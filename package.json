@@ -8,8 +8,6 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
     "electron": "set ELECTRON_START_URL=http://localhost:4200 && electron .",
     "electron-build": "ng build --configuration production && electron .",
     "package-win": "ng build --configuration production && electron-builder build --win --x64"
@@ -25,15 +23,18 @@
       "main.js",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "node_modules/electron/dist",
+        "to": "."
+      }
+    ],
     "win": {
       "target": "nsis",
       "forceCodeSigning": false,
       "signAndEditExecutable": false
     },
-    "asar": true,
-    "asarUnpack": [
-      "**/*.node"
-    ]
+    "asar": false
   },
   "private": true,
   "dependencies": {

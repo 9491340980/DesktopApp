@@ -1,0 +1,82 @@
+<nav class="minimal-navigation">
+
+  <!-- Left: Logo Only -->
+  <div class="nav-left">
+    <img src="images/RMx.png" alt="RMx" class="logo">
+  </div>
+
+  <!-- Center: Navigation Tabs -->
+  <div class="nav-center">
+    <div class="nav-tabs">
+      <a
+        *ngFor="let item of menuItems"
+        [routerLink]="item.route"
+        [class.active]="isActiveRoute(item.route)"
+        class="nav-tab">
+        <span>{{ item.label }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Right: Time & User -->
+  <div class="nav-right">
+
+    <!-- Refresh Button -->
+    <button class="icon-btn" (click)="refreshData()" title="Refresh">
+      <i class="fa fa-sync-alt" [class.spinning]="isRefreshing"></i>
+    </button>
+
+    <!-- Time Display -->
+    <div class="time-display">
+      <i class="fa fa-clock"></i>
+      <span>{{ currentTime }}</span>
+    </div>
+
+    <!-- User Menu -->
+    <div class="user-menu-wrapper">
+      <button class="user-btn" (click)="toggleUserMenu()">
+        <div class="user-avatar">
+          <i class="fa fa-user"></i>
+        </div>
+        <span class="username">{{ username }}</span>
+        <i class="fa fa-chevron-down" [class.rotated]="showUserMenu"></i>
+      </button>
+
+      <!-- Dropdown -->
+      <div class="user-dropdown" *ngIf="showUserMenu">
+        <div class="dropdown-header">
+          <div class="user-info">
+            <div class="avatar-large">
+              <i class="fa fa-user"></i>
+            </div>
+            <div class="user-details">
+              <div class="name">{{ username }}</div>
+              <div class="role">Administrator</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dropdown-divider"></div>
+
+        <button class="dropdown-item" (click)="goToProfile()">
+          <i class="fa fa-user-circle"></i>
+          <span>Profile</span>
+        </button>
+
+        <button class="dropdown-item" (click)="goToSettings()">
+          <i class="fa fa-cog"></i>
+          <span>Settings</span>
+        </button>
+
+        <div class="dropdown-divider"></div>
+
+        <button class="dropdown-item logout-item" (click)="logout()">
+          <i class="fa fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</nav>

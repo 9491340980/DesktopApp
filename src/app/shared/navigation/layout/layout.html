@@ -1,0 +1,7 @@
+ <div class="app-layout">
+      <app-navigation (viewModeChange)="onViewModeChange($event)"
+        (refreshRequested)="onRefreshRequested()"></app-navigation>
+      <main class="main-content">
+        <router-outlet></router-outlet>
+      </main>
+    </div>

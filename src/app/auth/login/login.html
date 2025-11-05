@@ -1,0 +1,88 @@
+<div class="login-container">
+  <div class="login-box">
+    <!-- Logo and Title -->
+    <div class="login-header">
+      <img src="assets/images/RMx.png" alt="RMx Logo" class="login-logo">
+      <h1>Service Monitoring</h1>
+      <p>Sign in to your account</p>
+    </div>
+
+    <!-- Login Form -->
+    <form class="login-form" (ngSubmit)="onSubmit()">
+
+      <!-- Error Message -->
+      <div class="error-message" *ngIf="errorMessage">
+        <i class="fa fa-exclamation-circle"></i>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Username Input -->
+      <div class="form-group">
+        <label for="username">
+          <i class="fa fa-user"></i> Username
+        </label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="username"
+          (focus)="clearError()"
+          placeholder="Enter your username"
+          [disabled]="loading"
+          autocomplete="username"
+          required>
+      </div>
+
+      <!-- Password Input -->
+      <div class="form-group">
+        <label for="password">
+          <i class="fa fa-lock"></i> Password
+        </label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          (focus)="clearError()"
+          placeholder="Enter your password"
+          [disabled]="loading"
+          autocomplete="current-password"
+          required>
+      </div>
+
+      <!-- Remember Me -->
+      <div class="form-group remember-me">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="rememberMe"
+            name="rememberMe"
+            [disabled]="loading">
+          <span>Remember me</span>
+        </label>
+      </div>
+
+      <!-- Login Button -->
+      <button
+        type="submit"
+        class="login-button"
+        [disabled]="loading || !username || !password">
+        <span *ngIf="!loading">
+          <i class="fa fa-sign-in-alt"></i> Sign In
+        </span>
+        <span *ngIf="loading">
+          <i class="fa fa-spinner fa-spin"></i> Signing in...
+        </span>
+      </button>
+
+    </form>
+
+    <!-- Demo Credentials -->
+    <div class="demo-credentials">
+      <p><i class="fa fa-info-circle"></i> Demo Credentials:</p>
+      <p><strong>Username:</strong> admin</p>
+      <p><strong>Password:</strong> admin123</p>
+    </div>
+
+  </div>
+</div>
