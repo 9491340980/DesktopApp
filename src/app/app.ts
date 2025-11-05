@@ -14,7 +14,7 @@ import { exhaustMap, startWith, takeUntil } from 'rxjs/operators';
 export class App {
   // Configuration
   private apiBaseUrl = 'https://qaapi-rmxt026.am.gxo.com:8333/api/';
-  private token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUaW1lU3RhbXAiOiIxMS81LzIwMjUgOTowMTowMSBBTSIsInVuaXF1ZV9uYW1lIjoic2F0aXNoLmRvbGkiLCJDbGllbnRJZCI6Ijk5OTkiLCJTaXRlSWQiOiJMT0dJTiIsIm5iZiI6MTc2MjMzMzI2MSwiZXhwIjoxNzYyNDE5NjYxLCJpYXQiOjE3NjIzMzMyNjEsImlzcyI6IlJNeCIsImF1ZCI6IlJNeFVzZXJzIn0.CuxhnUe7S0QCgEoq2Ec0kKfdpgtf-Ke96okJBvHBkGM'; // Replace with actual token
+  private token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJUaW1lU3RhbXAiOiIxMS81LzIwMjUgMTI6NTU6NTQgUE0iLCJ1bmlxdWVfbmFtZSI6InNhdGlzaC5kb2xpIiwiQ2xpZW50SWQiOiI5OTk5IiwiU2l0ZUlkIjoiTE9HSU4iLCJuYmYiOjE3NjIzNDczNTQsImV4cCI6MTc2MjQzMzc1NCwiaWF0IjoxNzYyMzQ3MzU0LCJpc3MiOiJSTXgiLCJhdWQiOiJSTXhVc2VycyJ9.C9_Ld_O4gNAP_NXcY519obET5_BFlFByFng4SoA1zw8'; // Replace with actual token
 
   // Data
   clientData: ClientData = {

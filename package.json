@@ -15,20 +15,25 @@
     "package-win": "ng build --configuration production && electron-builder build --win --x64"
   },
   "build": {
-    "appId": "com.company.app",
+    "appId": "com.company.desktopapp",
     "productName": "Desktop App",
     "directories": {
       "output": "release"
     },
     "files": [
-      "dist/DesktopApp/**/*",
+      "dist/**/*",
       "main.js",
       "package.json"
     ],
     "win": {
       "target": "nsis",
-      "forceCodeSigning": false
-    }
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false
+    },
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ]
   },
   "private": true,
   "dependencies": {
