@@ -85,3 +85,11 @@ export interface Session {
   EditWho: string;
   ReleaseVersion: string;
 }
+export interface AuthUser {
+  userId: string;
+  username: string;
+  clientId: string;
+  siteId: string;
+  roles: { [key: string]: string[] };
+  token: string;
+}

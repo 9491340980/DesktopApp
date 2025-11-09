@@ -11,7 +11,7 @@ import { Auth } from '../../services/auth';
   styleUrl: './navigation.scss',
 })
 export class Navigation {
- @Output() viewModeChange = new EventEmitter<string>();
+  @Output() viewModeChange = new EventEmitter<string>();
   @Output() refreshRequested = new EventEmitter<void>();
 
   // State
@@ -54,12 +54,12 @@ export class Navigation {
   constructor(
     private router: Router,
     private authService: Auth
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Get current user
-    this.username = this.authService.getUsername() || 'Admin';
-
+    // this.username = this.authService.getUsername() || 'Admin';
+    this.username = 'Admin';
     // Track route changes
     this.currentRoute = this.router.url;
     this.router.events.pipe(
@@ -120,10 +120,11 @@ export class Navigation {
    * Check if menu item is visible based on roles
    */
   isMenuItemVisible(item: MenuItem): boolean {
-    if (!item.roles || item.roles.length === 0) {
-      return true;
-    }
-    return item.roles.some(role => this.authService.hasRole(role));
+    // if (!item.roles || item.roles.length === 0) {
+    //   return true;
+    // }
+    // return item.roles.some(role => this.authService.hasRole(role));
+    return true;
   }
 
   /**
