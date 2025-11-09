@@ -3,20 +3,10 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Auth } from './services/auth';
 import { Layout } from './shared/navigation/layout/layout';
+import { authGuard } from './guard/auth-guard';
 
 
-// Auth Guard
-export const authGuard = () => {
-  const authService = inject(Auth);
-  const router = inject(Router);
 
-  if (authService.isAuthenticated()) {
-    return true;
-  } else {
-    router.navigate(['/login']);
-    return false;
-  }
-};
 
 // Login Guard (redirect if already logged in)
 export const loginGuard = () => {
@@ -32,7 +22,7 @@ export const loginGuard = () => {
 };
 
 export const routes: Routes = [
-  {
+    {
     path: '',
     redirectTo: '/login',
     pathMatch: 'full'
@@ -42,6 +32,15 @@ export const routes: Routes = [
     canActivate: [loginGuard],
     loadComponent: () => import('./auth/login/login').then(m => m.Login)
   },
+  // {
+  //   path: 'forgot-password',
+  //   canActivate: [loginGuard],
+  //   loadComponent: () => import('./auth/forgot-password/forgot-password').then(m => m.ForgotPassword)
+  // },
+  // {
+  //   path: 'unauthorized',
+  //   loadComponent: () => import('./shared/unauthorized/unauthorized').then(m => m.Unauthorized)
+  // },
   {
     path: '',
     component: Layout, // All authenticated routes use this layout
@@ -53,17 +52,40 @@ export const routes: Routes = [
       },
       {
         path: 'ios-management',
-        loadComponent: () => import('./ios-management/ios-management').then(m => m.IosManagement)
-      }
+        loadComponent: () => import('./ios-management/ios-management').then(m => m.IosManagement),
+        // Example: Add roles if this route requires specific permissions
+        // data: { roles: ['ADMIN', 'DEVELOPER', 'MANAGER'] }
+      },
+
       // ADD NEW ROUTES HERE - They will automatically get the navigation bar!
+
+      // Example routes with role-based access:
       /*
       {
         path: 'reports',
-        loadComponent: () => import('./reports/reports.component').then(m => m.ReportsComponent)
+        loadComponent: () => import('./reports/reports.component').then(m => m.ReportsComponent),
+        data: { roles: ['ADMIN', 'MANAGER', 'DEVELOPER'] }
       },
       {
         path: 'settings',
-        loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent)
+        loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent),
+        data: { roles: ['ADMIN'] }
+      },
+      {
+        path: 'user-management',
+        loadComponent: () => import('./user-management/user-management.component').then(m => m.UserManagementComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'MANAGER'] }
+      },
+      {
+        path: 'receiving',
+        loadComponent: () => import('./receiving/receiving.component').then(m => m.ReceivingComponent),
+        data: { roles: ['DEVELOPER', 'OPERATOR'] }
+      },
+      {
+        path: 'audit',
+        loadComponent: () => import('./audit/audit.component').then(m => m.AuditComponent),
+        data: { roles: ['ADMIN', 'AUDITOR'] }
       }
       */
     ]

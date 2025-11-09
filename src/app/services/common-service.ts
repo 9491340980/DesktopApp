@@ -1,21 +1,24 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { catchError, finalize, Observable, retry, throwError, timeout, TimeoutError } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiRequestConfig, ApiResponse, ClientData } from '../models/api.models';
+import { Auth } from './auth';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CommonService {
-   private baseUrl: string = 'http://tsgvm04112:8020'; // Default base URL
+  private baseUrl: string = 'http://tsgvm04112:8020'; // Default base URL
   private apiBaseUrl: string = 'http://tsgvm04112:8010/api'; // API base URL
   private defaultTimeout: number = 30000; // 30 seconds
   private isLoading: boolean = false;
 
-  constructor(
-    private http: HttpClient,
-    // private snackBar: MatSnackBar
-  ) {}
+  // Inject services
+  private authService = inject(Auth);
+  private snackBar = inject(MatSnackBar);
+
+  constructor(private http: HttpClient) {}
 
   /**
    * Generic API call method
@@ -38,7 +41,7 @@ export class CommonService {
       this.showLoader();
     }
 
-    // Prepare headers
+    // Prepare headers (token is now handled by interceptor)
     const httpHeaders = this.prepareHeaders(headers);
 
     // Prepare HTTP request
@@ -76,8 +79,36 @@ export class CommonService {
 
   /**
    * POST request with standard structure
+   * Automatically uses ClientData from AuthService if not provided
    */
   public post<T = any>(
+    endpoint: string,
+    additionalData: any = {},
+    options: Partial<ApiRequestConfig> = {},
+    customClientData?: ClientData
+  ): Observable<ApiResponse<T>> {
+    const url = this.buildUrl(endpoint);
+
+    // Use custom ClientData or get from AuthService
+    const clientData = customClientData || this.authService.getClientData();
+
+    const body = {
+      ClientData: clientData,
+      ...additionalData
+    };
+
+    return this.callApi<T>({
+      url,
+      method: 'POST',
+      body,
+      ...options
+    });
+  }
+
+  /**
+   * POST request with explicit ClientData (for login, etc.)
+   */
+  public postWithClientData<T = any>(
     endpoint: string,
     clientData: ClientData,
     additionalData: any = {},
@@ -98,19 +129,75 @@ export class CommonService {
   }
 
   /**
-   * GET request
+   * GET request (uses POST with ClientData)
    */
   public get<T = any>(
     endpoint: string,
-    clientData: ClientData,
+    additionalData: any = {},
+    options: Partial<ApiRequestConfig> = {}
+  ): Observable<ApiResponse<T>> {
+    return this.post<T>(endpoint, additionalData, options);
+  }
+
+  /**
+   * Simple GET request (actual HTTP GET without ClientData)
+   */
+  public simpleGet<T = any>(
+    endpoint: string,
     options: Partial<ApiRequestConfig> = {}
   ): Observable<ApiResponse<T>> {
     const url = this.buildUrl(endpoint);
-    const body = { ClientData: clientData };
 
     return this.callApi<T>({
       url,
-      method: 'POST', // Most of your APIs use POST even for GET-like operations
+      method: 'GET',
+      ...options
+    });
+  }
+
+  /**
+   * PUT request with standard structure
+   */
+  public put<T = any>(
+    endpoint: string,
+    additionalData: any = {},
+    options: Partial<ApiRequestConfig> = {}
+  ): Observable<ApiResponse<T>> {
+    const url = this.buildUrl(endpoint);
+    const clientData = this.authService.getClientData();
+
+    const body = {
+      ClientData: clientData,
+      ...additionalData
+    };
+
+    return this.callApi<T>({
+      url,
+      method: 'PUT',
+      body,
+      ...options
+    });
+  }
+
+  /**
+   * DELETE request with standard structure
+   */
+  public delete<T = any>(
+    endpoint: string,
+    additionalData: any = {},
+    options: Partial<ApiRequestConfig> = {}
+  ): Observable<ApiResponse<T>> {
+    const url = this.buildUrl(endpoint);
+    const clientData = this.authService.getClientData();
+
+    const body = {
+      ClientData: clientData,
+      ...additionalData
+    };
+
+    return this.callApi<T>({
+      url,
+      method: 'DELETE',
       body,
       ...options
     });
@@ -120,27 +207,28 @@ export class CommonService {
    * Build full URL from endpoint
    */
   private buildUrl(endpoint: string): string {
+    // If endpoint is already a full URL, return as-is
+    if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+      return endpoint;
+    }
+
     // If endpoint starts with /LogIn, use baseUrl, otherwise use apiBaseUrl
     if (endpoint.startsWith('/LogIn')) {
       return `${this.baseUrl}${endpoint}`;
     }
+
     return `${this.apiBaseUrl}${endpoint}`;
   }
 
   /**
    * Prepare HTTP headers
+   * Note: Authorization token is now handled by HTTP interceptor
    */
   private prepareHeaders(customHeaders: { [key: string]: string } = {}): HttpHeaders {
     let headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     });
-
-    // Add JWT token if available
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
 
     // Add custom headers
     Object.keys(customHeaders).forEach(key => {
@@ -255,12 +343,48 @@ export class CommonService {
    * Show error notification
    */
   private showError(message: string): void {
-    // this.snackBar.open(message, 'Close', {
-    //   duration: 5000,
-    //   horizontalPosition: 'center',
-    //   verticalPosition: 'top',
-    //   panelClass: ['error-snackbar']
-    // });
+    this.snackBar.open(message, 'Close', {
+      duration: 5000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  /**
+   * Show success notification
+   */
+  public showSuccess(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  /**
+   * Show info notification
+   */
+  public showInfo(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 4000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: ['info-snackbar']
+    });
+  }
+
+  /**
+   * Show warning notification
+   */
+  public showWarning(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 4000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: ['warning-snackbar']
+    });
   }
 
   /**
@@ -301,5 +425,19 @@ export class CommonService {
    */
   public setDefaultTimeout(timeout: number): void {
     this.defaultTimeout = timeout;
+  }
+
+  /**
+   * Get base URL
+   */
+  public getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
+  /**
+   * Get API base URL
+   */
+  public getApiBaseUrl(): string {
+    return this.apiBaseUrl;
   }
 }

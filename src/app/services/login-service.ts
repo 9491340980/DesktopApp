@@ -1,19 +1,26 @@
 import { Injectable } from '@angular/core';
-import { forkJoin, Observable, switchMap } from 'rxjs';
-import { ApiResponse, ClientData, LoginModel, UserProfile } from '../models/api.models';
+import { Observable, forkJoin } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import {
+  ClientData,
+  ApiResponse,
+  LoginModel,
+  UserProfile,
+  Session
+} from '../models/api.models';
 import { CommonService } from './common-service';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class LoginService {
-  constructor(private httpService: CommonService) {}
+  constructor(private commonService: CommonService) {}
 
   /**
    * Get Roles and Site IDs
    */
   getRolesSiteIds(clientData: ClientData, loginModel: LoginModel): Observable<ApiResponse<any>> {
-    return this.httpService.post('/LogIn/GetRolesSiteIds', clientData, {
+    return this.commonService.postWithClientData('/LogIn/GetRolesSiteIds', clientData, {
       LogInModel: loginModel
     });
   }
@@ -22,7 +29,7 @@ export class LoginService {
    * Get User Profile
    */
   getUserProfile(clientData: ClientData, userProfile: Partial<UserProfile>): Observable<ApiResponse<any>> {
-    return this.httpService.post('/LogIn/getUserProfile', clientData, {
+    return this.commonService.postWithClientData('/LogIn/getUserProfile', clientData, {
       UserProfile: userProfile
     });
   }
@@ -31,14 +38,14 @@ export class LoginService {
    * Get Messages for Category
    */
   getMessagesForCategory(clientData: ClientData, category: string = 'COM'): Observable<ApiResponse<any>> {
-    return this.httpService.post(`/common/getMessagesForCategory/${category}`, clientData);
+    return this.commonService.postWithClientData(`/common/getMessagesForCategory/${category}`, clientData);
   }
 
   /**
    * Get Control Config
    */
   getControlConfig(clientData: ClientData, module: string = 'LOGIN'): Observable<ApiResponse<any>> {
-    return this.httpService.post('/common/getControlConfig', clientData, {
+    return this.commonService.postWithClientData('/common/getControlConfig', clientData, {
       ControlConfig: { Module: module }
     });
   }
@@ -47,14 +54,14 @@ export class LoginService {
    * Get Session Time
    */
   getSessionTime(clientData: ClientData): Observable<ApiResponse<string>> {
-    return this.httpService.post<string>('/common/getSessionTime', clientData);
+    return this.commonService.postWithClientData<string>('/common/getSessionTime', clientData);
   }
 
   /**
    * Get Menu
    */
   getMenu(clientData: ClientData, rolesList: any): Observable<ApiResponse<any>> {
-    return this.httpService.post('/LogIn/getMenu', clientData, {
+    return this.commonService.postWithClientData('/LogIn/getMenu', clientData, {
       RolesList: rolesList
     });
   }
@@ -132,5 +139,29 @@ export class LoginService {
         });
       })
     );
+  }
+
+  /**
+   * Logout user (call backend logout API if available)
+   */
+  logout(clientData: ClientData): Observable<ApiResponse<any>> {
+    // If you have a logout endpoint on the backend
+    return this.commonService.postWithClientData('/LogIn/logout', clientData);
+  }
+
+  /**
+   * Refresh session
+   */
+  refreshSession(clientData: ClientData): Observable<ApiResponse<any>> {
+    // If you have a refresh session endpoint
+    return this.commonService.postWithClientData('/LogIn/refreshSession', clientData);
+  }
+
+  /**
+   * Validate session
+   */
+  validateSession(clientData: ClientData): Observable<ApiResponse<any>> {
+    // If you have a validate session endpoint
+    return this.commonService.postWithClientData('/LogIn/validateSession', clientData);
   }
 }

@@ -1,0 +1,29 @@
+<div class="unauthorized-container">
+      <div class="unauthorized-content">
+        <div class="icon-wrapper">
+          <mat-icon class="lock-icon">lock</mat-icon>
+        </div>
+
+        <h1>Access Denied</h1>
+
+        <p class="message">
+          {{ message }}
+        </p>
+
+        <div class="actions">
+          <button mat-raised-button color="primary" (click)="goToDashboard()">
+            <mat-icon>home</mat-icon>
+            Go to Dashboard
+          </button>
+
+          <button mat-stroked-button (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+            Go Back
+          </button>
+        </div>
+
+        <p class="help-text">
+          If you believe you should have access to this page, please contact your administrator.
+        </p>
+      </div>
+    </div>

@@ -1,0 +1,93 @@
+.unauthorized-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .unauthorized-content {
+      background: white;
+      border-radius: 20px;
+      padding: 48px 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.5s ease;
+    }
+
+    .icon-wrapper {
+      margin-bottom: 24px;
+    }
+
+    .lock-icon {
+      font-size: 80px;
+      width: 80px;
+      height: 80px;
+      color: #ef4444;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 16px 0;
+    }
+
+    .message {
+      font-size: 16px;
+      color: #6b7280;
+      margin: 0 0 32px 0;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .actions button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .help-text {
+      font-size: 14px;
+      color: #9ca3af;
+      margin: 0;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .unauthorized-content {
+        padding: 32px 24px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .actions button {
+        width: 100%;
+      }
+    }
