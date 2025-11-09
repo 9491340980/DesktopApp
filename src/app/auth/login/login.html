@@ -1,88 +1,179 @@
 <div class="login-container">
+  <!-- Background decoration -->
+  <div class="login-background">
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+  </div>
+
+  <!-- Login box -->
   <div class="login-box">
-    <!-- Logo and Title -->
+    <!-- Logo and header -->
     <div class="login-header">
-      <img src="images/RMx.png" alt="RMx Logo" class="login-logo">
-      <h1>GXO</h1>
-      <p>Sign in to your account</p>
+      <div class="logo-container">
+        <img src="assets/images/RMx.png" alt="RMx Logo" class="login-logo">
+      </div>
+      <h1 class="company-name">GXO</h1>
+      <p class="welcome-text">Service Monitor Application</p>
+      <p class="subtitle">Sign in to access your account</p>
     </div>
 
-    <!-- Login Form -->
-    <form class="login-form" (ngSubmit)="onSubmit()">
+    <!-- Login form -->
+    <form class="login-form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
 
-      <!-- Error Message -->
-      <div class="error-message" *ngIf="errorMessage">
+      <!-- Error message banner -->
+      <div class="error-banner" *ngIf="errorMessage" [@slideInDown]>
         <i class="fa fa-exclamation-circle"></i>
-        {{ errorMessage }}
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="close-btn" (click)="clearError()">
+          <i class="fa fa-times"></i>
+        </button>
       </div>
 
-      <!-- Username Input -->
+      <!-- Username field -->
       <div class="form-group">
-        <label for="username">
-          <i class="fa fa-user"></i> Username
+        <label for="username" class="form-label">
+          <i class="fa fa-user"></i>
+          Username
         </label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          [(ngModel)]="username"
-          (focus)="clearError()"
-          placeholder="Enter your username"
-          [disabled]="loading"
-          autocomplete="username"
-          required>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-input"
+            [(ngModel)]="username"
+            (focus)="clearError()"
+            (keypress)="onKeyPress($event)"
+            placeholder="Enter your username"
+            [disabled]="loading"
+            autocomplete="username"
+            required
+            #usernameInput="ngModel">
+          <i class="input-icon fa fa-user"></i>
+        </div>
+        <div class="field-error" *ngIf="usernameInput.invalid && usernameInput.touched">
+          <i class="fa fa-exclamation-circle"></i>
+          <span>Username is required</span>
+        </div>
       </div>
 
-      <!-- Password Input -->
+      <!-- Password field -->
       <div class="form-group">
-        <label for="password">
-          <i class="fa fa-lock"></i> Password
+        <label for="password" class="form-label">
+          <i class="fa fa-lock"></i>
+          Password
         </label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          [(ngModel)]="password"
-          (focus)="clearError()"
-          placeholder="Enter your password"
-          [disabled]="loading"
-          autocomplete="current-password"
-          required>
+        <div class="input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            name="password"
+            class="form-input"
+            [(ngModel)]="password"
+            (focus)="clearError()"
+            (keydown)="checkCapsLock($event)"
+            (keypress)="onKeyPress($event)"
+            placeholder="Enter your password"
+            [disabled]="loading"
+            autocomplete="current-password"
+            required
+            #passwordInput="ngModel">
+          <i class="input-icon fa fa-lock"></i>
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility()"
+            [disabled]="loading"
+            tabindex="-1">
+            <i [class]="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </button>
+        </div>
+
+        <!-- Caps lock warning -->
+        <div class="caps-lock-warning" *ngIf="isCapLockOn">
+          <i class="fa fa-exclamation-triangle"></i>
+          <span>Caps Lock is ON</span>
+        </div>
+
+        <div class="field-error" *ngIf="passwordInput.invalid && passwordInput.touched">
+          <i class="fa fa-exclamation-circle"></i>
+          <span>Password is required</span>
+        </div>
       </div>
 
-      <!-- Remember Me -->
-      <div class="form-group remember-me">
-        <label class="checkbox-label">
+      <!-- Remember me and forgot password -->
+      <div class="form-options">
+        <label class="checkbox-container">
           <input
             type="checkbox"
             [(ngModel)]="rememberMe"
             name="rememberMe"
             [disabled]="loading">
-          <span>Remember me</span>
+          <span class="checkmark"></span>
+          <span class="checkbox-label">Remember me</span>
         </label>
+
+        <button
+          type="button"
+          class="forgot-password-link"
+          (click)="forgotPassword()"
+          [disabled]="loading">
+          Forgot password?
+        </button>
       </div>
 
-      <!-- Login Button -->
+      <!-- Submit button -->
       <button
         type="submit"
         class="login-button"
-        [disabled]="loading || !username || !password">
-        <span *ngIf="!loading">
-          <i class="fa fa-sign-in-alt"></i> Sign In
+        [disabled]="loading || !username || !password || loginForm.invalid"
+        [class.loading]="loading">
+        <span class="button-content" *ngIf="!loading">
+          <i class="fa fa-sign-in-alt"></i>
+          <span>Sign In</span>
         </span>
-        <span *ngIf="loading">
-          <i class="fa fa-spinner fa-spin"></i> Signing in...
+        <span class="button-content" *ngIf="loading">
+          <i class="fa fa-spinner fa-spin"></i>
+          <span>Signing in...</span>
         </span>
       </button>
 
     </form>
 
-    <!-- Demo Credentials -->
-    <div class="demo-credentials">
-      <p><i class="fa fa-info-circle"></i> Demo Credentials:</p>
-      <p><strong>Username:</strong> admin</p>
-      <p><strong>Password:</strong> admin123</p>
+    <!-- Additional info -->
+    <div class="login-footer">
+      <div class="environment-badge">
+        <i class="fa fa-server"></i>
+        <span>{{ environment }}</span>
+      </div>
+      <div class="version-info">
+        <span>Version {{ releaseVersion }}</span>
+      </div>
     </div>
 
+    <!-- Demo credentials (remove in production) -->
+    <div class="demo-info" *ngIf="environment === 'DEV'">
+      <div class="demo-header">
+        <i class="fa fa-info-circle"></i>
+        <span>Demo Credentials</span>
+      </div>
+      <div class="demo-credentials">
+        <div class="credential-item">
+          <span class="label">Username:</span>
+          <span class="value">admin</span>
+        </div>
+        <div class="credential-item">
+          <span class="label">Password:</span>
+          <span class="value">admin123</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="login-page-footer">
+    <p>&copy; 2025 GXO Logistics. All rights reserved.</p>
   </div>
 </div>
