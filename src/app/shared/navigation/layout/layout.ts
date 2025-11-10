@@ -19,13 +19,13 @@ import { Auth } from '../../../services/auth';
     RouterModule,
     MatSidenavModule,
     MatToolbarModule,
-    MatIconModule,
     MatButtonModule,
     MatListModule,
     MatTooltipModule,
     MatMenuModule,
     MatBadgeModule,
-    MatDividerModule
+    MatDividerModule,
+    MatIconModule
   ],
   templateUrl: './layout.html',
   styleUrl: './layout.scss',
