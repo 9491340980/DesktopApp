@@ -29,34 +29,47 @@ $border-color: #334155;
   flex-direction: column;
   height: 100vh; // Full viewport height
 
-  // Header - Fixed at top
+  // Header - Fixed at top with better contrast
   .sidenav-header {
     flex-shrink: 0;
-    padding: 24px 20px;
+    padding: 20px;
     border-bottom: 1px solid $border-color;
-    background: $bg-sidebar-dark;
+    background: linear-gradient(135deg, $bg-sidebar-dark 0%, #1a2332 100%);
 
     .logo-section {
       display: flex;
       align-items: center;
       gap: 14px;
       cursor: pointer;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      transition: all 0.3s ease;
 
       &:hover {
-        opacity: 0.9;
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
       }
 
       .logo {
         width: 40px;
         height: 40px;
         object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
       }
 
       .brand-text {
-        font-size: 24px;
-        font-weight: 700;
-        color: $text-white;
-        letter-spacing: 0.5px;
+        font-size: 26px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
       }
     }
   }
@@ -264,6 +277,42 @@ $border-color: #334155;
     &:hover {
       background: #f1f5f9;
       color: $primary-color;
+    }
+  }
+
+  // Toolbar Logo - Shows when sidebar is closed
+  .toolbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-color: $primary-color;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+
+    .toolbar-logo-img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .toolbar-brand-text {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
     }
   }
 

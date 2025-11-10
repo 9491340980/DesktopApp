@@ -1,10 +1,6 @@
 <mat-sidenav-container class="layout-container">
   <!-- Side Navigation -->
-  <mat-sidenav
-    #sidenav
-    mode="side"
-    [opened]="isSidenavOpen"
-    class="sidenav">
+  <mat-sidenav #sidenav mode="side" [opened]="isSidenavOpen" class="sidenav">
 
     <!-- Wrapper div for flex layout -->
     <div class="sidenav-content-wrapper">
@@ -12,7 +8,7 @@
       <div class="sidenav-header">
         <div class="logo-section" (click)="navigateToDashboard()">
           <img src="images/RMx.png" alt="Logo" class="logo">
-          <span class="brand-text">RMx</span>
+          <!-- <span class="brand-text">RMx</span> -->
         </div>
       </div>
 
@@ -22,43 +18,23 @@
           <ng-container *ngFor="let item of filteredMenuItems">
             <!-- Main Menu Item -->
             <div class="menu-item-wrapper">
-              <mat-list-item
-                class="nav-item"
-                [class.has-submenu]="item.HasSubMenu"
+              <mat-list-item class="nav-item" [class.has-submenu]="item.HasSubMenu"
                 [class.expanded]="isMenuExpanded(item.Title)"
-                (click)="item.HasSubMenu ? toggleMenu(item.Title) : navigateToItem(item)"
-                [matTooltip]="item.Title"
+                (click)="item.HasSubMenu ? toggleMenu(item.Title) : navigateToItem(item)" [matTooltip]="item.Title"
                 matTooltipPosition="right">
 
                 <mat-icon matListItemIcon>{{ item.Icon }}</mat-icon>
                 <span matListItemTitle>{{ item.Title }}</span>
 
-                <!-- Optional: Show count of desktop app submenu items -->
-                <!-- <span
-                  *ngIf="item.HasSubMenu && getSubMenuCount(item) > 0"
-                  class="submenu-count"
-                  matListItemMeta>
-                  {{ getSubMenuCount(item) }}
-                </span> -->
-
-                <mat-icon
-                  *ngIf="item.HasSubMenu"
-                  class="expand-icon"
-                  matListItemMeta>
+                <mat-icon *ngIf="item.HasSubMenu" class="expand-icon" matListItemMeta>
                   {{ isMenuExpanded(item.Title) ? 'expand_less' : 'expand_more' }}
                 </mat-icon>
               </mat-list-item>
 
               <!-- Sub Menu Items - Using getFilteredSubMenu -->
-              <div
-                *ngIf="item.HasSubMenu && isMenuExpanded(item.Title)"
-                class="submenu-container">
-                <mat-list-item
-                  *ngFor="let subItem of getFilteredSubMenu(item)"
-                  class="submenu-item"
-                  (click)="navigateToSubItem(item, subItem)"
-                  [matTooltip]="subItem.Title"
-                  matTooltipPosition="right">
+              <div *ngIf="item.HasSubMenu && isMenuExpanded(item.Title)" class="submenu-container">
+                <mat-list-item *ngFor="let subItem of getFilteredSubMenu(item)" class="submenu-item"
+                  (click)="navigateToSubItem(item, subItem)" [matTooltip]="subItem.Title" matTooltipPosition="right">
 
                   <mat-icon matListItemIcon class="submenu-icon">
                     {{ subItem.Icon }}
@@ -88,31 +64,26 @@
   <mat-sidenav-content class="main-content">
     <!-- Top Toolbar -->
     <mat-toolbar class="toolbar">
-      <button
-        mat-icon-button
-        (click)="toggleSidenav()"
-        matTooltip="Toggle menu"
-        class="menu-toggle-btn">
+      <!-- Menu Toggle Button -->
+      <button mat-icon-button (click)="toggleSidenav()" matTooltip="Toggle menu" class="menu-toggle-btn">
         <mat-icon>menu</mat-icon>
       </button>
+
+      <!-- Logo - Show when sidebar is CLOSED -->
+      <div *ngIf="!isSidenavOpen" class="toolbar-logo" (click)="navigateToDashboard()">
+        <img src="images/RMx.png" alt="Logo" class="toolbar-logo-img">
+        <!-- <span class="toolbar-brand-text">RMx</span> -->
+      </div>
 
       <span class="toolbar-spacer"></span>
 
       <!-- Dashboard Button -->
-      <button
-        mat-icon-button
-        (click)="navigateToDashboard()"
-        matTooltip="Go to Dashboard"
-        class="toolbar-btn">
+      <button mat-icon-button (click)="navigateToDashboard()" matTooltip="Go to Dashboard" class="toolbar-btn">
         <mat-icon>dashboard</mat-icon>
       </button>
 
       <!-- User Menu -->
-      <button
-        mat-icon-button
-        [matMenuTriggerFor]="userMenu"
-        matTooltip="User menu"
-        class="toolbar-btn">
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" matTooltip="User menu" class="toolbar-btn">
         <mat-icon>account_circle</mat-icon>
       </button>
 
