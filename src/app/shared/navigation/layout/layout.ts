@@ -31,7 +31,7 @@ import { Auth } from '../../../services/auth';
   styleUrl: './layout.scss',
 })
 export class Layout {
-   @ViewChild('sidenav') sidenav!: MatSidenav;
+    @ViewChild('sidenav') sidenav!: MatSidenav;
 
   menuItems: MenuItem[] = [];
   filteredMenuItems: MenuItem[] = []; // For display
@@ -101,6 +101,12 @@ export class Layout {
 
         // Filter to show only items where isDesktopApp = true
         this.filteredMenuItems = this.menuItems.filter(item => item.isDesktopApp === true);
+
+        // AUTO-EXPAND if only 1 module
+        if (this.filteredMenuItems.length === 1 && this.filteredMenuItems[0].HasSubMenu) {
+          this.expandedMenuTitle = this.filteredMenuItems[0].Title;
+          console.log(`Auto-expanded single module in sidebar: ${this.expandedMenuTitle}`);
+        }
 
         console.log('Filtered menu items:', this.filteredMenuItems);
         console.log('Utility submenu:', this.filteredMenuItems[0]?.SubMenu);
@@ -178,7 +184,6 @@ export class Layout {
   }
 
   navigateToSubItem(mainItem: MenuItem, subItem: SubMenuItem): void {
-    debugger
     if (subItem.RouterLink) {
       this.storeOperationInfo(subItem);
       this.router.navigate([subItem.RouterLink]);
