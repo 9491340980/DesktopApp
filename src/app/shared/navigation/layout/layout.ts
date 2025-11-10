@@ -178,6 +178,7 @@ export class Layout {
   }
 
   navigateToSubItem(mainItem: MenuItem, subItem: SubMenuItem): void {
+    debugger
     if (subItem.RouterLink) {
       this.storeOperationInfo(subItem);
       this.router.navigate([subItem.RouterLink]);

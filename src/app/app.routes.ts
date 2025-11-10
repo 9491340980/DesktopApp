@@ -50,7 +50,7 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard)
       },  {
-        path: 'service-dashboard',
+        path: 'windowsservices',
         loadComponent: () => import('./service-dashboard/service-dashboard').then(m => m.ServiceDashboard)
       },
       {
