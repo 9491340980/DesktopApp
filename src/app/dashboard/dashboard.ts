@@ -45,7 +45,7 @@ interface SubMenuItem {
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit {
-  menuItems: MenuItem[] = [];
+ menuItems: MenuItem[] = [];
   filteredMenuItems: MenuItem[] = [];
   searchQuery: string = '';
   username: string = '';
@@ -76,10 +76,28 @@ export class Dashboard implements OnInit {
     if (menuStr) {
       try {
         this.menuItems = JSON.parse(menuStr);
-        this.filteredMenuItems = [...this.menuItems];
 
-        // Add default icons if not present
+        // TEMPORARY: Mark Utility and specific submenu as isDesktopApp = true
         this.menuItems.forEach(item => {
+          // Mark only "Utility" module
+          if (item.Title === 'Utility') {
+            item.isDesktopApp = true;
+
+            // Mark only OperationId 6850 in submenu
+            if (item.SubMenu) {
+              item.SubMenu.forEach(subItem => {
+                if (subItem.OperationId === '6850') {
+                  subItem.isDesktopApp = true;
+                } else {
+                  subItem.isDesktopApp = false;
+                }
+              });
+            }
+          } else {
+            item.isDesktopApp = false;
+          }
+
+          // Add default icons
           if (!item.Icon) {
             item.Icon = this.getDefaultIcon(item.Module || item.Title);
           }
@@ -92,6 +110,17 @@ export class Dashboard implements OnInit {
             });
           }
         });
+
+        // Filter to show only items where isDesktopApp = true
+        this.filteredMenuItems = this.menuItems.filter(item => item.isDesktopApp === true);
+
+        // AUTO-EXPAND if only 1 module
+        if (this.filteredMenuItems.length === 1 && this.filteredMenuItems[0].HasSubMenu) {
+          this.selectedModuleTitle = this.filteredMenuItems[0].Title;
+          console.log(`Auto-expanded single module: ${this.selectedModuleTitle}`);
+        }
+
+        console.log('Dashboard - Filtered items:', this.filteredMenuItems.length);
       } catch (error) {
         console.error('Error parsing menu from localStorage:', error);
         this.menuItems = [];
@@ -148,6 +177,8 @@ export class Dashboard implements OnInit {
     if (titleUpper.includes('NCI')) return 'inventory';
     if (titleUpper.includes('EXCEPTION')) return 'error';
     if (titleUpper.includes('ACCESSORY')) return 'extension';
+    if (titleUpper.includes('START') || titleUpper.includes('STOP')) return 'power_settings_new';
+    if (titleUpper.includes('WINDOWS') || titleUpper.includes('SERVICE')) return 'settings_applications';
 
     return 'arrow_forward';
   }
@@ -157,14 +188,18 @@ export class Dashboard implements OnInit {
     this.searchQuery = input.value.toLowerCase();
 
     if (!this.searchQuery) {
-      this.filteredMenuItems = [...this.menuItems];
+      // Show only desktop app items
+      this.filteredMenuItems = this.menuItems.filter(item => item.isDesktopApp === true);
       return;
     }
 
+    // Search within desktop app items only
     this.filteredMenuItems = this.menuItems.filter(item => {
+      if (item.isDesktopApp !== true) return false;
+
       const mainMatch = item.Title.toLowerCase().includes(this.searchQuery);
       const subMatch = item.SubMenu?.some(sub =>
-        sub.Title.toLowerCase().includes(this.searchQuery)
+        sub.isDesktopApp === true && sub.Title.toLowerCase().includes(this.searchQuery)
       );
       return mainMatch || subMatch;
     });
@@ -180,7 +215,7 @@ export class Dashboard implements OnInit {
 
       if (item.HasSubMenu) {
         const subMenuItems = this.getFilteredSubMenu(item);
-        console.log(`${item.Title} has ${subMenuItems.length} submenu items`);
+        console.log(`${item.Title} has ${subMenuItems.length} desktop app submenu items`);
       }
     }
   }
@@ -198,19 +233,6 @@ export class Dashboard implements OnInit {
     }
   }
 
-  private navigateToModule(item: MenuItem): void {
-    if (item.RouterLink) {
-      localStorage.setItem('currentOperation', JSON.stringify({
-        operationId: item.OperationId,
-        module: item.Module,
-        category: item.Category,
-        title: item.Title
-      }));
-
-      this.router.navigate([item.RouterLink]);
-    }
-  }
-
   isModuleSelected(item: MenuItem): boolean {
     return this.selectedModuleTitle === item.Title;
   }
@@ -220,15 +242,17 @@ export class Dashboard implements OnInit {
       return [];
     }
 
-    // Show ALL items regardless of AppEnabled status
-    // Only filter by search query if present
-    if (!this.searchQuery) {
-      return item.SubMenu; // Return ALL items
-    } else {
-      return item.SubMenu.filter(sub =>
+    // Show only submenu items where isDesktopApp = true
+    let filtered = item.SubMenu.filter(sub => sub.isDesktopApp === true);
+
+    // If search query present, filter by title too
+    if (this.searchQuery) {
+      filtered = filtered.filter(sub =>
         sub.Title.toLowerCase().includes(this.searchQuery)
       );
     }
+
+    return filtered;
   }
 
   getMenuImagePath(item: MenuItem): string {
@@ -246,7 +270,7 @@ export class Dashboard implements OnInit {
 
   clearSearch(): void {
     this.searchQuery = '';
-    this.filteredMenuItems = [...this.menuItems];
+    this.filteredMenuItems = this.menuItems.filter(item => item.isDesktopApp === true);
   }
 
   closeSelectedModule(event?: Event): void {
@@ -258,7 +282,6 @@ export class Dashboard implements OnInit {
   }
 }
 
-
 interface MenuItem {
   Title: string;
   OperationId: string;
@@ -269,6 +292,7 @@ interface MenuItem {
   SubMenu?: SubMenuItem[];
   Icon?: string;
   AppEnabled?: boolean;
+  isDesktopApp?: boolean;
 }
 
 interface SubMenuItem {
@@ -279,4 +303,5 @@ interface SubMenuItem {
   RouterLink: string;
   AppEnabled: boolean;
   Icon?: string;
+  isDesktopApp?: boolean;
 }
