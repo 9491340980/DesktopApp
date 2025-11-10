@@ -64,9 +64,9 @@
             <div class="menu-title">{{ item.Title }}</div>
 
             <!-- Badge -->
-            <div *ngIf="item.HasSubMenu" class="submenu-badge">
+            <!-- <div *ngIf="item.HasSubMenu" class="submenu-badge">
               <span>{{ getFilteredSubMenu(item).length }}</span>
-            </div>
+            </div> -->
 
             <!-- Arrow for SubMenu -->
             <mat-icon *ngIf="item.HasSubMenu" class="expand-icon">
@@ -78,11 +78,12 @@
         <!-- Sub-Menu Expanded View -->
         <div
           *ngIf="item.HasSubMenu && isModuleSelected(item)"
-          class="submenu-expanded"
-          [@slideDown]>
+          class="submenu-expanded">
           <div class="submenu-header">
             <h3>{{ item.Title }} Operations</h3>
-            <button class="close-submenu-btn" (click)="selectedModule = null">
+            <button
+              class="close-submenu-btn"
+              (click)="closeSelectedModule(); $event.stopPropagation()">
               <mat-icon>close</mat-icon>
             </button>
           </div>
@@ -105,43 +106,10 @@
               </div>
 
               <div class="submenu-title">{{ subItem.Title }}</div>
-
-              <div *ngIf="subItem.Category" class="submenu-category">
-                {{ subItem.Category }}
-              </div>
             </div>
           </div>
         </div>
       </ng-container>
-    </div>
-  </div>
-
-  <!-- Quick Stats Footer (Optional) -->
-  <div class="dashboard-footer">
-    <div class="stat-card">
-      <mat-icon>apps</mat-icon>
-      <div class="stat-info">
-        <span class="stat-value">{{ menuItems.length }}</span>
-        <span class="stat-label">Modules</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <mat-icon>wysiwyg</mat-icon>
-      <div class="stat-info">
-        <span class="stat-value">
-          {{menuData()}}
-        </span>
-        <span class="stat-label">Operations</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <mat-icon>person</mat-icon>
-      <div class="stat-info">
-        <span class="stat-value">{{ username }}</span>
-        <span class="stat-label">Current User</span>
-      </div>
     </div>
   </div>
 </div>

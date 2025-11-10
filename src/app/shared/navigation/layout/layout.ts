@@ -36,7 +36,7 @@ export class Layout {
   menuItems: MenuItem[] = [];
   username: string = '';
   siteId: string = '';
-  expandedMenu: string | null = null;
+  expandedMenuTitle: string | null = null;
   isSidenavOpen: boolean = true;
 
   constructor(
@@ -102,10 +102,11 @@ export class Layout {
       'SETTINGS': 'settings',
       'REPORTS': 'assessment',
       'UTILITIES': 'build',
-      'MAINTENANCE': 'construction'
+      'MAINTENANCE': 'construction',
+      'TESTING': 'science'
     };
 
-    const key = moduleOrTitle.toUpperCase();
+    const key = (moduleOrTitle || '').toUpperCase();
     return iconMap[key] || 'widgets';
   }
 
@@ -128,12 +129,16 @@ export class Layout {
     this.isSidenavOpen = this.sidenav.opened;
   }
 
-  toggleMenu(operationId: string): void {
-    this.expandedMenu = this.expandedMenu === operationId ? null : operationId;
+  toggleMenu(title: string): void {
+    if (this.expandedMenuTitle === title) {
+      this.expandedMenuTitle = null;
+    } else {
+      this.expandedMenuTitle = title;
+    }
   }
 
-  isMenuExpanded(operationId: string): boolean {
-    return this.expandedMenu === operationId;
+  isMenuExpanded(title: string): boolean {
+    return this.expandedMenuTitle === title;
   }
 
   navigateToItem(item: MenuItem): void {
@@ -169,7 +174,8 @@ export class Layout {
 
   getSubMenuCount(item: MenuItem): number {
     if (!item.SubMenu) return 0;
-    return item.SubMenu.filter(sub => sub.AppEnabled !== false).length;
+    // Show ALL submenu items count (don't filter by AppEnabled for display count)
+    return item.SubMenu.length;
   }
 }
 interface MenuItem {

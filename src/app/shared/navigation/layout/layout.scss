@@ -1,15 +1,13 @@
 // Variables
-$primary-color: #1e40af;
-$primary-light: #3b82f6;
+$primary-color: #3b82f6;
+$primary-dark: #2563eb;
 $accent-color: #06b6d4;
-$bg-dark: #0f172a;
-$bg-medium: #1e293b;
-$bg-light: #334155;
-$text-light: #f1f5f9;
+$bg-sidebar: #1e293b;
+$bg-sidebar-dark: #0f172a;
+$text-white: #ffffff;
+$text-light: #e2e8f0;
 $text-muted: #94a3b8;
 $border-color: #334155;
-$hover-bg: #1e293b;
-$active-bg: #3b82f6;
 
 // Layout Container
 .layout-container {
@@ -19,192 +17,192 @@ $active-bg: #3b82f6;
 
 // Sidenav
 .sidenav {
-  width: 260px;
-  background: $bg-dark;
-  color: $text-light;
+  width: 280px;
+  background: $bg-sidebar;
+  color: $text-white;
   border-right: 1px solid $border-color;
   display: flex;
   flex-direction: column;
 
   // Header
   .sidenav-header {
-    padding: 20px 16px;
+    padding: 24px 20px;
     border-bottom: 1px solid $border-color;
-    background: linear-gradient(135deg, $bg-dark 0%, $bg-medium 100%);
+    background: $bg-sidebar-dark;
 
     .logo-section {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       cursor: pointer;
-      transition: opacity 0.2s ease;
 
       &:hover {
         opacity: 0.9;
       }
 
       .logo {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         object-fit: contain;
       }
 
       .brand-text {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 700;
-        color: $text-light;
+        color: $text-white;
         letter-spacing: 0.5px;
       }
     }
   }
 
-  // Nav List - No scrollbar, auto-fit
+  // Nav List - Clean, no scrollbar
   .nav-list {
     flex: 1;
-    padding: 12px 8px;
+    padding: 16px 12px;
     overflow-y: auto;
 
-    // Hide scrollbar but keep functionality
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+    // Hide scrollbar
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 
     &::-webkit-scrollbar {
-      display: none; /* Chrome/Safari */
+      display: none;
     }
   }
 
   // Menu Item Wrapper
   .menu-item-wrapper {
-    margin-bottom: 2px;
+    margin-bottom: 6px;
   }
 
-  // Nav Item
+  // Nav Item - More spacing for full text visibility
   .nav-item {
     color: $text-muted;
-    transition: all 0.2s ease;
-    border-radius: 6px;
-    margin: 0 4px;
+    transition: all 0.15s ease;
+    border-radius: 8px;
     cursor: pointer;
-    height: 44px;
-    padding: 0 12px;
+    min-height: 48px;
+    padding: 0 14px !important;
 
     &:hover {
-      background: $hover-bg;
-      color: $text-light;
+      background: rgba(59, 130, 246, 0.1);
+      color: $text-white;
 
       mat-icon {
-        color: $accent-color;
+        color: $primary-color;
       }
     }
 
     &.expanded {
-      background: $bg-medium;
-      color: $text-light;
+      background: rgba(59, 130, 246, 0.15);
+      color: $text-white;
 
       mat-icon {
-        color: $accent-color;
+        color: $primary-color;
       }
     }
 
     mat-icon {
       color: $text-muted;
-      transition: color 0.2s ease;
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
+      transition: color 0.15s ease;
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+      margin-right: 2px;
     }
 
-    span {
-      font-size: 13px;
+    span[matListItemTitle] {
+      font-size: 14px;
       font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .submenu-count {
       background: $primary-color;
       color: white;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 10px;
-      min-width: 18px;
+      padding: 3px 7px;
+      border-radius: 12px;
+      min-width: 22px;
       text-align: center;
-      margin-right: 4px;
+      margin-right: 8px;
     }
 
     .expand-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
       color: $text-muted;
     }
   }
 
   // Sub Menu Container
   .submenu-container {
-    background: $bg-medium;
-    border-left: 2px solid $accent-color;
-    margin: 4px 0 4px 16px;
-    padding: 2px 0;
+    background: $bg-sidebar-dark;
+    border-left: 3px solid $primary-color;
+    margin: 6px 0 6px 20px;
+    padding: 6px 0;
   }
 
-  // Sub Menu Item
+  // Sub Menu Item - Clean, no badges
   .submenu-item {
     color: $text-muted;
-    font-size: 12px;
-    padding: 0 12px 0 24px;
-    transition: all 0.2s ease;
-    border-radius: 6px;
-    margin: 0 4px;
+    font-size: 13px;
+    padding: 0 14px 0 28px !important;
+    transition: all 0.15s ease;
+    border-radius: 8px;
     cursor: pointer;
-    height: 38px;
+    min-height: 42px;
 
     &:hover {
-      background: $hover-bg;
-      color: $text-light;
+      background: rgba(59, 130, 246, 0.1);
+      color: $text-white;
 
       .submenu-icon {
-        color: $accent-color;
+        color: $primary-color;
       }
     }
 
     .submenu-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
       color: $text-muted;
-      transition: color 0.2s ease;
+      transition: color 0.15s ease;
+      margin-right: 2px;
     }
 
-    .submenu-category {
-      font-size: 9px;
-      background: rgba($accent-color, 0.15);
-      color: $accent-color;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 600;
-      text-transform: uppercase;
+    span[matListItemTitle] {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
     }
   }
 
   // Footer
   .sidenav-footer {
     padding: 16px;
-    background: $bg-medium;
+    background: $bg-sidebar-dark;
     border-top: 1px solid $border-color;
 
     .user-info {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 8px;
-      background: $bg-dark;
-      border-radius: 8px;
+      padding: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: 10px;
 
       .user-icon {
-        font-size: 36px;
-        width: 36px;
-        height: 36px;
-        color: $accent-color;
+        font-size: 40px;
+        width: 40px;
+        height: 40px;
+        color: $primary-color;
+        flex-shrink: 0;
       }
 
       .user-details {
@@ -214,16 +212,16 @@ $active-bg: #3b82f6;
         min-width: 0;
 
         .user-name {
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
-          color: $text-light;
+          color: $text-white;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
         .user-site {
-          font-size: 11px;
+          font-size: 12px;
           color: $text-muted;
         }
       }
@@ -233,17 +231,17 @@ $active-bg: #3b82f6;
 
 // Main Content
 .main-content {
-  background: #f8fafc;
+  background: #f1f5f9;
 }
 
 // Toolbar
 .toolbar {
   background: white;
-  color: #1e293b;
+  color: #0f172a;
   border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  padding: 0 20px;
-  height: 60px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 0 24px;
+  height: 64px;
 
   .menu-toggle-btn {
     margin-right: 16px;
@@ -260,7 +258,7 @@ $active-bg: #3b82f6;
   }
 
   .toolbar-btn {
-    margin-left: 8px;
+    margin-left: 10px;
     color: #64748b;
 
     &:hover {
@@ -272,17 +270,17 @@ $active-bg: #3b82f6;
 
 // User Menu
 .user-menu-header {
-  padding: 16px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-bottom: 1px solid #e0e7ff;
+  gap: 14px;
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+  border-bottom: 1px solid #bfdbfe;
 
   mat-icon {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
     color: $primary-color;
   }
 
@@ -291,13 +289,13 @@ $active-bg: #3b82f6;
     flex-direction: column;
 
     .user-menu-name {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
-      color: #1e293b;
+      color: #0f172a;
     }
 
     .user-menu-site {
-      font-size: 12px;
+      font-size: 13px;
       color: #64748b;
     }
   }
@@ -305,12 +303,11 @@ $active-bg: #3b82f6;
 
 // Content Wrapper
 .content-wrapper {
-  padding: 24px;
-  min-height: calc(100vh - 60px);
-  max-height: calc(100vh - 60px);
+  padding: 28px;
+  min-height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
   overflow-y: auto;
 
-  // Hide scrollbar
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 
@@ -335,10 +332,10 @@ $active-bg: #3b82f6;
 // Responsive
 @media (max-width: 768px) {
   .sidenav {
-    width: 240px;
+    width: 260px;
   }
 
   .content-wrapper {
-    padding: 16px;
+    padding: 20px;
   }
 }

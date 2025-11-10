@@ -50,7 +50,7 @@ export class Dashboard implements OnInit {
   searchQuery: string = '';
   username: string = '';
   siteId: string = '';
-  selectedModule: MenuItem | null = null;
+  selectedModuleTitle: string | null = null;
 
   constructor(
     private router: Router,
@@ -62,13 +62,6 @@ export class Dashboard implements OnInit {
     this.loadMenuItems();
   }
 
-
-  menuData(){
-     return this.menuItems.reduce((acc, item) => acc + (item.SubMenu?.length || 0), 0)
-  }
-  /**
-   * Load user information
-   */
   private loadUserInfo(): void {
     const user = this.authService.currentUserValue;
     if (user) {
@@ -77,9 +70,6 @@ export class Dashboard implements OnInit {
     }
   }
 
-  /**
-   * Load menu items from localStorage
-   */
   private loadMenuItems(): void {
     const menuStr = localStorage.getItem('menu');
 
@@ -110,9 +100,6 @@ export class Dashboard implements OnInit {
     }
   }
 
-  /**
-   * Get default icon based on module/title
-   */
   private getDefaultIcon(moduleOrTitle: string): string {
     const iconMap: { [key: string]: string } = {
       'RCV': 'inbox',
@@ -131,16 +118,16 @@ export class Dashboard implements OnInit {
       'SETTINGS': 'settings',
       'REPORTS': 'assessment',
       'UTILITIES': 'build',
-      'MAINTENANCE': 'construction'
+      'UTILITY': 'build',
+      'MAINTENANCE': 'construction',
+      'TESTING': 'science',
+      'DEVICE': 'devices'
     };
 
     const key = moduleOrTitle.toUpperCase();
     return iconMap[key] || 'widgets';
   }
 
-  /**
-   * Get default icon for sub-menu items
-   */
   private getDefaultSubMenuIcon(title: string): string {
     const titleUpper = title.toUpperCase();
 
@@ -153,13 +140,18 @@ export class Dashboard implements OnInit {
     if (titleUpper.includes('PRINT')) return 'print';
     if (titleUpper.includes('EXPORT')) return 'file_download';
     if (titleUpper.includes('IMPORT')) return 'file_upload';
+    if (titleUpper.includes('KILL')) return 'clear';
+    if (titleUpper.includes('CLEAR')) return 'cleaning_services';
+    if (titleUpper.includes('DOCK')) return 'warehouse';
+    if (titleUpper.includes('INBOUND')) return 'input';
+    if (titleUpper.includes('MANAGE')) return 'folder';
+    if (titleUpper.includes('NCI')) return 'inventory';
+    if (titleUpper.includes('EXCEPTION')) return 'error';
+    if (titleUpper.includes('ACCESSORY')) return 'extension';
 
-    return 'fiber_manual_record';
+    return 'arrow_forward';
   }
 
-  /**
-   * Search/filter menu items
-   */
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchQuery = input.value.toLowerCase();
@@ -170,35 +162,31 @@ export class Dashboard implements OnInit {
     }
 
     this.filteredMenuItems = this.menuItems.filter(item => {
-      // Check main menu
       const mainMatch = item.Title.toLowerCase().includes(this.searchQuery);
-
-      // Check sub-menu
       const subMatch = item.SubMenu?.some(sub =>
         sub.Title.toLowerCase().includes(this.searchQuery)
       );
-
       return mainMatch || subMatch;
     });
   }
 
-  /**
-   * Handle main menu click
-   */
   onMainMenuClick(item: MenuItem): void {
-    if (item.HasSubMenu) {
-      this.selectedModule = this.selectedModule?.OperationId === item.OperationId ? null : item;
+    if (this.selectedModuleTitle === item.Title) {
+      console.log(`Closing ${item.Title}`);
+      this.selectedModuleTitle = null;
     } else {
-      this.navigateToModule(item);
+      console.log(`Opening ${item.Title}`);
+      this.selectedModuleTitle = item.Title;
+
+      if (item.HasSubMenu) {
+        const subMenuItems = this.getFilteredSubMenu(item);
+        console.log(`${item.Title} has ${subMenuItems.length} submenu items`);
+      }
     }
   }
 
-  /**
-   * Handle sub-menu click
-   */
   onSubMenuClick(mainItem: MenuItem, subItem: SubMenuItem): void {
     if (subItem.RouterLink) {
-      // Store operation info for the target component
       localStorage.setItem('currentOperation', JSON.stringify({
         operationId: subItem.OperationId,
         module: subItem.Module,
@@ -210,9 +198,6 @@ export class Dashboard implements OnInit {
     }
   }
 
-  /**
-   * Navigate to module
-   */
   private navigateToModule(item: MenuItem): void {
     if (item.RouterLink) {
       localStorage.setItem('currentOperation', JSON.stringify({
@@ -226,119 +211,72 @@ export class Dashboard implements OnInit {
     }
   }
 
-  /**
-   * Check if menu item is selected
-   */
   isModuleSelected(item: MenuItem): boolean {
-    return this.selectedModule?.OperationId === item.OperationId;
+    return this.selectedModuleTitle === item.Title;
   }
 
-  /**
-   * Get sub-menu items (filtered if searching)
-   */
   getFilteredSubMenu(item: MenuItem): SubMenuItem[] {
-    if (!item.SubMenu) return [];
-
-    if (!this.searchQuery) {
-      return item.SubMenu.filter(sub => sub.AppEnabled !== false);
+    if (!item.SubMenu) {
+      return [];
     }
 
-    return item.SubMenu.filter(sub =>
-      sub.AppEnabled !== false &&
-      sub.Title.toLowerCase().includes(this.searchQuery)
-    );
+    // Show ALL items regardless of AppEnabled status
+    // Only filter by search query if present
+    if (!this.searchQuery) {
+      return item.SubMenu; // Return ALL items
+    } else {
+      return item.SubMenu.filter(sub =>
+        sub.Title.toLowerCase().includes(this.searchQuery)
+      );
+    }
   }
 
-  /**
-   * Get image path for menu item
-   */
   getMenuImagePath(item: MenuItem): string {
     return `assets/images/dashboard/${item.Title}.png`;
   }
 
-  /**
-   * Get image path for sub-menu item
-   */
   getSubMenuImagePath(mainTitle: string, subItem: SubMenuItem): string {
     return `assets/images/dashboard/sub-menu-icons/${subItem.Title}-${subItem.OperationId}.png`;
   }
 
-  /**
-   * Handle image error
-   */
-  onImageError(event: Event, useIcon: boolean = true): void {
-    if (useIcon) {
-      const img = event.target as HTMLImageElement;
-      img.style.display = 'none';
-      // Icon will be shown as fallback
-    }
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
   }
 
-  /**
-   * Clear search
-   */
   clearSearch(): void {
     this.searchQuery = '';
     this.filteredMenuItems = [...this.menuItems];
   }
+
+  closeSelectedModule(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    console.log('Closing all modules');
+    this.selectedModuleTitle = null;
+  }
 }
 
-// Models (keep all your existing interfaces)
-interface ClientData {
-  Location: string;
-  ClientId: string;
-  SiteId: string;
-  LoggedInUser?: string;
-  DeviceId?: string;
-  Roles?: string[];
+
+interface MenuItem {
+  Title: string;
+  OperationId: string;
+  Category: string;
+  Module: string;
+  RouterLink: string;
+  HasSubMenu: boolean;
+  SubMenu?: SubMenuItem[];
+  Icon?: string;
+  AppEnabled?: boolean;
 }
 
-interface UIData {
-  OperationId?: string;
-  OperCategory?: string;
-}
-
-interface WindowsService {
-  ServiceName: string;
-  Description: string;
-  Status: string;
-  ServerName: string;
-  MemoryUtilization: number;
-  ThreadCount: number;
-  CPUUtilization: number;
-  Total_CPU: number;
-}
-
-interface TaskScheduler {
-  TaskName: string;
-  Description: string;
-  LastRunTime: string;
-  Status: string;
-}
-
-interface ApiService {
-  WebAPIName: string;
-  Status: string;
-  Url?: string;
-}
-
-interface QueueAlert {
-  QueueName: string;
-  QueueDesc: string;
-  LastHour: number;
-  New: number;
-  Inprocess: number;
-  Error: number;
-  Completed: number;
-  Color: string;
-  Threshold: number;
-  LastRun: string;
-  QueueType: string;
-}
-
-interface ServiceStatistics {
-  totalServices: number;
-  runningServices: number;
-  stoppedServices: number;
-  warningServices: number;
+interface SubMenuItem {
+  Title: string;
+  OperationId: string;
+  Category: string;
+  Module: string;
+  RouterLink: string;
+  AppEnabled: boolean;
+  Icon?: string;
 }

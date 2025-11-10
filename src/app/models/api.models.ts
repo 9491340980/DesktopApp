@@ -93,3 +93,24 @@ export interface AuthUser {
   roles: { [key: string]: string[] };
   token: string;
 }
+
+interface MenuItem {
+  Title: string;
+  OperationId: string;
+  Category: string;
+  Module: string;
+  RouterLink: string;
+  HasSubMenu: boolean;
+  SubMenu?: SubMenuItem[];
+  Icon?: string;
+}
+
+interface SubMenuItem {
+  Title: string;
+  OperationId: string;
+  Category: string;
+  Module: string;
+  RouterLink: string;
+  AppEnabled: boolean;
+  Icon?: string;
+}
