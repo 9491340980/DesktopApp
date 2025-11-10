@@ -1,7 +1,156 @@
- <div class="app-layout">
-      <app-navigation (viewModeChange)="onViewModeChange($event)"
-        (refreshRequested)="onRefreshRequested()"></app-navigation>
-      <main class="main-content">
-        <router-outlet></router-outlet>
-      </main>
+<mat-sidenav-container class="layout-container">
+  <!-- Side Navigation -->
+  <mat-sidenav
+    #sidenav
+    mode="side"
+    [opened]="isSidenavOpen"
+    class="sidenav">
+
+    <!-- Logo/Brand -->
+    <div class="sidenav-header">
+      <div class="logo-section" (click)="navigateToDashboard()">
+        <img src="assets/images/RMx.png" alt="Logo" class="logo">
+        <span class="brand-text">RMx</span>
+      </div>
     </div>
+
+    <!-- Menu Items -->
+    <mat-nav-list class="nav-list">
+      <ng-container *ngFor="let item of menuItems">
+        <!-- Main Menu Item -->
+        <div class="menu-item-wrapper">
+          <mat-list-item
+            class="nav-item"
+            [class.has-submenu]="item.HasSubMenu"
+            [class.expanded]="isMenuExpanded(item.OperationId)"
+            (click)="item.HasSubMenu ? toggleMenu(item.OperationId) : navigateToItem(item)"
+            [matTooltip]="item.Title"
+            matTooltipPosition="right">
+
+            <mat-icon matListItemIcon>{{ item.Icon }}</mat-icon>
+            <span matListItemTitle>{{ item.Title }}</span>
+
+            <span
+              *ngIf="item.HasSubMenu"
+              class="submenu-count"
+              matListItemMeta>
+              {{ getSubMenuCount(item) }}
+            </span>
+
+            <mat-icon
+              *ngIf="item.HasSubMenu"
+              class="expand-icon"
+              matListItemMeta>
+              {{ isMenuExpanded(item.OperationId) ? 'expand_less' : 'expand_more' }}
+            </mat-icon>
+          </mat-list-item>
+
+          <!-- Sub Menu Items -->
+          <div
+            *ngIf="item.HasSubMenu && isMenuExpanded(item.OperationId)"
+            class="submenu-container"
+            [@expandCollapse]>
+            <mat-list-item
+              *ngFor="let subItem of item.SubMenu"
+              class="submenu-item"
+              (click)="navigateToSubItem(item, subItem)"
+              [matTooltip]="subItem.Title"
+              matTooltipPosition="right">
+
+              <mat-icon matListItemIcon class="submenu-icon">
+                {{ subItem.Icon }}
+              </mat-icon>
+              <span matListItemTitle>{{ subItem.Title }}</span>
+
+              <span
+                *ngIf="subItem.Category"
+                class="submenu-category"
+                matListItemMeta>
+                {{ subItem.Category }}
+              </span>
+            </mat-list-item>
+          </div>
+        </div>
+      </ng-container>
+    </mat-nav-list>
+
+    <!-- User Info Footer -->
+    <div class="sidenav-footer">
+      <div class="user-info">
+        <mat-icon class="user-icon">account_circle</mat-icon>
+        <div class="user-details">
+          <span class="user-name">{{ username }}</span>
+          <span class="user-site">{{ siteId }}</span>
+        </div>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <!-- Main Content Area -->
+  <mat-sidenav-content class="main-content">
+    <!-- Top Toolbar -->
+    <mat-toolbar class="toolbar">
+      <button
+        mat-icon-button
+        (click)="toggleSidenav()"
+        matTooltip="Toggle menu"
+        class="menu-toggle-btn">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <span class="toolbar-spacer"></span>
+
+      <!-- Dashboard Button -->
+      <button
+        mat-icon-button
+        (click)="navigateToDashboard()"
+        matTooltip="Go to Dashboard"
+        class="toolbar-btn">
+        <mat-icon>dashboard</mat-icon>
+      </button>
+
+      <!-- User Menu -->
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="userMenu"
+        matTooltip="User menu"
+        class="toolbar-btn">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <div class="user-menu-header">
+          <mat-icon>person</mat-icon>
+          <div class="user-menu-info">
+            <span class="user-menu-name">{{ username }}</span>
+            <span class="user-menu-site">Site: {{ siteId }}</span>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <button mat-menu-item (click)="navigateToDashboard()">
+          <mat-icon>dashboard</mat-icon>
+          <span>Dashboard</span>
+        </button>
+
+        <button mat-menu-item disabled>
+          <mat-icon>settings</mat-icon>
+          <span>Settings</span>
+        </button>
+
+        <mat-divider></mat-divider>
+
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <!-- Router Outlet -->
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

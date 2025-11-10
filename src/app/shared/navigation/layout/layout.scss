@@ -1,11 +1,344 @@
- .app-layout {
+// Variables
+$primary-color: #1e40af;
+$primary-light: #3b82f6;
+$accent-color: #06b6d4;
+$bg-dark: #0f172a;
+$bg-medium: #1e293b;
+$bg-light: #334155;
+$text-light: #f1f5f9;
+$text-muted: #94a3b8;
+$border-color: #334155;
+$hover-bg: #1e293b;
+$active-bg: #3b82f6;
+
+// Layout Container
+.layout-container {
+  height: 100vh;
+  width: 100%;
+}
+
+// Sidenav
+.sidenav {
+  width: 260px;
+  background: $bg-dark;
+  color: $text-light;
+  border-right: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+
+  // Header
+  .sidenav-header {
+    padding: 20px 16px;
+    border-bottom: 1px solid $border-color;
+    background: linear-gradient(135deg, $bg-dark 0%, $bg-medium 100%);
+
+    .logo-section {
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      background: #f8f9fa;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+
+      &:hover {
+        opacity: 0.9;
+      }
+
+      .logo {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+      }
+
+      .brand-text {
+        font-size: 22px;
+        font-weight: 700;
+        color: $text-light;
+        letter-spacing: 0.5px;
+      }
+    }
+  }
+
+  // Nav List - No scrollbar, auto-fit
+  .nav-list {
+    flex: 1;
+    padding: 12px 8px;
+    overflow-y: auto;
+
+    // Hide scrollbar but keep functionality
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+  }
+
+  // Menu Item Wrapper
+  .menu-item-wrapper {
+    margin-bottom: 2px;
+  }
+
+  // Nav Item
+  .nav-item {
+    color: $text-muted;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin: 0 4px;
+    cursor: pointer;
+    height: 44px;
+    padding: 0 12px;
+
+    &:hover {
+      background: $hover-bg;
+      color: $text-light;
+
+      mat-icon {
+        color: $accent-color;
+      }
     }
 
-    .main-content {
-      flex: 1;
-      overflow: auto;
+    &.expanded {
+      background: $bg-medium;
+      color: $text-light;
+
+      mat-icon {
+        color: $accent-color;
+      }
     }
+
+    mat-icon {
+      color: $text-muted;
+      transition: color 0.2s ease;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    span {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .submenu-count {
+      background: $primary-color;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+      margin-right: 4px;
+    }
+
+    .expand-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: $text-muted;
+    }
+  }
+
+  // Sub Menu Container
+  .submenu-container {
+    background: $bg-medium;
+    border-left: 2px solid $accent-color;
+    margin: 4px 0 4px 16px;
+    padding: 2px 0;
+  }
+
+  // Sub Menu Item
+  .submenu-item {
+    color: $text-muted;
+    font-size: 12px;
+    padding: 0 12px 0 24px;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin: 0 4px;
+    cursor: pointer;
+    height: 38px;
+
+    &:hover {
+      background: $hover-bg;
+      color: $text-light;
+
+      .submenu-icon {
+        color: $accent-color;
+      }
+    }
+
+    .submenu-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: $text-muted;
+      transition: color 0.2s ease;
+    }
+
+    .submenu-category {
+      font-size: 9px;
+      background: rgba($accent-color, 0.15);
+      color: $accent-color;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+  }
+
+  // Footer
+  .sidenav-footer {
+    padding: 16px;
+    background: $bg-medium;
+    border-top: 1px solid $border-color;
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      background: $bg-dark;
+      border-radius: 8px;
+
+      .user-icon {
+        font-size: 36px;
+        width: 36px;
+        height: 36px;
+        color: $accent-color;
+      }
+
+      .user-details {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+
+        .user-name {
+          font-size: 13px;
+          font-weight: 600;
+          color: $text-light;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .user-site {
+          font-size: 11px;
+          color: $text-muted;
+        }
+      }
+    }
+  }
+}
+
+// Main Content
+.main-content {
+  background: #f8fafc;
+}
+
+// Toolbar
+.toolbar {
+  background: white;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 0 20px;
+  height: 60px;
+
+  .menu-toggle-btn {
+    margin-right: 16px;
+    color: #64748b;
+
+    &:hover {
+      background: #f1f5f9;
+      color: $primary-color;
+    }
+  }
+
+  .toolbar-spacer {
+    flex: 1;
+  }
+
+  .toolbar-btn {
+    margin-left: 8px;
+    color: #64748b;
+
+    &:hover {
+      background: #f1f5f9;
+      color: $primary-color;
+    }
+  }
+}
+
+// User Menu
+.user-menu-header {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-bottom: 1px solid #e0e7ff;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: $primary-color;
+  }
+
+  .user-menu-info {
+    display: flex;
+    flex-direction: column;
+
+    .user-menu-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .user-menu-site {
+      font-size: 12px;
+      color: #64748b;
+    }
+  }
+}
+
+// Content Wrapper
+.content-wrapper {
+  padding: 24px;
+  min-height: calc(100vh - 60px);
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+
+  // Hide scrollbar
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .sidenav {
+    width: 240px;
+  }
+
+  .content-wrapper {
+    padding: 16px;
+  }
+}

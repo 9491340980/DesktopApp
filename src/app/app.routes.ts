@@ -49,6 +49,9 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard)
+      },  {
+        path: 'service-dashboard',
+        loadComponent: () => import('./service-dashboard/service-dashboard').then(m => m.ServiceDashboard)
       },
       {
         path: 'ios-management',
