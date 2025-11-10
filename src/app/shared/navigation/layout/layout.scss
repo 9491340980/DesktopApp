@@ -6,7 +6,7 @@ $bg-sidebar: #1e293b;
 $bg-sidebar-dark: #0f172a;
 $text-white: #ffffff;
 $text-light: #e2e8f0;
-$text-muted: #94a3b8;
+$text-muted: #cbd5e1;
 $border-color: #334155;
 
 // Layout Container
@@ -17,15 +17,21 @@ $border-color: #334155;
 
 // Sidenav
 .sidenav {
-  width: 280px;
+  width: 320px;
   background: $bg-sidebar;
   color: $text-white;
   border-right: 1px solid $border-color;
+}
+
+// WRAPPER - This is the key to making footer stick
+.sidenav-content-wrapper {
   display: flex;
   flex-direction: column;
+  height: 100vh; // Full viewport height
 
-  // Header
+  // Header - Fixed at top
   .sidenav-header {
+    flex-shrink: 0;
     padding: 24px 20px;
     border-bottom: 1px solid $border-color;
     background: $bg-sidebar-dark;
@@ -55,11 +61,11 @@ $border-color: #334155;
     }
   }
 
-  // Nav List - Clean, no scrollbar
-  .nav-list {
+  // Nav list wrapper - Takes remaining space
+  .nav-list-wrapper {
     flex: 1;
-    padding: 16px 12px;
     overflow-y: auto;
+    min-height: 0;
 
     // Hide scrollbar
     scrollbar-width: none;
@@ -70,121 +76,14 @@ $border-color: #334155;
     }
   }
 
-  // Menu Item Wrapper
-  .menu-item-wrapper {
-    margin-bottom: 6px;
+  // Nav List
+  .nav-list {
+    padding: 16px 12px;
   }
 
-  // Nav Item - More spacing for full text visibility
-  .nav-item {
-    color: $text-muted;
-    transition: all 0.15s ease;
-    border-radius: 8px;
-    cursor: pointer;
-    min-height: 48px;
-    padding: 0 14px !important;
-
-    &:hover {
-      background: rgba(59, 130, 246, 0.1);
-      color: $text-white;
-
-      mat-icon {
-        color: $primary-color;
-      }
-    }
-
-    &.expanded {
-      background: rgba(59, 130, 246, 0.15);
-      color: $text-white;
-
-      mat-icon {
-        color: $primary-color;
-      }
-    }
-
-    mat-icon {
-      color: $text-muted;
-      transition: color 0.15s ease;
-      font-size: 22px;
-      width: 22px;
-      height: 22px;
-      margin-right: 2px;
-    }
-
-    span[matListItemTitle] {
-      font-size: 14px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .submenu-count {
-      background: $primary-color;
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 7px;
-      border-radius: 12px;
-      min-width: 22px;
-      text-align: center;
-      margin-right: 8px;
-    }
-
-    .expand-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-      color: $text-muted;
-    }
-  }
-
-  // Sub Menu Container
-  .submenu-container {
-    background: $bg-sidebar-dark;
-    border-left: 3px solid $primary-color;
-    margin: 6px 0 6px 20px;
-    padding: 6px 0;
-  }
-
-  // Sub Menu Item - Clean, no badges
-  .submenu-item {
-    color: $text-muted;
-    font-size: 13px;
-    padding: 0 14px 0 28px !important;
-    transition: all 0.15s ease;
-    border-radius: 8px;
-    cursor: pointer;
-    min-height: 42px;
-
-    &:hover {
-      background: rgba(59, 130, 246, 0.1);
-      color: $text-white;
-
-      .submenu-icon {
-        color: $primary-color;
-      }
-    }
-
-    .submenu-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-      color: $text-muted;
-      transition: color 0.15s ease;
-      margin-right: 2px;
-    }
-
-    span[matListItemTitle] {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-weight: 500;
-    }
-  }
-
-  // Footer
+  // Footer - Fixed at bottom
   .sidenav-footer {
+    flex-shrink: 0;
     padding: 16px;
     background: $bg-sidebar-dark;
     border-top: 1px solid $border-color;
@@ -226,6 +125,121 @@ $border-color: #334155;
         }
       }
     }
+  }
+}
+
+// Menu Item Wrapper
+.menu-item-wrapper {
+  margin-bottom: 6px;
+}
+
+// Nav Item
+.nav-item {
+  color: $text-light;
+  transition: all 0.15s ease;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 48px;
+  padding: 0 14px !important;
+
+  &:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: $text-white;
+
+    mat-icon {
+      color: $primary-color;
+    }
+  }
+
+  &.expanded {
+    background: rgba(59, 130, 246, 0.2);
+    color: $text-white;
+
+    mat-icon {
+      color: $primary-color;
+    }
+  }
+
+  mat-icon {
+    color: $text-light;
+    transition: color 0.15s ease;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    margin-right: 2px;
+  }
+
+  span[matListItemTitle] {
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: $text-light;
+  }
+
+  .submenu-count {
+    background: $primary-color;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 12px;
+    min-width: 22px;
+    text-align: center;
+    margin-right: 8px;
+  }
+
+  .expand-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: $text-light;
+  }
+}
+
+// Sub Menu Container
+.submenu-container {
+  background: $bg-sidebar-dark;
+  border-left: 3px solid $primary-color;
+  margin: 6px 0 6px 20px;
+  padding: 6px 0;
+}
+
+// Sub Menu Item
+.submenu-item {
+  color: $text-muted;
+  font-size: 14px;
+  padding: 0 14px 0 28px !important;
+  transition: all 0.15s ease;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 42px;
+
+  &:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: $text-white;
+
+    .submenu-icon {
+      color: $primary-color;
+    }
+  }
+
+  .submenu-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: $text-muted;
+    transition: color 0.15s ease;
+    margin-right: 4px;
+  }
+
+  span[matListItemTitle] {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.4;
+    font-weight: 500;
+    color: $text-muted;
   }
 }
 
@@ -332,7 +346,7 @@ $border-color: #334155;
 // Responsive
 @media (max-width: 768px) {
   .sidenav {
-    width: 260px;
+    width: 280px;
   }
 
   .content-wrapper {

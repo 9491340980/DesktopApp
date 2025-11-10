@@ -31,13 +31,14 @@ import { Auth } from '../../../services/auth';
   styleUrl: './layout.scss',
 })
 export class Layout {
-  @ViewChild('sidenav') sidenav!: MatSidenav;
+   @ViewChild('sidenav') sidenav!: MatSidenav;
 
   menuItems: MenuItem[] = [];
+  filteredMenuItems: MenuItem[] = []; // For display
   username: string = '';
   siteId: string = '';
   expandedMenuTitle: string | null = null;
-  isSidenavOpen: boolean = true;
+  isSidenavOpen: boolean = false;
 
   constructor(
     private authService: Auth,
@@ -64,8 +65,27 @@ export class Layout {
       try {
         this.menuItems = JSON.parse(menuStr);
 
-        // Add default icons
+        // TEMPORARY: Mark Utility and specific submenu as isDesktopApp = true
         this.menuItems.forEach(item => {
+          // Mark only "Utility" module
+          if (item.Title === 'Utility') {
+            item.isDesktopApp = true;
+
+            // Mark only OperationId 6850 in submenu
+            if (item.SubMenu) {
+              item.SubMenu.forEach(subItem => {
+                if (subItem.OperationId === '6850') {
+                  subItem.isDesktopApp = true;
+                } else {
+                  subItem.isDesktopApp = false;
+                }
+              });
+            }
+          } else {
+            item.isDesktopApp = false;
+          }
+
+          // Add default icons
           if (!item.Icon) {
             item.Icon = this.getDefaultIcon(item.Module || item.Title);
           }
@@ -78,6 +98,12 @@ export class Layout {
             });
           }
         });
+
+        // Filter to show only items where isDesktopApp = true
+        this.filteredMenuItems = this.menuItems.filter(item => item.isDesktopApp === true);
+
+        console.log('Filtered menu items:', this.filteredMenuItems);
+        console.log('Utility submenu:', this.filteredMenuItems[0]?.SubMenu);
       } catch (error) {
         console.error('Error parsing menu:', error);
       }
@@ -102,6 +128,7 @@ export class Layout {
       'SETTINGS': 'settings',
       'REPORTS': 'assessment',
       'UTILITIES': 'build',
+      'UTILITY': 'build',
       'MAINTENANCE': 'construction',
       'TESTING': 'science'
     };
@@ -120,6 +147,8 @@ export class Layout {
     if (titleUpper.includes('SEARCH') || titleUpper.includes('FIND')) return 'search';
     if (titleUpper.includes('REPORT')) return 'description';
     if (titleUpper.includes('PRINT')) return 'print';
+    if (titleUpper.includes('START') || titleUpper.includes('STOP')) return 'power_settings_new';
+    if (titleUpper.includes('WINDOWS') || titleUpper.includes('SERVICE')) return 'settings_applications';
 
     return 'arrow_forward';
   }
@@ -174,8 +203,14 @@ export class Layout {
 
   getSubMenuCount(item: MenuItem): number {
     if (!item.SubMenu) return 0;
-    // Show ALL submenu items count (don't filter by AppEnabled for display count)
-    return item.SubMenu.length;
+    // Count only items where isDesktopApp = true
+    return item.SubMenu.filter(sub => sub.isDesktopApp === true).length;
+  }
+
+  // Filter submenu to show only isDesktopApp items
+  getFilteredSubMenu(item: MenuItem): SubMenuItem[] {
+    if (!item.SubMenu) return [];
+    return item.SubMenu.filter(sub => sub.isDesktopApp === true);
   }
 }
 interface MenuItem {
@@ -187,6 +222,7 @@ interface MenuItem {
   HasSubMenu: boolean;
   SubMenu?: SubMenuItem[];
   Icon?: string;
+  isDesktopApp?: boolean; // Added for filtering
 }
 
 interface SubMenuItem {
@@ -197,4 +233,5 @@ interface SubMenuItem {
   RouterLink: string;
   AppEnabled: boolean;
   Icon?: string;
+  isDesktopApp?: boolean; // Added for filtering
 }

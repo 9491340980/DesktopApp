@@ -6,73 +6,79 @@
     [opened]="isSidenavOpen"
     class="sidenav">
 
-    <!-- Logo/Brand -->
-    <div class="sidenav-header">
-      <div class="logo-section" (click)="navigateToDashboard()">
-        <img src="assets/images/RMx.png" alt="Logo" class="logo">
-        <span class="brand-text">RMx</span>
-      </div>
-    </div>
-
-    <!-- Menu Items -->
-    <mat-nav-list class="nav-list">
-      <ng-container *ngFor="let item of menuItems">
-        <!-- Main Menu Item -->
-        <div class="menu-item-wrapper">
-          <mat-list-item
-            class="nav-item"
-            [class.has-submenu]="item.HasSubMenu"
-            [class.expanded]="isMenuExpanded(item.Title)"
-            (click)="item.HasSubMenu ? toggleMenu(item.Title) : navigateToItem(item)"
-            [matTooltip]="item.Title"
-            matTooltipPosition="right">
-
-            <mat-icon matListItemIcon>{{ item.Icon }}</mat-icon>
-            <span matListItemTitle>{{ item.Title }}</span>
-
-            <!-- <span
-              *ngIf="item.HasSubMenu"
-              class="submenu-count"
-              matListItemMeta>
-              {{ getSubMenuCount(item) }}
-            </span> -->
-
-            <mat-icon
-              *ngIf="item.HasSubMenu"
-              class="expand-icon"
-              matListItemMeta>
-              {{ isMenuExpanded(item.Title) ? 'expand_less' : 'expand_more' }}
-            </mat-icon>
-          </mat-list-item>
-
-          <!-- Sub Menu Items -->
-          <div
-            *ngIf="item.HasSubMenu && isMenuExpanded(item.Title)"
-            class="submenu-container">
-            <mat-list-item
-              *ngFor="let subItem of item.SubMenu"
-              class="submenu-item"
-              (click)="navigateToSubItem(item, subItem)"
-              [matTooltip]="subItem.Title"
-              matTooltipPosition="right">
-
-              <mat-icon matListItemIcon class="submenu-icon">
-                {{ subItem.Icon }}
-              </mat-icon>
-              <span matListItemTitle>{{ subItem.Title }}</span>
-            </mat-list-item>
-          </div>
+    <!-- Wrapper div for flex layout -->
+    <div class="sidenav-content-wrapper">
+      <!-- Logo/Brand -->
+      <div class="sidenav-header">
+        <div class="logo-section" (click)="navigateToDashboard()">
+          <img src="images/RMx.png" alt="Logo" class="logo">
+          <span class="brand-text">RMx</span>
         </div>
-      </ng-container>
-    </mat-nav-list>
+      </div>
 
-    <!-- User Info Footer -->
-    <div class="sidenav-footer">
-      <div class="user-info">
-        <mat-icon class="user-icon">account_circle</mat-icon>
-        <div class="user-details">
-          <span class="user-name">{{ username }}</span>
-          <span class="user-site">{{ siteId }}</span>
+      <!-- Menu Items - Using filteredMenuItems -->
+      <div class="nav-list-wrapper">
+        <mat-nav-list class="nav-list">
+          <ng-container *ngFor="let item of filteredMenuItems">
+            <!-- Main Menu Item -->
+            <div class="menu-item-wrapper">
+              <mat-list-item
+                class="nav-item"
+                [class.has-submenu]="item.HasSubMenu"
+                [class.expanded]="isMenuExpanded(item.Title)"
+                (click)="item.HasSubMenu ? toggleMenu(item.Title) : navigateToItem(item)"
+                [matTooltip]="item.Title"
+                matTooltipPosition="right">
+
+                <mat-icon matListItemIcon>{{ item.Icon }}</mat-icon>
+                <span matListItemTitle>{{ item.Title }}</span>
+
+                <!-- Optional: Show count of desktop app submenu items -->
+                <!-- <span
+                  *ngIf="item.HasSubMenu && getSubMenuCount(item) > 0"
+                  class="submenu-count"
+                  matListItemMeta>
+                  {{ getSubMenuCount(item) }}
+                </span> -->
+
+                <mat-icon
+                  *ngIf="item.HasSubMenu"
+                  class="expand-icon"
+                  matListItemMeta>
+                  {{ isMenuExpanded(item.Title) ? 'expand_less' : 'expand_more' }}
+                </mat-icon>
+              </mat-list-item>
+
+              <!-- Sub Menu Items - Using getFilteredSubMenu -->
+              <div
+                *ngIf="item.HasSubMenu && isMenuExpanded(item.Title)"
+                class="submenu-container">
+                <mat-list-item
+                  *ngFor="let subItem of getFilteredSubMenu(item)"
+                  class="submenu-item"
+                  (click)="navigateToSubItem(item, subItem)"
+                  [matTooltip]="subItem.Title"
+                  matTooltipPosition="right">
+
+                  <mat-icon matListItemIcon class="submenu-icon">
+                    {{ subItem.Icon }}
+                  </mat-icon>
+                  <span matListItemTitle>{{ subItem.Title }}</span>
+                </mat-list-item>
+              </div>
+            </div>
+          </ng-container>
+        </mat-nav-list>
+      </div>
+
+      <!-- User Info Footer -->
+      <div class="sidenav-footer">
+        <div class="user-info">
+          <mat-icon class="user-icon">account_circle</mat-icon>
+          <div class="user-details">
+            <span class="user-name">{{ username }}</span>
+            <span class="user-site">{{ siteId }}</span>
+          </div>
         </div>
       </div>
     </div>
