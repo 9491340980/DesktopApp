@@ -342,55 +342,55 @@ export class ServiceDashboard {
     }
 
     // Handle grid data order for DB Jobs
-   if (config.gridDataOrder && config.gridDataOrder.length > 0) {
-    this.dbJobsDisplayColumns = this.getDbJobsColumns(config.gridDataOrder, config.gridReqCols || config.gridDataOrder);
-  } else {
-    // Default columns if not specified - use API field names
-    this.dbJobsDisplayColumns = ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
-  }
+    if (config.gridDataOrder && config.gridDataOrder.length > 0) {
+      this.dbJobsDisplayColumns = this.getDbJobsColumns(config.gridDataOrder, config.gridReqCols || config.gridDataOrder);
+    } else {
+      // Default columns if not specified - use API field names
+      this.dbJobsDisplayColumns = ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
+    }
 
     // Save updated config to localStorage
     localStorage.setItem('controlConfig', JSON.stringify(this.hideControls));
   }
 
 
- private getDbJobsColumns(gridDataOrder: string[], gridReqCols: string[]): string[] {
-  const columns: string[] = [];
+  private getDbJobsColumns(gridDataOrder: string[], gridReqCols: string[]): string[] {
+    const columns: string[] = [];
 
-  // Add columns based on gridDataOrder - use API field names directly
-  gridDataOrder.forEach(col => {
-    if (gridReqCols.includes(col)) {
-      // Check role-based permission for this column
-      if (this.checkDbJobColumnPermission(col)) {
-        columns.push(col);  // Use API field name directly
+    // Add columns based on gridDataOrder - use API field names directly
+    gridDataOrder.forEach(col => {
+      if (gridReqCols.includes(col)) {
+        // Check role-based permission for this column
+        if (this.checkDbJobColumnPermission(col)) {
+          columns.push(col);  // Use API field name directly
+        }
       }
-    }
-  });
+    });
 
-  // If no columns determined, use defaults
-  if (columns.length === 0) {
-    return ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
+    // If no columns determined, use defaults
+    if (columns.length === 0) {
+      return ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
+    }
+
+    return columns;
   }
 
-  return columns;
-}
+  private checkDbJobColumnPermission(column: string): boolean {
+    const dbJobTabColumns = this.hideControls.controlProperties.dbJobTabColumns;
 
- private checkDbJobColumnPermission(column: string): boolean {
-  const dbJobTabColumns = this.hideControls.controlProperties.dbJobTabColumns;
+    // If no specific column restrictions, allow all required columns
+    if (!dbJobTabColumns || dbJobTabColumns.length === 0) {
+      return true;
+    }
 
-  // If no specific column restrictions, allow all required columns
-  if (!dbJobTabColumns || dbJobTabColumns.length === 0) {
+    // For 'Broken' and 'Active' columns, check if they're in the allowed list
+    if (column === 'Broken' || column === 'Active') {
+      return dbJobTabColumns.includes(column);
+    }
+
+    // Allow all other columns by default
     return true;
   }
-
-  // For 'Broken' and 'Active' columns, check if they're in the allowed list
-  if (column === 'Broken' || column === 'Active') {
-    return dbJobTabColumns.includes(column);
-  }
-
-  // Allow all other columns by default
-  return true;
-}
 
 
   shouldShowDbJobColumn(columnName: string): boolean {

@@ -49,7 +49,8 @@
       <ng-template mat-tab-label>
         <mat-icon class="tab-icon mr-2">computer</mat-icon>
         Windows Services
-        <mat-chip *ngIf="serviceError" class="error-badge">!</mat-chip>
+        <mat-chip *ngIf="serviceError" class="error-badge blink">!</mat-chip>
+        <mat-chip *ngIf="!serviceError && services.length > 0" class="success-badge">✓</mat-chip>
       </ng-template>
 
       <!-- Table View -->
@@ -353,7 +354,9 @@
       <ng-template mat-tab-label>
         <mat-icon class="tab-icon">schedule</mat-icon>
         Task Scheduler
-        <mat-chip *ngIf="serviceErrorTaskList" class="error-badge">!</mat-chip>
+        <mat-chip *ngIf="serviceErrorTaskList" class="error-badge blink">!</mat-chip>
+        <mat-chip *ngIf="!serviceErrorTaskList && tasks.length > 0" class="success-badge">✓</mat-chip>
+
       </ng-template>
 
       <div class="tab-content">
@@ -429,7 +432,9 @@
       <ng-template mat-tab-label>
         <mat-icon class="tab-icon">api</mat-icon>
         API Services
-        <mat-chip *ngIf="serviceErrorApilist" class="error-badge">!</mat-chip>
+        <mat-chip *ngIf="serviceErrorApilist" class="error-badge blink">!</mat-chip>
+        <mat-chip *ngIf="!serviceErrorApilist && groupedApiServices.length > 0" class="success-badge">✓</mat-chip>
+
       </ng-template>
 
       <div class="tab-content">
@@ -477,7 +482,8 @@
       <ng-template mat-tab-label>
         <mat-icon class="tab-icon">queue</mat-icon>
         Queue Alerts
-        <mat-chip *ngIf="serviceErrorQueuelist" class="error-badge">!</mat-chip>
+        <mat-chip *ngIf="serviceErrorQueuelist" class="error-badge blink">!</mat-chip>
+        <mat-chip *ngIf="!serviceErrorQueuelist && queService.length > 0" class="success-badge">✓</mat-chip>
       </ng-template>
 
       <div class="tab-content">
@@ -592,7 +598,8 @@
       <ng-template mat-tab-label>
         <mat-icon class="tab-icon">storage</mat-icon>
         DB Jobs
-        <mat-chip *ngIf="dbJoblist" class="error-badge">!</mat-chip>
+        <mat-chip *ngIf="dbJoblist" class="error-badge blink">!</mat-chip>
+        <mat-chip *ngIf="!dbJoblist && dbJobsList.length > 0" class="success-badge">✓</mat-chip>
       </ng-template>
 
       <div class="tab-content">
