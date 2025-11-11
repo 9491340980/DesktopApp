@@ -54,68 +54,70 @@ export class ServiceDashboard {
   loadingServices: Set<string> = new Set();
   loadingTasks: Set<string> = new Set();
 
+
+  hideControls: any = {};
   // Control Configuration (EXACTLY matching web version)
-  hideControls: any = {
-    controlProperties: {
-      // Tab visibility controls
-      allowWindowsTab: [],  // Empty = show to all
-      allowTaskScheTab: [],
-      allowApiTab: [],
-      allowQueueTab: ['DEVELOPER', 'CLIENTSUPPORT'],
-      dbJobs: ['DEVELOPER', 'CLIENTSUPPORT'],
-      allowQueueservicesTab: ['DEVELOPER', 'CLIENTSUPPORT'],
-      allowQueuepropogatorsTab: ['DEVELOPER', 'CLIENTSUPPORT'],
+  // hideControls: any = {
+  //   controlProperties: {
+  //     // Tab visibility controls
+  //     allowWindowsTab: [],  // Empty = show to all
+  //     allowTaskScheTab: [],
+  //     allowApiTab: [],
+  //     allowQueueTab: ['DEVELOPER', 'CLIENTSUPPORT'],
+  //     dbJobs: ['DEVELOPER', 'CLIENTSUPPORT'],
+  //     allowQueueservicesTab: ['DEVELOPER', 'CLIENTSUPPORT'],
+  //     allowQueuepropogatorsTab: ['DEVELOPER', 'CLIENTSUPPORT'],
 
-      // Column visibility controls
-      description: ['DEVELOPER', 'ADMIN'],
-      serverName: ['DEVELOPER', 'ADMIN'],
-      logs: ['DEVELOPER', 'ADMIN'],
-      memoryUtilization: ['DEVELOPER', 'ADMIN'],
-      ThreadCount: ['DEVELOPER', 'ADMIN'],
-      processUtilization: ['DEVELOPER', 'ADMIN'],
-      CpuUtilization: ['DEVELOPER', 'ADMIN'],
-      Threshold: ['DEVELOPER', 'ADMIN'],
-      statusAccess: ['DEVELOPER', 'ADMIN'],
+  //     // Column visibility controls
+  //     description: ['DEVELOPER', 'ADMIN'],
+  //     serverName: ['DEVELOPER', 'ADMIN'],
+  //     logs: ['DEVELOPER', 'ADMIN'],
+  //     memoryUtilization: ['DEVELOPER', 'ADMIN'],
+  //     ThreadCount: ['DEVELOPER', 'ADMIN'],
+  //     processUtilization: ['DEVELOPER', 'ADMIN'],
+  //     CpuUtilization: ['DEVELOPER', 'ADMIN'],
+  //     Threshold: ['DEVELOPER', 'ADMIN'],
+  //     statusAccess: ['DEVELOPER', 'ADMIN'],
 
-      // Search configuration
-      searchKey: {
-        Pattern: '^[a-zA-Z0-9\\s]*$',
-        MaxLength: 50,
-        TextCase: 'upper'
-      },
+  //     // Search configuration
+  //     searchKey: {
+  //       Pattern: '^[a-zA-Z0-9\\s]*$',
+  //       MaxLength: 50,
+  //       TextCase: 'upper'
+  //     },
 
-      // Labels (for translation support)
-      windowsServices: {
-        serviceLbl: 'Service Name',
-        statusLbl: 'Status',
-        serverNameLbl: 'Server Name',
-        logsLbl: 'Logs',
-        descriptionLbl: 'Description',
-        memoryUtilizationLbl: 'Memory Utilization',
-        threadCountLbl: 'Thread Count',
-        processUtilizationLbl: 'Process CPU Utilization',
-        cpuUtilizationLbl: 'Total CPU Utilization'
-      },
-      taskScheduler: {
-        taskNameLbl: 'Task Name',
-        desctiptionLbl: 'Description',
-        lastRunTimeLbl: 'Last Run Time',
-        statusLbl: 'Status'
-      },
+  //     // Labels (for translation support)
+  //     windowsServices: {
+  //       serviceLbl: 'Service Name',
+  //       statusLbl: 'Status',
+  //       serverNameLbl: 'Server Name',
+  //       logsLbl: 'Logs',
+  //       descriptionLbl: 'Description',
+  //       memoryUtilizationLbl: 'Memory Utilization',
+  //       threadCountLbl: 'Thread Count',
+  //       processUtilizationLbl: 'Process CPU Utilization',
+  //       cpuUtilizationLbl: 'Total CPU Utilization'
+  //     },
+  //     taskScheduler: {
+  //       taskNameLbl: 'Task Name',
+  //       desctiptionLbl: 'Description',
+  //       lastRunTimeLbl: 'Last Run Time',
+  //       statusLbl: 'Status'
+  //     },
 
-      // Queue configuration
-      queueData: {
-        propogation: 'S',
-        nonPropogation: 'P'
-      },
+  //     // Queue configuration
+  //     queueData: {
+  //       propogation: 'S',
+  //       nonPropogation: 'P'
+  //     },
 
-      // Polling intervals (milliseconds)
-      servicePollTimer: 2000000,           // 30 seconds
-      queueAlertPollTimer: 2000,        // 60 seconds
-      apiStatusAlertPollTimer: 60000,    // 60 seconds
-      dbJobsPollTimer: 60000             // 60 seconds
-    }
-  };
+  //     // Polling intervals (milliseconds)
+  //     servicePollTimer: 2000000,           // 30 seconds
+  //     queueAlertPollTimer: 2000,        // 60 seconds
+  //     apiStatusAlertPollTimer: 60000,    // 60 seconds
+  //     dbJobsPollTimer: 60000             // 60 seconds
+  //   }
+  // };
 
   // UI Data
   uiData: UIData = {
@@ -173,6 +175,11 @@ export class ServiceDashboard {
   private queuePolling$ = new Subject<void>();
   private dbJobsPolling$ = new Subject<void>();
 
+  // Add property to track if config is loaded
+  configLoaded: boolean = false;
+  // DB Jobs column configuration
+  dbJobsDisplayColumns: string[] = [];
+
   // Common Enum (matching web)
   commonEnum = {
     Running: 'Running',
@@ -226,9 +233,168 @@ export class ServiceDashboard {
   }
 
   ngOnInit(): void {
-    this.loadAllServices();
-    this.startAllPolling();
-    this.loadSavedPreferences();
+    this.loadControlConfiguration();
+  }
+
+
+  private loadControlConfiguration(): void {
+    this.commonService.post<string>(
+      '/common/getControlConfig',
+      {
+        ControlConfig: {
+          Module: 'UTL',
+          OperationId: '6850'
+        }
+      },
+      { showLoader: true }
+    ).subscribe({
+      next: (response) => {
+        if (response.Status === 'PASS' && response.Response) {
+          try {
+            // Parse the JSON string response
+            const config = JSON.parse(response.Response);
+            this.applyControlConfiguration(config);
+          } catch (error) {
+            console.error('Error parsing control config:', error);
+          }
+        }
+        this.configLoaded = true;
+        // Load services after config is loaded
+        this.loadAllServices();
+        this.startAllPolling();
+        this.loadSavedPreferences();
+      },
+      error: (error) => {
+        console.error('Error loading control config:', error);
+        // Use default config if API fails
+        this.configLoaded = true;
+        this.loadAllServices();
+        this.startAllPolling();
+        this.loadSavedPreferences();
+      }
+    });
+  }
+
+  private handleDbJobsConfiguration(dbJobTab: any): void {
+    if (dbJobTab.column && Array.isArray(dbJobTab.column)) {
+      // Store which columns are allowed based on roles
+      this.hideControls.controlProperties.dbJobTabColumns = dbJobTab.column;
+    }
+  }
+
+  private applyControlConfiguration(config: any): void {
+    console.log('Applying control configuration:', config);
+
+    // Update tab visibility
+    if (config.allowWindowsTab !== undefined) {
+      this.hideControls.controlProperties.allowWindowsTab = config.allowWindowsTab;
+    }
+    if (config.allowTaskScheTab !== undefined) {
+      this.hideControls.controlProperties.allowTaskScheTab = config.allowTaskScheTab;
+    }
+    if (config.allowApiTab !== undefined) {
+      this.hideControls.controlProperties.allowApiTab = config.allowApiTab;
+    }
+    if (config.allowQueueTab !== undefined) {
+      this.hideControls.controlProperties.allowQueueTab = config.allowQueueTab;
+    }
+    if (config.dbJobs !== undefined) {
+      this.hideControls.controlProperties.dbJobs = config.dbJobs;
+    }
+
+    // Update column visibility
+    if (config.description !== undefined) {
+      this.hideControls.controlProperties.description = config.description;
+    }
+    if (config.serverName !== undefined) {
+      this.hideControls.controlProperties.serverName = config.serverName;
+    }
+    if (config.logs !== undefined) {
+      this.hideControls.controlProperties.logs = config.logs;
+    }
+    if (config.memoryUtilization !== undefined) {
+      this.hideControls.controlProperties.memoryUtilization = config.memoryUtilization;
+    }
+    if (config.ThreadCount !== undefined) {
+      this.hideControls.controlProperties.ThreadCount = config.ThreadCount;
+    }
+    if (config.processUtilization !== undefined) {
+      this.hideControls.controlProperties.processUtilization = config.processUtilization;
+    }
+    if (config.CpuUtilization !== undefined) {
+      this.hideControls.controlProperties.CpuUtilization = config.CpuUtilization;
+    }
+    if (config.Threshold !== undefined) {
+      this.hideControls.controlProperties.Threshold = config.Threshold;
+    }
+    if (config.statusAccess !== undefined) {
+      this.hideControls.controlProperties.statusAccess = config.statusAccess;
+    }
+
+    // Handle Task Scheduler visibility
+    if (config.canTaskSchedulerShow !== undefined) {
+      this.hideControls.controlProperties.canTaskSchedulerShow = config.canTaskSchedulerShow.Show;
+    }
+
+    // Handle DB Jobs configuration
+    if (config.dbJobTab) {
+      this.handleDbJobsConfiguration(config.dbJobTab);
+    }
+
+    // Handle grid data order for DB Jobs
+   if (config.gridDataOrder && config.gridDataOrder.length > 0) {
+    this.dbJobsDisplayColumns = this.getDbJobsColumns(config.gridDataOrder, config.gridReqCols || config.gridDataOrder);
+  } else {
+    // Default columns if not specified - use API field names
+    this.dbJobsDisplayColumns = ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
+  }
+
+    // Save updated config to localStorage
+    localStorage.setItem('controlConfig', JSON.stringify(this.hideControls));
+  }
+
+
+ private getDbJobsColumns(gridDataOrder: string[], gridReqCols: string[]): string[] {
+  const columns: string[] = [];
+
+  // Add columns based on gridDataOrder - use API field names directly
+  gridDataOrder.forEach(col => {
+    if (gridReqCols.includes(col)) {
+      // Check role-based permission for this column
+      if (this.checkDbJobColumnPermission(col)) {
+        columns.push(col);  // Use API field name directly
+      }
+    }
+  });
+
+  // If no columns determined, use defaults
+  if (columns.length === 0) {
+    return ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
+  }
+
+  return columns;
+}
+
+ private checkDbJobColumnPermission(column: string): boolean {
+  const dbJobTabColumns = this.hideControls.controlProperties.dbJobTabColumns;
+
+  // If no specific column restrictions, allow all required columns
+  if (!dbJobTabColumns || dbJobTabColumns.length === 0) {
+    return true;
+  }
+
+  // For 'Broken' and 'Active' columns, check if they're in the allowed list
+  if (column === 'Broken' || column === 'Active') {
+    return dbJobTabColumns.includes(column);
+  }
+
+  // Allow all other columns by default
+  return true;
+}
+
+
+  shouldShowDbJobColumn(columnName: string): boolean {
+    return this.dbJobsDisplayColumns.includes(columnName);
   }
 
   ngOnDestroy(): void {
@@ -1017,13 +1183,14 @@ interface DbJob {
   ClientId: string | null;
   SiteId: string | null;
   Id: string;
-  Name: string;           // Not JobName
+  Name: string;           // Exact API field name
   Schema: string;
-  LastRun: string;        // Not LastRunDate
-  NextRun: string;        // Not NextRunDate
+  LastRun: string;        // Exact API field name
+  NextRun: string;        // Exact API field name
   Schedule: string;
   Broken: 'Y' | 'N';
-  // Remove Active and Failures - they don't exist in API
+  Active?: 'Y' | 'N';     // Optional - shown based on API config
+  Failures?: number;       // Optional - shown based on API config
 }
 
 interface ServiceStatistics {

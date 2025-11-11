@@ -611,24 +611,14 @@
         <div class="table-container mat-elevation-z2">
           <table mat-table [dataSource]="dbJobsList" class="services-table">
 
-            <!-- Eye Icon Column (optional - if you want view functionality) -->
-            <ng-container matColumnDef="view">
-              <th mat-header-cell *matHeaderCellDef style="width: 50px;">
-                <mat-icon>visibility</mat-icon>
-              </th>
-              <td mat-cell *matCellDef="let job">
-                <mat-icon class="cursor-pointer">visibility</mat-icon>
-              </td>
-            </ng-container>
-
             <!-- Id Column -->
-            <ng-container matColumnDef="id">
+            <ng-container matColumnDef="Id">
               <th mat-header-cell *matHeaderCellDef>Id</th>
               <td mat-cell *matCellDef="let job">{{ job.Id }}</td>
             </ng-container>
 
             <!-- Name Column -->
-            <ng-container matColumnDef="name">
+            <ng-container matColumnDef="Name">
               <th mat-header-cell *matHeaderCellDef>Name</th>
               <td mat-cell *matCellDef="let job">
                 <div class="service-name-cell">
@@ -638,13 +628,13 @@
             </ng-container>
 
             <!-- Schema Column -->
-            <ng-container matColumnDef="schema">
+            <ng-container matColumnDef="Schema">
               <th mat-header-cell *matHeaderCellDef>Schema</th>
               <td mat-cell *matCellDef="let job">{{ job.Schema }}</td>
             </ng-container>
 
             <!-- Broken Column -->
-            <ng-container matColumnDef="broken">
+            <ng-container matColumnDef="Broken">
               <th mat-header-cell *matHeaderCellDef>Broken</th>
               <td mat-cell *matCellDef="let job">
                 <mat-chip [color]="job.Broken === 'Y' ? 'warn' : 'primary'" selected>
@@ -653,44 +643,62 @@
               </td>
             </ng-container>
 
+            <!-- Active Column -->
+            <ng-container matColumnDef="Active">
+              <th mat-header-cell *matHeaderCellDef>Active</th>
+              <td mat-cell *matCellDef="let job">
+                <mat-chip [color]="job.Active === 'Y' ? 'accent' : ''" selected>
+                  {{ job.Active || 'N' }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
             <!-- LastRun Column -->
-            <ng-container matColumnDef="lastRun">
+            <ng-container matColumnDef="LastRun">
               <th mat-header-cell *matHeaderCellDef>LastRun</th>
               <td mat-cell *matCellDef="let job">{{ job.LastRun }}</td>
             </ng-container>
 
             <!-- NextRun Column -->
-            <ng-container matColumnDef="nextRun">
+            <ng-container matColumnDef="NextRun">
               <th mat-header-cell *matHeaderCellDef>NextRun</th>
               <td mat-cell *matCellDef="let job">{{ job.NextRun }}</td>
             </ng-container>
 
             <!-- Schedule Column -->
-            <ng-container matColumnDef="schedule">
+            <ng-container matColumnDef="Schedule">
               <th mat-header-cell *matHeaderCellDef>Schedule</th>
               <td mat-cell *matCellDef="let job">{{ job.Schedule }}</td>
             </ng-container>
 
-            <!-- ClientId Column (optional based on roles) -->
-            <ng-container matColumnDef="clientId">
+            <!-- ClientId Column -->
+            <ng-container matColumnDef="ClientId">
               <th mat-header-cell *matHeaderCellDef>ClientId</th>
               <td mat-cell *matCellDef="let job">{{ job.ClientId }}</td>
             </ng-container>
 
-            <!-- SiteId Column (optional based on roles) -->
-            <ng-container matColumnDef="siteId">
+            <!-- SiteId Column -->
+            <ng-container matColumnDef="SiteId">
               <th mat-header-cell *matHeaderCellDef>SiteId</th>
               <td mat-cell *matCellDef="let job">{{ job.SiteId }}</td>
             </ng-container>
 
-            <!-- Header Row -->
-            <tr mat-header-row *matHeaderRowDef="['id', 'name', 'schema', 'broken', 'lastRun', 'nextRun', 'schedule']">
-            </tr>
+            <!-- Failures Column -->
+            <ng-container matColumnDef="Failures">
+              <th mat-header-cell *matHeaderCellDef>Failures</th>
+              <td mat-cell *matCellDef="let job">
+                <mat-chip [color]="(job.Failures || 0) > 0 ? 'warn' : ''" selected>
+                  {{ job.Failures || 0 }}
+                </mat-chip>
+              </td>
+            </ng-container>
 
-            <!-- Data Rows -->
-            <tr mat-row
-              *matRowDef="let row; columns: ['id', 'name', 'schema', 'broken', 'lastRun', 'nextRun', 'schedule'];"
-              [class.error-row]="row.Broken === 'Y'"></tr>
+            <!-- Dynamic Header Row - Uses API field names -->
+            <tr mat-header-row *matHeaderRowDef="dbJobsDisplayColumns"></tr>
+
+            <!-- Dynamic Data Rows - Uses API field names -->
+            <tr mat-row *matRowDef="let row; columns: dbJobsDisplayColumns;" [class.error-row]="row.Broken === 'Y'">
+            </tr>
           </table>
 
           <div class="empty-state" *ngIf="dbJobsList.length === 0">
