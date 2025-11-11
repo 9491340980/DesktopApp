@@ -23,6 +23,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ViewLogsDialog } from './view-logs-dialog/view-logs-dialog';
 // import { ViewLogsDialogComponent } from './view-logs-dialog.component';
 
 @Component({
@@ -735,16 +736,16 @@ export class ServiceDashboard {
       return;
     }
 
-    // this.dialog.open(ViewLogsDialogComponent, {
-    //   width: '90%',
-    //   maxWidth: '1200px',
-    //   height: '80vh',
-    //   data: {
-    //     ServiceName: serviceName,
-    //     ServerName: serverName,
-    //     uiData: this.uiData
-    //   }
-    // });
+    this.dialog.open(ViewLogsDialog, {
+      width: '90%',
+      maxWidth: '1200px',
+      height: '80vh',
+      data: {
+        ServiceName: serviceName,
+        ServerName: serverName,
+        uiData: this.uiData
+      }
+    });
   }
 
   /**

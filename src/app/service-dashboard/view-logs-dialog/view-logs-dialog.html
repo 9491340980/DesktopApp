@@ -1,0 +1,84 @@
+<div class="log-viewer-dialog">
+  <!-- Dialog Header -->
+  <div class="dialog-header" mat-dialog-title>
+    <h2>{{ serviceName }} - View Logs</h2>
+    <button mat-icon-button (click)="cancelPopup()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Dialog Content -->
+  <mat-dialog-content class="dialog-content">
+    <!-- Loading Indicator -->
+    <div class="loading-overlay" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading logs...</p>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filter-row">
+        <!-- Log File Selection -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Log Files</mat-label>
+          <mat-select [(ngModel)]="selectedLogFile" (selectionChange)="onLogFileChange($event.value)">
+            <mat-option *ngFor="let file of logFileList" [value]="file.Id">
+              {{ file.Text }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Date Selection -->
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Select Date</mat-label>
+          <mat-select [(ngModel)]="selectedModule" (selectionChange)="onModuleChange($event.value)"
+            [disabled]="!selectedLogFile || moduleList.length === 0">
+            <mat-option *ngFor="let module of moduleList" [value]="module.Id">
+              {{ module.Text }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Clear Button -->
+        <button mat-raised-button color="accent" (click)="clear()" class="clear-button"
+          [disabled]="!selectedLogFile && !selectedModule">
+          <mat-icon>clear</mat-icon>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Log Content Section -->
+    <div class="log-content-section" *ngIf="txtContentArr && txtContentArr.length > 0">
+      <mat-accordion multi="false">
+        <mat-expansion-panel *ngFor="let element of txtContentArr; let i = index"
+          [expanded]="isExpanded(i)"
+          (opened)="setExpandedIndex(i)"
+          [class.error-panel]="element.css === 'panel_Fail'">
+
+          <mat-expansion-panel-header [ngClass]="element.css">
+            <mat-panel-title>
+              <mat-icon [class.error-icon]="element.css === 'panel_Fail'">
+                {{ element.css === 'panel_Fail' ? 'error' : 'check_circle' }}
+              </mat-icon>
+              {{ element.id }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="log-content" [innerHTML]="element.safeHtml"></div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading && (!txtContentArr || txtContentArr.length === 0) && selectedModule">
+      <mat-icon>description</mat-icon>
+      <p>No log entries found for the selected date</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && !selectedLogFile">
+      <mat-icon>folder_open</mat-icon>
+      <p>Please select a log file to view</p>
+    </div>
+  </mat-dialog-content>
+</div>

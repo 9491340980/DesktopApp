@@ -354,7 +354,7 @@ export class CommonService {
   /**
    * Show error notification
    */
-  private showError(message: string): void {
+  showError(message: string): void {
     this.snackBar.open(message, 'Close', {
       duration: 5000,
       horizontalPosition: 'center',
