@@ -37,7 +37,7 @@ export class Login {
   showPassword: boolean = false;
 
   // Environment info
-  environment: string = 'DEV'; // Can be changed to PROD, UAT, etc.
+  environment: string = 'QA026'; // Can be changed to PROD, UAT, etc.
   releaseVersion: string = '1.0.0';
 
   constructor(
@@ -55,6 +55,7 @@ export class Login {
       this.router.navigate(['/dashboard']);
       return;
     }
+
 
     // Check for timeout message
     this.route.queryParams.subscribe(params => {
@@ -115,7 +116,7 @@ export class Login {
         } else {
           localStorage.removeItem('rememberedUsername');
         }
-debugger
+        debugger
         // Show success message
         this.showSnackbar('Login successful! Welcome back.', 'success');
 

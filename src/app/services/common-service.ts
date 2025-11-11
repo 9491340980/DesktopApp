@@ -9,10 +9,18 @@ import { Auth } from './auth';
   providedIn: 'root',
 })
 export class CommonService {
-  private baseUrl: string = 'http://tsgvm04112:8020'; // Default base URL
+  // private baseUrl: string = 'http://tsgvm04112:8020'; // Default base URL
+  private baseUrl: string = 'https://qaapi-rmxt026.am.gxo.com:8553'; // Default base URL
+
+  // private apiBaseUrl: string = 'http://tsgvm04112:8010/api'; // API base URL
   private apiBaseUrl: string = 'http://tsgvm04112:8010/api'; // API base URL
+
+  private utlBaseURl:string='https://qaapi-rmxt026.am.gxo.com:8333/api'
+
   private defaultTimeout: number = 30000; // 30 seconds
   private isLoading: boolean = false;
+
+  environment: string = 'QA026';
 
   // Inject services
   private authService = inject(Auth);
@@ -215,6 +223,10 @@ export class CommonService {
     // If endpoint starts with /LogIn, use baseUrl, otherwise use apiBaseUrl
     if (endpoint.startsWith('/LogIn')) {
       return `${this.baseUrl}${endpoint}`;
+    }
+
+    if(endpoint.startsWith('/utilities')){
+      return `${this.utlBaseURl}${endpoint}`;
     }
 
     return `${this.apiBaseUrl}${endpoint}`;

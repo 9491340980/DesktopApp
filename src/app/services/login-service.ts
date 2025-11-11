@@ -94,7 +94,7 @@ export class LoginService {
     const loginModel: LoginModel = {
       UserName: username,
       Password: password,
-      Environment: 'DEV',
+      Environment: 'QA026',
       DataType: 'WAREHOUSE',
       DataTypeIdList: ['DFW004', 'DFW005', 'DFW009'],
       Application: 'RMX'
