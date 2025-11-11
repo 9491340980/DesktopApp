@@ -1,6 +1,6 @@
 <div class="dashboard-container">
 
- 
+
 
   <!-- Control Bar -->
   <section class="control-bar">
@@ -8,10 +8,8 @@
       <!-- Search Input -->
       <mat-form-field class="search-field" appearance="outline">
         <mat-label>Search services...</mat-label>
-        <input matInput
-               [(ngModel)]="searchKey"
-               placeholder="Search by name, description, or server"
-               (input)="changeInput()">
+        <input matInput [(ngModel)]="searchKey" placeholder="Search by name, description, or server"
+          (input)="changeInput()">
         <mat-icon matPrefix>search</mat-icon>
         <button mat-icon-button matSuffix *ngIf="searchKey" (click)="searchKey = ''; changeInput()">
           <mat-icon>close</mat-icon>
@@ -19,21 +17,21 @@
       </mat-form-field>
 
       <!-- Status Filter -->
-      <mat-button-toggle-group [(ngModel)]="statusFilter" class="status-toggle">
+      <!-- <mat-button-toggle-group [(ngModel)]="statusFilter" class="status-toggle">
         <mat-button-toggle value="all">All</mat-button-toggle>
         <mat-button-toggle value="running">Running</mat-button-toggle>
         <mat-button-toggle value="stopped">Stopped</mat-button-toggle>
-      </mat-button-toggle-group>
+      </mat-button-toggle-group> -->
 
       <!-- View Mode Toggle -->
-      <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
+      <!-- <mat-button-toggle-group [(ngModel)]="viewMode" class="view-toggle">
         <mat-button-toggle value="table" matTooltip="Table View">
           <mat-icon>table_chart</mat-icon>
         </mat-button-toggle>
         <mat-button-toggle value="cards" matTooltip="Card View">
           <mat-icon>view_module</mat-icon>
         </mat-button-toggle>
-      </mat-button-toggle-group>
+      </mat-button-toggle-group> -->
 
       <!-- Refresh Button -->
       <button mat-icon-button color="primary" (click)="refreshAll()" matTooltip="Refresh All">
@@ -43,74 +41,72 @@
   </section>
 
   <!-- Main Tabs -->
-  <mat-tab-group [(selectedIndex)]="selectedTab"
-                 (selectedIndexChange)="onTabChange($event)"
-                 class="main-tabs"
-                 animationDuration="300ms">
+  <mat-tab-group [(selectedIndex)]="selectedTab" (selectedIndexChange)="onTabChange($event)" class="main-tabs"
+    animationDuration="300ms">
 
     <!-- Windows Services Tab -->
     <mat-tab *ngIf="!checkTabMatch(hideControls.controlProperties?.allowWindowsTab)">
       <ng-template mat-tab-label>
-        <mat-icon class="tab-icon mr-2">computer</mat-icon> 
+        <mat-icon class="tab-icon mr-2">computer</mat-icon>
         Windows Services
         <mat-chip *ngIf="serviceError" class="error-badge">!</mat-chip>
       </ng-template>
 
       <!-- Table View -->
       <div class="tab-content" *ngIf="viewMode === 'table'">
-         <!-- Statistics Overview Section -->
-  <section class="stats-overview">
-    <mat-card class="stat-card stat-total">
-      <mat-card-content>
-        <div class="stat-icon">
-          <mat-icon>dns</mat-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ statistics.totalServices }}</div>
-          <div class="stat-label">Total Services</div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+        <!-- Statistics Overview Section -->
+        <!-- <section class="stats-overview">
+          <mat-card class="stat-card stat-total">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>dns</mat-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ statistics.totalServices }}</div>
+                <div class="stat-label">Total Services</div>
+              </div>
+            </mat-card-content>
+          </mat-card>
 
-    <mat-card class="stat-card stat-running">
-      <mat-card-content>
-        <div class="stat-icon">
-          <mat-icon>check_circle</mat-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ statistics.runningServices }}</div>
-          <div class="stat-label">Running</div>
-          <div class="stat-percentage">{{ getPercentage(statistics.runningServices) }}%</div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+          <mat-card class="stat-card stat-running">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ statistics.runningServices }}</div>
+                <div class="stat-label">Running</div>
+                <div class="stat-percentage">{{ getPercentage(statistics.runningServices) }}%</div>
+              </div>
+            </mat-card-content>
+          </mat-card>
 
-    <mat-card class="stat-card stat-stopped">
-      <mat-card-content>
-        <div class="stat-icon">
-          <mat-icon>cancel</mat-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ statistics.stoppedServices }}</div>
-          <div class="stat-label">Stopped</div>
-          <div class="stat-percentage">{{ getPercentage(statistics.stoppedServices) }}%</div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+          <mat-card class="stat-card stat-stopped">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>cancel</mat-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ statistics.stoppedServices }}</div>
+                <div class="stat-label">Stopped</div>
+                <div class="stat-percentage">{{ getPercentage(statistics.stoppedServices) }}%</div>
+              </div>
+            </mat-card-content>
+          </mat-card>
 
-    <mat-card class="stat-card stat-warning">
-      <mat-card-content>
-        <div class="stat-icon">
-          <mat-icon>warning</mat-icon>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ statistics.warningServices }}</div>
-          <div class="stat-label">Issues</div>
-          <div class="stat-percentage">{{ getPercentage(statistics.warningServices) }}%</div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </section>
+          <mat-card class="stat-card stat-warning">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>warning</mat-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ statistics.warningServices }}</div>
+                <div class="stat-label">Issues</div>
+                <div class="stat-percentage">{{ getPercentage(statistics.warningServices) }}%</div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </section> -->
         <div class="table-container mat-elevation-z2">
           <table mat-table [dataSource]="getFilteredServices()" class="services-table">
 
@@ -135,11 +131,9 @@
                 {{ hideControls.controlProperties?.windowsServices?.statusLbl || 'Status' }}
               </th>
               <td mat-cell *matCellDef="let service">
-                <button mat-raised-button
-                        [color]="service.Status === commonEnum.Running ? 'success' : 'warn'"
-                        [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName)"
-                        (click)="startOrStop(service.ServiceName)"
-                        class="status-button">
+                <button mat-raised-button [color]="service.Status === commonEnum.Running ? 'success' : 'warn'"
+                  [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName)"
+                  (click)="startOrStop(service.ServiceName)" class="status-button">
                   <mat-icon>{{ service.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}</mat-icon>
                   {{ service.Status }}
                 </button>
@@ -169,15 +163,14 @@
               </ng-container>
               <ng-container *ngIf="checkLogsMatch(hideControls.controlProperties?.logs)">
                 <td mat-cell *matCellDef="let service">
-                  <button mat-button color="blue"
-                          (click)="processConfirm(service.ServiceName, service.ServerName)">
+                  <button mat-button color="blue" (click)="processConfirm(service.ServiceName, service.ServerName)">
                     <mat-icon>description</mat-icon>
                     View Logs
                   </button>
                 </td>
               </ng-container>
             </ng-container>
-             <!-- Description Column -->
+            <!-- Description Column -->
             <ng-container matColumnDef="description">
               <ng-container *ngIf="checkDescriptionMatch(hideControls.controlProperties?.description)">
                 <th mat-header-cell *matHeaderCellDef>
@@ -229,9 +222,8 @@
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.processUtilization)">
                 <td mat-cell *matCellDef="let service">
                   <div class="cpu-progress">
-                    <mat-progress-bar mode="determinate"
-                                      [value]="service.CPUUtilization"
-                                      [ngClass]="getCpuClass(service.CPUUtilization)">
+                    <mat-progress-bar mode="determinate" [value]="service.CPUUtilization"
+                      [ngClass]="getCpuClass(service.CPUUtilization)">
                     </mat-progress-bar>
                     <span class="cpu-value">{{ service.CPUUtilization }}%</span>
                   </div>
@@ -249,9 +241,8 @@
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.CpuUtilization)">
                 <td mat-cell *matCellDef="let service">
                   <div class="cpu-progress">
-                    <mat-progress-bar mode="determinate"
-                                      [value]="service.Total_CPU"
-                                      [ngClass]="getCpuClass(service.Total_CPU)">
+                    <mat-progress-bar mode="determinate" [value]="service.Total_CPU"
+                      [ngClass]="getCpuClass(service.Total_CPU)">
                     </mat-progress-bar>
                     <span class="cpu-value">{{ service.Total_CPU }}%</span>
                   </div>
@@ -261,7 +252,7 @@
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                [class.error-row]="row.Status !== commonEnum.Running"></tr>
+              [class.error-row]="row.Status !== commonEnum.Running"></tr>
           </table>
 
           <!-- Empty State -->
@@ -275,9 +266,8 @@
       <!-- Card View -->
       <div class="tab-content cards-view" *ngIf="viewMode === 'cards'">
         <div class="cards-grid">
-          <mat-card *ngFor="let service of getFilteredServices()"
-                    class="service-card"
-                    [class.error-card]="service.Status !== commonEnum.Running">
+          <mat-card *ngFor="let service of getFilteredServices()" class="service-card"
+            [class.error-card]="service.Status !== commonEnum.Running">
             <mat-card-header>
               <mat-icon mat-card-avatar>settings</mat-icon>
               <mat-card-title>{{ service.ServiceName }}</mat-card-title>
@@ -301,9 +291,8 @@
                 <div class="metric-row">
                   <span class="metric-label">Process CPU:</span>
                   <div class="cpu-progress">
-                    <mat-progress-bar mode="determinate"
-                                      [value]="service.CPUUtilization"
-                                      [ngClass]="getCpuClass(service.CPUUtilization)">
+                    <mat-progress-bar mode="determinate" [value]="service.CPUUtilization"
+                      [ngClass]="getCpuClass(service.CPUUtilization)">
                     </mat-progress-bar>
                     <span class="cpu-value">{{ service.CPUUtilization }}%</span>
                   </div>
@@ -311,9 +300,8 @@
                 <div class="metric-row">
                   <span class="metric-label">Total CPU:</span>
                   <div class="cpu-progress">
-                    <mat-progress-bar mode="determinate"
-                                      [value]="service.Total_CPU"
-                                      [ngClass]="getCpuClass(service.Total_CPU)">
+                    <mat-progress-bar mode="determinate" [value]="service.Total_CPU"
+                      [ngClass]="getCpuClass(service.Total_CPU)">
                     </mat-progress-bar>
                     <span class="cpu-value">{{ service.Total_CPU }}%</span>
                   </div>
@@ -322,15 +310,13 @@
             </mat-card-content>
 
             <mat-card-actions>
-              <button mat-raised-button
-                      [color]="service.Status === commonEnum.Running ? 'primary' : 'warn'"
-                      [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName)"
-                      (click)="startOrStop(service.ServiceName)">
+              <button mat-raised-button [color]="service.Status === commonEnum.Running ? 'primary' : 'warn'"
+                [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName)"
+                (click)="startOrStop(service.ServiceName)">
                 <mat-icon>{{ service.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}</mat-icon>
                 {{ service.Status }}
               </button>
-              <button mat-button color="accent"
-                      (click)="processConfirm(service.ServiceName, service.ServerName)">
+              <button mat-button color="accent" (click)="processConfirm(service.ServiceName, service.ServerName)">
                 <mat-icon>description</mat-icon>
                 Logs
               </button>
@@ -343,7 +329,7 @@
     <!-- Task Scheduler Tab -->
     <mat-tab *ngIf="!checkTabMatch(hideControls.controlProperties?.allowTaskScheTab)">
       <ng-template mat-tab-label>
-        <mat-icon class="tab-icon">schedule</mat-icon> 
+        <mat-icon class="tab-icon">schedule</mat-icon>
         Task Scheduler
         <mat-chip *ngIf="serviceErrorTaskList" class="error-badge">!</mat-chip>
       </ng-template>
@@ -383,10 +369,8 @@
                 {{ hideControls.controlProperties?.taskScheduler?.statusLbl || 'Status' }}
               </th>
               <td mat-cell *matCellDef="let task">
-                <button mat-raised-button
-                        [color]="task.Status === commonEnum.Running ? 'primary' : 'warn'"
-                        (click)="startOrStopTask(task.TaskName)"
-                        class="status-button">
+                <button mat-raised-button [color]="task.Status === commonEnum.Running ? 'primary' : 'warn'"
+                  (click)="startOrStopTask(task.TaskName)" class="status-button">
                   <mat-icon>{{ task.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}</mat-icon>
                   {{ task.Status }}
                 </button>
@@ -395,7 +379,7 @@
 
             <tr mat-header-row *matHeaderRowDef="['taskName', 'description', 'lastRunTime', 'status']"></tr>
             <tr mat-row *matRowDef="let row; columns: ['taskName', 'description', 'lastRunTime', 'status'];"
-                [class.error-row]="row.Status !== commonEnum.Running"></tr>
+              [class.error-row]="row.Status !== commonEnum.Running"></tr>
           </table>
 
           <div class="empty-state" *ngIf="getFilteredTasks().length === 0">
@@ -409,7 +393,7 @@
     <!-- API Services Tab -->
     <mat-tab *ngIf="!checkTabMatch(hideControls.controlProperties?.allowApiTab)">
       <ng-template mat-tab-label>
-        <mat-icon class="tab-icon">api</mat-icon> 
+        <mat-icon class="tab-icon">api</mat-icon>
         API Services
         <mat-chip *ngIf="serviceErrorApilist" class="error-badge">!</mat-chip>
       </ng-template>
@@ -417,9 +401,8 @@
       <div class="tab-content">
         <div class="api-services-grid">
           <!-- Server Group Card -->
-          <mat-card *ngFor="let serverGroup of groupedApiServices"
-                    class="server-group-card"
-                    [class.has-errors]="serverGroup.hasError">
+          <mat-card *ngFor="let serverGroup of groupedApiServices" class="server-group-card"
+            [class.has-errors]="serverGroup.hasError">
 
             <!-- Server Header -->
             <mat-card-header class="server-header">
@@ -431,16 +414,14 @@
 
             <mat-card-content class="services-list">
               <!-- API Service Row -->
-              <div *ngFor="let service of serverGroup.services"
-                   class="service-row"
-                   [class.service-error]="service.status !== 'Running'">
+              <div *ngFor="let service of serverGroup.services" class="service-row"
+                [class.service-error]="service.status !== 'Running'">
                 <div class="service-info">
                   <span class="service-name">{{ service.name }}</span>
                 </div>
                 <div class="service-status">
-                  <mat-icon class="status-icon"
-                            [class.status-running]="service.status === 'Running'"
-                            [class.status-error]="service.status !== 'Running'">
+                  <mat-icon class="status-icon" [class.status-running]="service.status === 'Running'"
+                    [class.status-error]="service.status !== 'Running'">
                     {{ service.status === 'Running' ? 'check_circle' : 'cancel' }}
                   </mat-icon>
                 </div>
@@ -460,7 +441,7 @@
     <!-- Queue Alerts Tab -->
     <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.allowQueueTab)">
       <ng-template mat-tab-label>
-        <mat-icon class="tab-icon">queue</mat-icon> 
+        <mat-icon class="tab-icon">queue</mat-icon>
         Queue Alerts
         <mat-chip *ngIf="serviceErrorQueuelist" class="error-badge">!</mat-chip>
       </ng-template>
@@ -475,9 +456,8 @@
             </ng-template>
 
             <div class="queue-grid">
-              <mat-card *ngFor="let queue of getFilteredQueueServices()"
-                        class="queue-card"
-                        [class.queue-error]="queue.Color !== commonEnum.GREEN">
+              <mat-card *ngFor="let queue of getFilteredQueueServices()" class="queue-card"
+                [class.queue-error]="queue.Color !== commonEnum.GREEN">
                 <mat-card-header>
                   <mat-icon mat-card-avatar>queue</mat-icon>
                   <mat-card-title>{{ queue.QueueName }}</mat-card-title>
@@ -505,8 +485,7 @@
                       <span class="label">Completed:</span>
                       <mat-chip class="value success">{{ queue.Completed }}</mat-chip>
                     </div>
-                    <div class="metric-item"
-                         *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
+                    <div class="metric-item" *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
                       <span class="label">Threshold:</span>
                       <mat-chip class="value">{{ queue.Threshold }}</mat-chip>
                     </div>
@@ -528,9 +507,8 @@
             </ng-template>
 
             <div class="queue-grid">
-              <mat-card *ngFor="let queue of getFilteredQueuePropagators()"
-                        class="queue-card"
-                        [class.queue-error]="queue.Color !== commonEnum.GREEN">
+              <mat-card *ngFor="let queue of getFilteredQueuePropagators()" class="queue-card"
+                [class.queue-error]="queue.Color !== commonEnum.GREEN">
                 <mat-card-header>
                   <mat-icon mat-card-avatar>sync</mat-icon>
                   <mat-card-title>{{ queue.QueueName }}</mat-card-title>
@@ -558,8 +536,7 @@
                       <span class="label">Completed:</span>
                       <mat-chip class="value success">{{ queue.Completed }}</mat-chip>
                     </div>
-                    <div class="metric-item"
-                         *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
+                    <div class="metric-item" *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
                       <span class="label">Threshold:</span>
                       <mat-chip class="value">{{ queue.Threshold }}</mat-chip>
                     </div>
@@ -579,7 +556,7 @@
     <!-- DB Jobs Tab -->
     <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.dbJobs)">
       <ng-template mat-tab-label>
-        <mat-icon class="tab-icon">storage</mat-icon> 
+        <mat-icon class="tab-icon">storage</mat-icon>
         DB Jobs
         <mat-chip *ngIf="dbJoblist" class="error-badge">!</mat-chip>
       </ng-template>
@@ -652,9 +629,12 @@
               </td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="['schema', 'jobName', 'lastRunDate', 'nextRunDate', 'broken', 'active', 'failures']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['schema', 'jobName', 'lastRunDate', 'nextRunDate', 'broken', 'active', 'failures'];"
-                [class.error-row]="row.Broken === 'Y' || row.Active === 'Y'"></tr>
+            <tr mat-header-row
+              *matHeaderRowDef="['schema', 'jobName', 'lastRunDate', 'nextRunDate', 'broken', 'active', 'failures']">
+            </tr>
+            <tr mat-row
+              *matRowDef="let row; columns: ['schema', 'jobName', 'lastRunDate', 'nextRunDate', 'broken', 'active', 'failures'];"
+              [class.error-row]="row.Broken === 'Y' || row.Active === 'Y'"></tr>
           </table>
 
           <div class="empty-state" *ngIf="dbJobsList.length === 0">
