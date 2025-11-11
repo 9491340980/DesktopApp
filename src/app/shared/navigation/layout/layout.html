@@ -7,7 +7,7 @@
       <!-- Logo/Brand -->
       <div class="sidenav-header">
         <div class="logo-section" (click)="navigateToDashboard()">
-          <img src="images/RMx.png" alt="Logo" class="logo">
+          <img src="images/RMx-logo.png" alt="Logo" class="logo">
           <!-- <span class="brand-text">RMx</span> -->
         </div>
       </div>
@@ -26,9 +26,12 @@
                 <mat-icon matListItemIcon>{{ item.Icon }}</mat-icon>
                 <span matListItemTitle>{{ item.Title }}</span>
 
-                <mat-icon *ngIf="item.HasSubMenu" class="expand-icon" matListItemMeta>
+                <mat-icon *ngIf="item.HasSubMenu" class="expand-icon" >
                   {{ isMenuExpanded(item.Title) ? 'expand_less' : 'expand_more' }}
                 </mat-icon>
+                <!-- <mat-icon *ngIf="item.HasSubMenu" class="expand-icon">
+              {{ isModuleSelected(item) ? 'expand_less' : 'expand_more' }}
+            </mat-icon> -->
               </mat-list-item>
 
               <!-- Sub Menu Items - Using getFilteredSubMenu -->

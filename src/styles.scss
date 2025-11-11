@@ -63,7 +63,7 @@ html, body {
 }
 
 body {
-  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family: Avenir Next World,Arial,Helvetica Neue,sans-serif !important;
   font-size: 14px;
   line-height: 1.5;
   color: $text-dark;
@@ -640,6 +640,19 @@ body {
     &::before {
       background-color: $status-warning;
     }
+  }
+}
+
+.main-tabs{
+  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+      color: #f44336 !important;
+  }
+  .mat-mdc-tab .mdc-tab-indicator__content--underline {
+      border-color: #f44336 !important;
+  }
+  .mat-success{
+    background: #0ac773 !important;
+    color: #002313 !important;
   }
 }
 

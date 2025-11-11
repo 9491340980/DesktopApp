@@ -1,11 +1,12 @@
 // Premium Variables
-$primary-color: #3b82f6;
-$primary-light: #60a5fa;
+$primary-color: #bcceff;
+$primary-light: #698df0;
 $bg-sidebar: #0f172a;
+$text-gray: #64748b;
 $bg-sidebar-elevated: #1e293b;
 $text-white: #ffffff;
 $text-primary: #f1f5f9;
-$text-secondary: #cbd5e1;
+$text-secondary: #64748b;
 $text-muted: #94a3b8;
 $border-subtle: rgba(148, 163, 184, 0.1);
 $accent-glow: rgba(59, 130, 246, 0.15);
@@ -19,7 +20,8 @@ $accent-glow: rgba(59, 130, 246, 0.15);
 // Sidenav - Premium Design
 .sidenav {
   width: 320px;
-  background: linear-gradient(180deg, $bg-sidebar 0%, #0a0f1a 100%);
+  background: linear-gradient(180deg, #000b27 0%, #000b27 100%);
+  color: #f44336;
   color: $text-white;
   border-right: 1px solid $border-subtle;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
@@ -34,7 +36,7 @@ $accent-glow: rgba(59, 130, 246, 0.15);
   // Header - Premium
   .sidenav-header {
     flex-shrink: 0;
-    padding: 28px 24px;
+    padding: 12px;
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%);
     border-bottom: 1px solid $border-subtle;
     backdrop-filter: blur(10px);
@@ -45,7 +47,7 @@ $accent-glow: rgba(59, 130, 246, 0.15);
       justify-content: center;
       cursor: pointer;
       padding: 16px;
-      background: rgba(255, 255, 255, 0.03);
+      background: rgb(114 153 255 / 74%);
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.05);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -64,8 +66,8 @@ $accent-glow: rgba(59, 130, 246, 0.15);
       }
 
       &:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(59, 130, 246, 0.3);
+        background: rgb(187 205 255);
+    border-color: rgb(155 182 255);
         transform: translateY(-2px);
         box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
 
@@ -75,8 +77,8 @@ $accent-glow: rgba(59, 130, 246, 0.15);
       }
 
       .logo {
-        width: 52px;
-        height: 52px;
+        width: 80px;
+        height: auto;
         object-fit: contain;
         filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3));
       }
@@ -247,33 +249,32 @@ $accent-glow: rgba(59, 130, 246, 0.15);
   span[matListItemTitle] {
     font-size: 15px;
     font-weight: 500;
-    color: inherit;
+    color: $primary-color;
     letter-spacing: 0.3px;
   }
 
   .expand-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-    color: $text-muted;
-    transition: all 0.3s ease;
+    position: absolute;
+    top: 16px;
+    right: 10px;
+    color: $text-gray;
   }
 }
 
 // Submenu - Premium
 .submenu-container {
-  background: rgba(0, 0, 0, 0.2);
-  border-left: 2px solid $primary-color;
-  margin: 6px 0 6px 20px;
-  padding: 8px 0;
-  border-radius: 0 8px 8px 0;
-  box-shadow: inset 2px 0 8px rgba(0, 0, 0, 0.2);
+background: rgb(6 23 60);
+    border-left: 2px solid #698df0;
+    margin: 6px 0 6px 20px;
+    padding: 4px 0;
+    border-radius: 0 8px 8px 0;
+    box-shadow: inset 2px 0 4px rgb(105 141 240 / 28%);
 }
 
 .submenu-item {
   color: $text-secondary;
   font-size: 14px;
-  padding: 0 16px 0 28px !important;
+  padding: 0 12px 0 12px !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 6px;
   cursor: pointer;
@@ -292,6 +293,7 @@ $accent-glow: rgba(59, 130, 246, 0.15);
     border-radius: 50%;
     opacity: 0.5;
     transition: all 0.3s ease;
+    display: none;
   }
 
   &:hover {
@@ -314,8 +316,10 @@ $accent-glow: rgba(59, 130, 246, 0.15);
     font-size: 18px;
     width: 18px;
     height: 18px;
-    color: $text-muted;
+    color: #698df0;
     transition: all 0.3s ease;
+    margin-left: 0;
+    margin-right: 15px;
   }
 
   span[matListItemTitle] {
@@ -323,10 +327,15 @@ $accent-glow: rgba(59, 130, 246, 0.15);
     word-break: break-word;
     line-height: 1.4;
     font-weight: 400;
-    color: inherit;
+    color: $primary-color;
     letter-spacing: 0.2px;
+    font-size: 14px;
   }
 }
+.mat-mdc-list-item.mdc-list-item--with-leading-icon.mdc-list-item--with-two-lines {
+    height: 58px !important;
+}
+
 
 // Main Content
 .main-content {
@@ -441,7 +450,7 @@ $accent-glow: rgba(59, 130, 246, 0.15);
 
 // Content Wrapper
 .content-wrapper {
-  padding: 32px;
+  padding: 32px 20px;
   min-height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow-y: auto;

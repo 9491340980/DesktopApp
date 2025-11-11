@@ -106,7 +106,7 @@ export class ServiceDashboard {
       },
 
       // Polling intervals (milliseconds)
-      servicePollTimer: 2000,           // 30 seconds
+      servicePollTimer: 2000000,           // 30 seconds
       queueAlertPollTimer: 2000,        // 60 seconds
       apiStatusAlertPollTimer: 60000,    // 60 seconds
       dbJobsPollTimer: 60000             // 60 seconds
