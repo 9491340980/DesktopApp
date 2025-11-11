@@ -132,14 +132,24 @@
               </th>
               <td mat-cell *matCellDef="let service">
                 <button mat-raised-button [color]="service.Status === commonEnum.Running ? 'success' : 'warn'"
-                  [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName)"
+                  [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName) || isServiceLoading(service.ServiceName)"
                   (click)="startOrStop(service.ServiceName)" class="status-button">
-                  <mat-icon>{{ service.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}</mat-icon>
-                  {{ service.Status }}
+
+                  <!-- Show spinner when loading -->
+                  <mat-spinner *ngIf="isServiceLoading(service.ServiceName)" diameter="16"
+                    style="display: inline-block; margin-right: 8px;">
+                  </mat-spinner>
+
+                  <!-- Show icon when not loading -->
+                  <mat-icon *ngIf="!isServiceLoading(service.ServiceName)">
+                    {{ service.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}
+                  </mat-icon>
+
+                  <!-- Dynamic text -->
+                  {{ getServiceButtonText(service) }}
                 </button>
               </td>
             </ng-container>
-
             <!-- Server Name Column -->
             <ng-container matColumnDef="serverName">
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.serverName)">
@@ -311,11 +321,23 @@
 
             <mat-card-actions>
               <button mat-raised-button [color]="service.Status === commonEnum.Running ? 'primary' : 'warn'"
-                [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName)"
+                [disabled]="!checkStatusAccessMatch(hideControls.controlProperties?.statusAccess, service.ServiceName) || isServiceLoading(service.ServiceName)"
                 (click)="startOrStop(service.ServiceName)">
-                <mat-icon>{{ service.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}</mat-icon>
-                {{ service.Status }}
+
+                <!-- Show spinner when loading -->
+                <mat-spinner *ngIf="isServiceLoading(service.ServiceName)" diameter="16"
+                  style="display: inline-block; margin-right: 8px;">
+                </mat-spinner>
+
+                <!-- Show icon when not loading -->
+                <mat-icon *ngIf="!isServiceLoading(service.ServiceName)">
+                  {{ service.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}
+                </mat-icon>
+
+                <!-- Dynamic text -->
+                {{ getServiceButtonText(service) }}
               </button>
+
               <button mat-button color="accent" (click)="processConfirm(service.ServiceName, service.ServerName)">
                 <mat-icon>description</mat-icon>
                 Logs
@@ -370,9 +392,21 @@
               </th>
               <td mat-cell *matCellDef="let task">
                 <button mat-raised-button [color]="task.Status === commonEnum.Running ? 'primary' : 'warn'"
-                  (click)="startOrStopTask(task.TaskName)" class="status-button">
-                  <mat-icon>{{ task.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}</mat-icon>
-                  {{ task.Status }}
+                  [disabled]="isTaskLoading(task.TaskName)" (click)="startOrStopTask(task.TaskName)"
+                  class="status-button">
+
+                  <!-- Show spinner when loading -->
+                  <mat-spinner *ngIf="isTaskLoading(task.TaskName)" diameter="16"
+                    style="display: inline-block; margin-right: 8px;">
+                  </mat-spinner>
+
+                  <!-- Show icon when not loading -->
+                  <mat-icon *ngIf="!isTaskLoading(task.TaskName)">
+                    {{ task.Status === commonEnum.Running ? 'play_arrow' : 'stop' }}
+                  </mat-icon>
+
+                  <!-- Dynamic text -->
+                  {{ getTaskButtonText(task) }}
                 </button>
               </td>
             </ng-container>

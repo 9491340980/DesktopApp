@@ -50,6 +50,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
   styleUrl: './service-dashboard.scss',
 })
 export class ServiceDashboard {
+  loadingServices: Set<string> = new Set();
+  loadingTasks: Set<string> = new Set();
+
   // Control Configuration (EXACTLY matching web version)
   hideControls: any = {
     controlProperties: {
@@ -356,13 +359,17 @@ export class ServiceDashboard {
   /**
    * Get Windows Services (matching web method name)
    */
-  getServicesList(): void {
+  getServicesList(serviceName?: any): void {
     this.commonService.post<WindowsService[]>(
       '/utilities/getServicesList',
       { UIData: this.uiData },
       { showLoader: false }
     ).subscribe({
       next: (response) => {
+        if (serviceName) {
+          this.loadingServices.delete(serviceName);
+          this.commonService.showSuccess(`Service ${serviceName} toggled successfully`);
+        }
         if (response.Status === 'PASS' && response.Response) {
           this.services = response.Response;
           this.serviceError = response.Response.some(s => s.Status !== 'Running');
@@ -386,13 +393,17 @@ export class ServiceDashboard {
   /**
    * Get Task Schedulers (matching web method name)
    */
-  getTasksList(): void {
+  getTasksList(taskName?: any): void {
     this.commonService.post<TaskScheduler[]>(
       '/utilities/getTasksList',
       { UIData: this.uiData },
       { showLoader: false }
     ).subscribe({
       next: (response) => {
+        if (taskName) {
+          this.commonService.showSuccess(`Task ${taskName} toggled successfully`);
+          this.loadingTasks.delete(taskName);
+        }
         if (response.Status === 'PASS' && response.Response) {
           this.tasks = response.Response;
           this.serviceErrorTaskList = response.Response.some(t => t.Status !== 'Running');
@@ -644,42 +655,75 @@ export class ServiceDashboard {
       return;
     }
 
+    // Add service to loading set
+    this.loadingServices.add(serviceName);
+
     this.commonService.post(
       `/utilities/startstop/${serviceName}`,
       { UIData: this.uiData },
-      { showLoader: true, showError: true }
+      { showLoader: false, showError: true }  // Changed to false to not show global loader
     ).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
-          this.commonService.showSuccess(`Service ${serviceName} toggled successfully`);
-          this.getServicesList();
+          this.getServicesList(serviceName);
         }
+        // Remove from loading set
+
       },
       error: (error) => {
         console.error('Error toggling service:', error);
+        // Remove from loading set on error too
+        this.loadingServices.delete(serviceName);
       }
     });
   }
+
+  isServiceLoading(serviceName: string): boolean {
+    return this.loadingServices.has(serviceName);
+  }
+
+  getServiceButtonText(service: WindowsService): string {
+    if (this.isServiceLoading(service.ServiceName)) {
+      return service.Status === this.commonEnum.Running ? 'Stopping...' : 'Starting...';
+    }
+    return service.Status;
+  }
+
 
   /**
    * Start or Stop Task (matching web method name)
    */
   startOrStopTask(taskName: string): void {
+    // Add task to loading set
+    this.loadingTasks.add(taskName);
+
     this.commonService.post(
       `/utilities/taskstartstop/${taskName}`,
       { UIData: this.uiData },
-      { showLoader: true, showError: true }
+      { showLoader: false, showError: true }
     ).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
-          this.commonService.showSuccess(`Task ${taskName} toggled successfully`);
-          this.getTasksList();
+          this.getTasksList(taskName);
         }
       },
       error: (error) => {
         console.error('Error toggling task:', error);
+        this.loadingTasks.delete(taskName);
       }
     });
+  }
+
+
+  isTaskLoading(taskName: string): boolean {
+    return this.loadingTasks.has(taskName);
+  }
+
+  getTaskButtonText(task: TaskScheduler): string {
+    if (this.isTaskLoading(task.TaskName)) {
+      return task.Status === this.commonEnum.Running ? 'Stopping...' : 'Starting...';
+    }
+    return task.Status;
   }
 
   /**

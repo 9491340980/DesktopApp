@@ -1105,3 +1105,17 @@ mat-button-toggle:focus {
 .p-4 {
   padding: $spacing-lg;
 }
+
+.status-button {
+  min-width: 140px; // Increased to accommodate "Stopping..." text
+
+  mat-spinner {
+    display: inline-block !important;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  mat-icon {
+    margin-right: $spacing-xs;
+  }
+}
