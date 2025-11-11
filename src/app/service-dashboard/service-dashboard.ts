@@ -591,7 +591,7 @@ export class ServiceDashboard {
           this.dbJobsData = response.Response;
           this.originalDbJobsData = response.Response;
           this.dbJobsList = response.Response;
-          this.dbJoblist = response.Response.some(job => job.Broken === 'Y' || job.Active === 'Y');
+          this.dbJoblist = response.Response.some(job => job.Broken === 'Y');
 
           // Extract unique schemas (matching web logic)
           const schemas = [...new Set(response.Response.map(job => job.Schema))];
@@ -628,7 +628,7 @@ export class ServiceDashboard {
       this.selectedSchema = schema;
       this.dbJobsData = this.originalDbJobsData.filter(job => job.Schema === schema);
       this.dbJobsList = this.dbJobsData;
-      this.dbJoblist = this.dbJobsData.some(job => job.Broken === 'Y' || job.Active === 'Y');
+      this.dbJoblist = this.dbJobsData.some(job => job.Broken === 'Y');
     } else {
       this.dbJobsData = this.originalDbJobsData;
       this.dbJobsList = this.originalDbJobsData;
@@ -666,7 +666,7 @@ export class ServiceDashboard {
    */
   startOrStopTask(taskName: string): void {
     this.commonService.post(
-      `/utilities/startOrStopTask/${taskName}`,
+      `/utilities/taskstartstop/${taskName}`,
       { UIData: this.uiData },
       { showLoader: true, showError: true }
     ).subscribe({
@@ -969,13 +969,16 @@ interface QueueAlert {
 }
 
 interface DbJob {
+  ClientId: string | null;
+  SiteId: string | null;
+  Id: string;
+  Name: string;           // Not JobName
   Schema: string;
-  JobName: string;
-  LastRunDate: string;
-  NextRunDate: string;
-  Broken: 'Y' | 'N' | string;
-  Active: 'Y' | 'N' | string;
-  Failures: number;
+  LastRun: string;        // Not LastRunDate
+  NextRun: string;        // Not NextRunDate
+  Schedule: string;
+  Broken: 'Y' | 'N';
+  // Remove Active and Failures - they don't exist in API
 }
 
 interface ServiceStatistics {
