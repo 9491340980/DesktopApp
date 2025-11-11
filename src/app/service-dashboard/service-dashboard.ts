@@ -83,10 +83,10 @@ export class ServiceDashboard {
       // Labels (for translation support)
       windowsServices: {
         serviceLbl: 'Service Name',
-        descriptionLbl: 'Description',
         statusLbl: 'Status',
         serverNameLbl: 'Server Name',
         logsLbl: 'Logs',
+        descriptionLbl: 'Description',
         memoryUtilizationLbl: 'Memory Utilization',
         threadCountLbl: 'Thread Count',
         processUtilizationLbl: 'Process CPU Utilization',
@@ -106,8 +106,8 @@ export class ServiceDashboard {
       },
 
       // Polling intervals (milliseconds)
-      servicePollTimer: 30000,           // 30 seconds
-      queueAlertPollTimer: 60000,        // 60 seconds
+      servicePollTimer: 2000,           // 30 seconds
+      queueAlertPollTimer: 2000,        // 60 seconds
       apiStatusAlertPollTimer: 60000,    // 60 seconds
       dbJobsPollTimer: 60000             // 60 seconds
     }
@@ -179,10 +179,6 @@ export class ServiceDashboard {
   get displayedColumns(): string[] {
     const columns = ['serviceName'];
 
-    if (this.checkDescriptionMatch(this.hideControls.controlProperties?.description)) {
-      columns.push('description');
-    }
-
     columns.push('status');
 
     if (this.checkRolesMatch(this.hideControls.controlProperties?.serverName)) {
@@ -192,6 +188,10 @@ export class ServiceDashboard {
     if (this.checkLogsMatch(this.hideControls.controlProperties?.logs)) {
       columns.push('logs');
     }
+     if (this.checkDescriptionMatch(this.hideControls.controlProperties?.description)) {
+      columns.push('description');
+    }
+
 
     if (this.checkRolesMatch(this.hideControls.controlProperties?.memoryUtilization)) {
       columns.push('memoryUtilization');
@@ -539,7 +539,7 @@ export class ServiceDashboard {
     }
 
     this.commonService.post(
-      `/utilities/startStopService/${serviceName}`,
+      `/utilities/startstop/${serviceName}`,
       { UIData: this.uiData },
       { showLoader: true, showError: true }
     ).subscribe({
