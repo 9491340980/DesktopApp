@@ -414,23 +414,44 @@
       </ng-template>
 
       <div class="tab-content">
-        <div class="cards-grid">
-          <mat-card *ngFor="let api of getFilteredApiServices()"
-                    class="api-card"
-                    [class.error-card]="api.Status !== commonEnum.Running">
-            <mat-card-header>
-              <mat-icon mat-card-avatar color="primary">api</mat-icon>
-              <mat-card-title>{{ api.WebAPIName }}</mat-card-title>
+        <div class="api-services-grid">
+          <!-- Server Group Card -->
+          <mat-card *ngFor="let serverGroup of groupedApiServices"
+                    class="server-group-card"
+                    [class.has-errors]="serverGroup.hasError">
+
+            <!-- Server Header -->
+            <mat-card-header class="server-header">
+              <div class="server-header-content">
+                <mat-icon class="server-icon">dns</mat-icon>
+                <h3 class="server-name">{{ serverGroup.serverName }}</h3>
+              </div>
             </mat-card-header>
-            <mat-card-content>
-              <div class="api-status">
-                <mat-chip [color]="api.Status === commonEnum.Running ? 'primary' : 'warn'" selected>
-                  <mat-icon>{{ api.Status === commonEnum.Running ? 'check_circle' : 'error' }}</mat-icon>
-                  {{ api.Status }}
-                </mat-chip>
+
+            <mat-card-content class="services-list">
+              <!-- API Service Row -->
+              <div *ngFor="let service of serverGroup.services"
+                   class="service-row"
+                   [class.service-error]="service.status !== 'Running'">
+                <div class="service-info">
+                  <span class="service-name">{{ service.name }}</span>
+                </div>
+                <div class="service-status">
+                  <mat-icon class="status-icon"
+                            [class.status-running]="service.status === 'Running'"
+                            [class.status-error]="service.status !== 'Running'">
+                    {{ service.status === 'Running' ? 'check_circle' : 'cancel' }}
+                  </mat-icon>
+                </div>
               </div>
             </mat-card-content>
           </mat-card>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="groupedApiServices.length === 0">
+          <mat-icon>inbox</mat-icon>
+          <p>No API services found</p>
         </div>
       </div>
     </mat-tab>

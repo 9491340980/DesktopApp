@@ -464,9 +464,126 @@ $transition-speed: 0.3s;
 }
 
 // ===================================================================
-// API SERVICES
+// API SERVICES (Matching Screenshot)
 // ===================================================================
 
+.api-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $spacing-md;
+  padding: $spacing-sm;
+}
+
+.server-group-card {
+  background: white;
+  border-radius: $card-border-radius;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid $border-color;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &.has-errors {
+    border-top: 3px solid $warn-color;
+  }
+
+  .server-header {
+    background: linear-gradient(135deg, #546e7a 0%, #37474f 100%);
+    padding: $spacing-md;
+    margin-bottom: 0;
+
+    .mat-mdc-card-header-text {
+      margin: 0;
+      width: 100%;
+    }
+
+    .server-header-content {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      width: 100%;
+    }
+
+    .server-icon {
+      color: white;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .server-name {
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .services-list {
+    padding: 0;
+
+    .service-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-sm $spacing-md;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: #f9f9f9;
+      }
+
+      &.service-error {
+        background-color: #ffebee;
+
+        &:hover {
+          background-color: #ffcdd2;
+        }
+      }
+
+      .service-info {
+        flex: 1;
+
+        .service-name {
+          font-size: 14px;
+          font-weight: 500;
+          color: $text-primary;
+        }
+      }
+
+      .service-status {
+        display: flex;
+        align-items: center;
+
+        .status-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+
+          &.status-running {
+            color: $success-color;
+          }
+
+          &.status-error {
+            color: $warn-color;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Old API card styles (keeping for backward compatibility)
 .api-card {
   text-align: center;
   transition: all 0.3s ease;

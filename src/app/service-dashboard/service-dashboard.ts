@@ -27,7 +27,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-service-dashboard',
- imports: [CommonModule,
+  imports: [CommonModule,
     FormsModule,
     MatDialogModule,
     MatSnackBarModule,
@@ -123,6 +123,7 @@ export class ServiceDashboard {
   services: WindowsService[] = [];  // Web uses 'services'
   tasks: TaskScheduler[] = [];      // Web uses 'tasks'
   apiServiceData: ApiService[] = []; // Web uses 'apiServiceData'
+  groupedApiServices: GroupedApiService[] = []; // Grouped API services by server
   queService: QueueAlert[] = [];     // Web uses 'queService'
   queService1: QueueAlert[] = [];    // Web uses 'queService1'
   PropService: QueueAlert[] = [];    // Web uses 'PropService'
@@ -188,7 +189,7 @@ export class ServiceDashboard {
     if (this.checkLogsMatch(this.hideControls.controlProperties?.logs)) {
       columns.push('logs');
     }
-     if (this.checkDescriptionMatch(this.hideControls.controlProperties?.description)) {
+    if (this.checkDescriptionMatch(this.hideControls.controlProperties?.description)) {
       columns.push('description');
     }
 
@@ -416,6 +417,67 @@ export class ServiceDashboard {
       next: (response) => {
         if (response.Status === 'PASS' && response.Response) {
           this.apiServiceData = response.Response;
+          response.Response = [
+            {
+              "WebAPIName": "CommonAPI:tsgvm04133",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "ReceivingAPI:tsgvm04133",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "TestingAPI:tsgvm04133",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "TransferServicesAPI:tsgvm04133",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "UtilitiesAPI:tsgvm04133",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "VendorTestResultsAPI:tsgvm04133",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "WarehouseTransferAPI:tsgvm04133",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "CommonAPI:tsgvm04155",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "ReceivingAPI:tsgvm04155",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "TestingAPI:tsgvm04155",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "TransferServicesAPI:tsgvm04155",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "UtilitiesAPI:tsgvm04155",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "VendorTestResultsAPI:tsgvm04155",
+              "Status": "Running"
+            },
+            {
+              "WebAPIName": "WarehouseTransferAPI:tsgvm04155",
+              "Status": "Running"
+            }
+          ]
+          // Group API services by server and parse the response
+          this.groupedApiServices = this.groupApiServicesByServer(response.Response);
+
           this.serviceErrorApilist = response.Response.some(a => a.Status !== 'Running');
         }
       },
@@ -424,6 +486,50 @@ export class ServiceDashboard {
         this.serviceErrorApilist = true;
       }
     });
+  }
+
+  /**
+   * Group API services by server name
+   * Parse WebAPIName format: "APIName:ServerName"
+   */
+  private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[] {
+    // Create a map to group services by server
+    const serverMap = new Map<string, GroupedApiService>();
+
+    apiServices.forEach(api => {
+      // Parse the WebAPIName to extract API name and server name
+      // Format: "CommonAPI:tsgvm04133" or "ReceivingAPI:tsgvm04155"
+      const parts = api.WebAPIName.split(':');
+      const apiName = parts[0] || api.WebAPIName;
+      const serverName = parts[1] || 'Unknown';
+
+      // Get or create server group
+      if (!serverMap.has(serverName)) {
+        serverMap.set(serverName, {
+          serverName: serverName,
+          services: [],
+          hasError: false
+        });
+      }
+
+      const serverGroup = serverMap.get(serverName)!;
+
+      // Add service to server group
+      serverGroup.services.push({
+        name: apiName,
+        status: api.Status
+      });
+
+      // Update error flag
+      if (api.Status !== 'Running') {
+        serverGroup.hasError = true;
+      }
+    });
+
+    // Convert map to array and sort by server name
+    return Array.from(serverMap.values()).sort((a, b) =>
+      a.serverName.localeCompare(b.serverName)
+    );
   }
 
   /**
@@ -837,6 +943,15 @@ interface ApiService {
   WebAPIName: string;
   Status: string;
   Url?: string;
+}
+
+interface GroupedApiService {
+  serverName: string;
+  services: {
+    name: string;
+    status: string;
+  }[];
+  hasError: boolean;
 }
 
 interface QueueAlert {
