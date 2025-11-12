@@ -199,7 +199,7 @@
             <ng-container matColumnDef="memoryUtilization">
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.memoryUtilization)">
                 <th mat-header-cell *matHeaderCellDef>
-                  {{ hideControls.controlProperties?.windowsServices?.memoryUtilizationLbl || 'Memory' }}
+                  {{ hideControls.controlProperties?.windowsServices?.memoryUtilizationLbl || 'Memory Utilization' }}
                 </th>
               </ng-container>
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.memoryUtilization)">
@@ -213,7 +213,7 @@
             <ng-container matColumnDef="threadCount">
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.ThreadCount)">
                 <th mat-header-cell *matHeaderCellDef>
-                  {{ hideControls.controlProperties?.windowsServices?.threadCountLbl || 'Threads' }}
+                  {{ hideControls.controlProperties?.windowsServices?.threadCountLbl || 'Thread Count' }}
                 </th>
               </ng-container>
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.ThreadCount)">
@@ -246,7 +246,7 @@
             <ng-container matColumnDef="cpuUtilization">
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.CpuUtilization)">
                 <th mat-header-cell *matHeaderCellDef>
-                  {{ hideControls.controlProperties?.windowsServices?.cpuUtilizationLbl || 'Total CPU' }}
+                  {{ hideControls.controlProperties?.windowsServices?.cpuUtilizationLbl || 'CPU Utilization' }}
                 </th>
               </ng-container>
               <ng-container *ngIf="checkRolesMatch(hideControls.controlProperties?.CpuUtilization)">
@@ -292,11 +292,11 @@
                   <mat-chip class="metric-chip">{{ service.ServerName }}</mat-chip>
                 </div>
                 <div class="metric-row">
-                  <span class="metric-label">Memory:</span>
+                  <span class="metric-label">Memory Utilization:</span>
                   <span class="metric-value">{{ service.MemoryUtilization }} MB</span>
                 </div>
                 <div class="metric-row">
-                  <span class="metric-label">Threads:</span>
+                  <span class="metric-label">Thread Count:</span>
                   <span class="metric-value">{{ service.ThreadCount }}</span>
                 </div>
                 <div class="metric-row">
@@ -309,7 +309,7 @@
                   </div>
                 </div>
                 <div class="metric-row">
-                  <span class="metric-label">Total CPU:</span>
+                  <span class="metric-label">CPU Utilization:</span>
                   <div class="cpu-progress">
                     <mat-progress-bar mode="determinate" [value]="service.Total_CPU"
                       [ngClass]="getCpuClass(service.Total_CPU)">
@@ -356,13 +356,13 @@
         Task Scheduler
         <mat-chip *ngIf="serviceErrorTaskList" class="error-badge blink">!</mat-chip>
         <mat-chip *ngIf="!serviceErrorTaskList && tasks.length > 0" class="success-badge">✓</mat-chip>
-
       </ng-template>
 
       <div class="tab-content">
         <div class="table-container mat-elevation-z2">
           <table mat-table [dataSource]="getFilteredTasks()" class="services-table">
 
+            <!-- Task Name Column -->
             <ng-container matColumnDef="taskName">
               <th mat-header-cell *matHeaderCellDef>
                 {{ hideControls.controlProperties?.taskScheduler?.taskNameLbl || 'Task Name' }}
@@ -375,6 +375,26 @@
               </td>
             </ng-container>
 
+            <!-- Server Name Column - NEW CONFIGURABLE COLUMN (Comes before Description) -->
+            <ng-container matColumnDef="serverName">
+              <ng-container
+                *ngIf="checkTaskServerNameShow(hideControls.controlProperties?.taskScheduler?.taskServerName)">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ hideControls.controlProperties?.taskScheduler?.serverNameLbl || 'Server Name' }}
+                </th>
+              </ng-container>
+              <ng-container
+                *ngIf="checkTaskServerNameShow(hideControls.controlProperties?.taskScheduler?.taskServerName)">
+                <td mat-cell *matCellDef="let task">
+                  <mat-chip class="server-chip" *ngIf="getTaskServerName(task.TaskName)">
+                    {{ getTaskServerName(task.TaskName) }}
+                  </mat-chip>
+                  <span *ngIf="!getTaskServerName(task.TaskName)" class="no-server">-</span>
+                </td>
+              </ng-container>
+            </ng-container>
+
+            <!-- Description Column -->
             <ng-container matColumnDef="description">
               <th mat-header-cell *matHeaderCellDef>
                 {{ hideControls.controlProperties?.taskScheduler?.desctiptionLbl || 'Description' }}
@@ -382,13 +402,21 @@
               <td mat-cell *matCellDef="let task">{{ task.Description }}</td>
             </ng-container>
 
+            <!-- Last Run Time Column - CONDITIONALLY SHOWN -->
             <ng-container matColumnDef="lastRunTime">
-              <th mat-header-cell *matHeaderCellDef>
-                {{ hideControls.controlProperties?.taskScheduler?.lastRunTimeLbl || 'Last Run Time' }}
-              </th>
-              <td mat-cell *matCellDef="let task">{{ task.LastRunTime }}</td>
+              <ng-container
+                *ngIf="checkLastRunTimeShow(hideControls.controlProperties?.taskScheduler?.lastRunTimeShow)">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ hideControls.controlProperties?.taskScheduler?.lastRunTimeLbl || 'Last Run Time' }}
+                </th>
+              </ng-container>
+              <ng-container
+                *ngIf="checkLastRunTimeShow(hideControls.controlProperties?.taskScheduler?.lastRunTimeShow)">
+                <td mat-cell *matCellDef="let task">{{ task.LastRunTime }}</td>
+              </ng-container>
             </ng-container>
 
+            <!-- Status Column -->
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef>
                 {{ hideControls.controlProperties?.taskScheduler?.statusLbl || 'Status' }}
@@ -414,8 +442,9 @@
               </td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="['taskName', 'description', 'lastRunTime', 'status']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['taskName', 'description', 'lastRunTime', 'status'];"
+            <!-- Dynamic header row using getter -->
+            <tr mat-header-row *matHeaderRowDef="taskSchedulerDisplayColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: taskSchedulerDisplayColumns;"
               [class.error-row]="row.Status !== commonEnum.Running"></tr>
           </table>
 

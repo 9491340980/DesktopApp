@@ -25,6 +25,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ViewLogsDialog } from './view-logs-dialog/view-logs-dialog';
 import { EngineResult } from '../models/app-config.models';
+import { StorageKey } from '../enums/app-constants.enum';
 // import { ViewLogsDialogComponent } from './view-logs-dialog.component';
 
 @Component({
@@ -179,6 +180,7 @@ export class ServiceDashboard {
   configLoaded: boolean = false;
   // DB Jobs column configuration
   dbJobsDisplayColumns: string[] = [];
+  private taskServerMapping: Map<string, string> = new Map();
 
   // Common Enum (matching web)
   commonEnum = {
@@ -190,7 +192,6 @@ export class ServiceDashboard {
   // Column definitions for Material Table
   get displayedColumns(): string[] {
     const columns = ['serviceName'];
-
     columns.push('status');
 
     if (this.checkRolesMatch(this.hideControls.controlProperties?.serverName)) {
@@ -234,8 +235,120 @@ export class ServiceDashboard {
 
   ngOnInit(): void {
     this.loadControlConfiguration();
+    // let clientData = this.authService.getUpdatedClientData();
+    // clientData.Roles = ['SERVICEADMIN'];
+    // localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
   }
 
+
+  checkLastRunTimeShow(show?: boolean | string[]): boolean {
+    // If not configured, default to false (hide by default)
+    if (show === undefined || show === null) {
+      return false;
+    }
+
+    // If it's a boolean, return it directly
+    if (typeof show === 'boolean') {
+      return show;
+    }
+
+    // If it's an array of roles, check user roles
+    if (Array.isArray(show) && show.length > 0) {
+      const clientData = this.authService.getUpdatedClientData();
+      return show.some(role => clientData.Roles?.includes(role));
+    }
+
+    // Default to false if configuration is invalid
+    return false;
+  }
+
+  get taskSchedulerDisplayColumns(): string[] {
+    const columns = ['taskName'];
+
+    // Conditionally add serverName column (after taskName, before description)
+    if (this.checkTaskServerNameShow(this.hideControls.controlProperties?.taskScheduler?.taskServerName)) {
+      columns.push('serverName');
+    }
+
+    // Add description column
+    columns.push('description');
+
+    // Conditionally add lastRunTime column
+    if (this.checkLastRunTimeShow(this.hideControls.controlProperties?.taskScheduler?.lastRunTimeShow)) {
+      columns.push('lastRunTime');
+    }
+
+    // Always show status column
+    columns.push('status');
+
+    return columns;
+  }
+
+  checkTaskServerNameShow(config?: any): boolean {
+    // If not configured, default to false (hide by default)
+    if (!config) {
+      return false;
+    }
+
+    // If it's an array of roles, check user roles
+    if (Array.isArray(config)) {
+      const clientData = this.authService.getUpdatedClientData();
+      return config.some(role => clientData.Roles?.includes(role));
+    }
+
+    // If it's an object with roles property
+    if (config.roles && Array.isArray(config.roles)) {
+      const clientData = this.authService.getUpdatedClientData();
+      return config.roles.some((role: string) => clientData.Roles?.includes(role));
+    }
+
+    // Default to false
+    return false;
+  }
+
+  getTaskServerName(taskName: string): string {
+    if (!taskName) {
+      return '';
+    }
+
+    // Return mapped server name or empty string
+    return this.taskServerMapping.get(taskName) || '';
+  }
+
+  private buildTaskServerMapping(mappingConfig: any): void {
+    this.taskServerMapping.clear();
+
+    if (!mappingConfig) {
+      return;
+    }
+
+    // Format 1: Object with taskName as key
+    // Example: { "JRSocketClient": "tsgvm03520", "JR-WMx CRTC1 Web Socket": "tsgvm04373" }
+    if (typeof mappingConfig === 'object' && !Array.isArray(mappingConfig)) {
+      Object.keys(mappingConfig).forEach(taskName => {
+        if (taskName !== 'roles' && typeof mappingConfig[taskName] === 'string') {
+          this.taskServerMapping.set(taskName, mappingConfig[taskName]);
+        }
+      });
+      return;
+    }
+
+    // Format 2: Array of objects
+    // Example: [{ taskName: "JRSocketClient", serverName: "tsgvm03520" }]
+    if (Array.isArray(mappingConfig)) {
+      mappingConfig.forEach((item: any) => {
+        if (item.taskName && item.serverName) {
+          this.taskServerMapping.set(item.taskName, item.serverName);
+        } else if (typeof item === 'string') {
+          // Format 3: String format "TaskName=>ServerName"
+          const parts = item.split('=>');
+          if (parts.length === 2) {
+            this.taskServerMapping.set(parts[0].trim(), parts[1].trim());
+          }
+        }
+      });
+    }
+  }
 
   private loadControlConfiguration(): void {
     this.commonService.post<string>(
@@ -252,7 +365,15 @@ export class ServiceDashboard {
         if (response.Status === 'PASS' && response.Response) {
           try {
             // Parse the JSON string response
-            const config = JSON.parse(response.Response);
+            let config = JSON.parse(response.Response);
+            // config.taskScheduler = {
+            //   "taskServerName": {
+            //     "roles": ["DEVELOPER", "SERVICEADMIN"],
+            //     "JRSocketClient": "tsgvm04373",
+            //     "JR-WMx CRTC1 Web Socket": "tsgvm03520",
+            //     "JR-WMx CRTC1 Update Order Info Web Socket":"tsgvm03520"
+            //   }
+            // }
             this.applyControlConfiguration(config);
           } catch (error) {
             console.error('Error parsing control config:', error);
@@ -285,7 +406,6 @@ export class ServiceDashboard {
   private applyControlConfiguration(config: any): void {
     console.log('Applying control configuration:', config);
 
-    // Update tab visibility
     if (config.allowWindowsTab !== undefined) {
       this.hideControls.controlProperties.allowWindowsTab = config.allowWindowsTab;
     }
@@ -334,6 +454,42 @@ export class ServiceDashboard {
     // Handle Task Scheduler visibility
     if (config.canTaskSchedulerShow !== undefined) {
       this.hideControls.controlProperties.canTaskSchedulerShow = config.canTaskSchedulerShow.Show;
+    }
+
+    // ===== UPDATED SECTION: Handle Task Scheduler configuration =====
+    if (config.taskScheduler) {
+      if (!this.hideControls.controlProperties.taskScheduler) {
+        this.hideControls.controlProperties.taskScheduler = {};
+      }
+
+      // Handle labels
+      if (config.taskScheduler.taskNameLbl) {
+        this.hideControls.controlProperties.taskScheduler.taskNameLbl = config.taskScheduler.taskNameLbl;
+      }
+      if (config.taskScheduler.desctiptionLbl) {
+        this.hideControls.controlProperties.taskScheduler.desctiptionLbl = config.taskScheduler.desctiptionLbl;
+      }
+      if (config.taskScheduler.serverNameLbl) {
+        this.hideControls.controlProperties.taskScheduler.serverNameLbl = config.taskScheduler.serverNameLbl;
+      }
+      if (config.taskScheduler.lastRunTimeLbl) {
+        this.hideControls.controlProperties.taskScheduler.lastRunTimeLbl = config.taskScheduler.lastRunTimeLbl;
+      }
+      if (config.taskScheduler.statusLbl) {
+        this.hideControls.controlProperties.taskScheduler.statusLbl = config.taskScheduler.statusLbl;
+      }
+
+      // Handle lastRunTimeShow configuration
+      if (config.taskScheduler.lastRunTimeShow !== undefined) {
+        this.hideControls.controlProperties.taskScheduler.lastRunTimeShow = config.taskScheduler.lastRunTimeShow;
+      }
+
+      // ===== NEW: Handle taskServerName configuration =====
+      if (config.taskScheduler.taskServerName !== undefined) {
+        this.hideControls.controlProperties.taskScheduler.taskServerName = config.taskScheduler.taskServerName;
+        // Build the mapping when configuration is loaded
+        this.buildTaskServerMapping(config.taskScheduler.taskServerName);
+      }
     }
 
     // Handle DB Jobs configuration
@@ -489,14 +645,14 @@ export class ServiceDashboard {
   private startAllPolling(): void {
     // Windows Services Polling - matches web's checkStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
-      timer(0, this.hideControls.controlProperties?.servicePollTimer || 2000)
+      timer(0, this.hideControls.controlProperties?.servicePollTimer || 20000)
         .pipe(takeUntil(this.windowsPolling$))
         .subscribe(() => this.checkStatus());
     }
 
     // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
-      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 2000)
+      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 20000)
         .pipe(takeUntil(this.taskPolling$))
         .subscribe(() => this.getTasksList());
     }
@@ -1199,3 +1355,10 @@ interface ServiceStatistics {
   stoppedServices: number;
   warningServices: number;
 }
+
+
+// {
+//   "taskScheduler": {
+//     "lastRunTimeShow": false  // or omit this property entirely
+//   }
+// }
