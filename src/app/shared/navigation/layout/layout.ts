@@ -11,6 +11,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { Auth } from '../../../services/auth';
+import { StorageKey } from '../../../enums/app-constants.enum';
+import { CryptoService } from '../../../services/crypto-service';
 
 @Component({
   selector: 'app-layout',
@@ -31,7 +33,7 @@ import { Auth } from '../../../services/auth';
   styleUrl: './layout.scss',
 })
 export class Layout {
-    @ViewChild('sidenav') sidenav!: MatSidenav;
+  @ViewChild('sidenav') sidenav!: MatSidenav;
 
   menuItems: MenuItem[] = [];
   filteredMenuItems: MenuItem[] = []; // For display
@@ -42,7 +44,8 @@ export class Layout {
 
   constructor(
     private authService: Auth,
-    private router: Router
+    private router: Router,
+    private cryto:CryptoService
   ) { }
 
   ngOnInit(): void {
@@ -51,11 +54,10 @@ export class Layout {
   }
 
   private loadUserInfo(): void {
-    const user = this.authService.currentUserValue;
-    if (user) {
-      this.username = user.username;
-      this.siteId = user.siteId;
-    }
+    let USERNAME:any = localStorage.getItem(StorageKey.USERNAME);
+    let SITEID = localStorage.getItem(StorageKey.SITE_ID);
+    this.username = this.cryto.decrypt(USERNAME) || '';
+    this.siteId = SITEID || '';
   }
 
   private loadMenuItems(): void {

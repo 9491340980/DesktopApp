@@ -7,6 +7,8 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Auth } from '../services/auth';
+import { StorageKey } from '../enums/app-constants.enum';
+import { CryptoService } from '../services/crypto-service';
 
 interface MenuItem {
   Title: string;
@@ -54,7 +56,8 @@ export class Dashboard implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: Auth
+    private authService: Auth,
+    private cryto:CryptoService
   ) {}
 
   ngOnInit(): void {
@@ -62,13 +65,14 @@ export class Dashboard implements OnInit {
     this.loadMenuItems();
   }
 
+
   private loadUserInfo(): void {
-    const user = this.authService.currentUserValue;
-    if (user) {
-      this.username = user.username;
-      this.siteId = user.siteId;
-    }
+    let USERNAME:any = localStorage.getItem(StorageKey.USERNAME);
+    let SITEID = localStorage.getItem(StorageKey.SITE_ID);
+    this.username = this.cryto.decrypt(USERNAME) || '';
+    this.siteId = SITEID || '';
   }
+
 
   private loadMenuItems(): void {
     const menuStr = localStorage.getItem('menu');
