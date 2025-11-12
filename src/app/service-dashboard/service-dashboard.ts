@@ -24,6 +24,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ViewLogsDialog } from './view-logs-dialog/view-logs-dialog';
+import { EngineResult } from '../models/app-config.models';
 // import { ViewLogsDialogComponent } from './view-logs-dialog.component';
 
 @Component({
@@ -53,9 +54,8 @@ import { ViewLogsDialog } from './view-logs-dialog/view-logs-dialog';
 export class ServiceDashboard {
   loadingServices: Set<string> = new Set();
   loadingTasks: Set<string> = new Set();
+  hideControls: EngineResult = new EngineResult();
 
-
-  hideControls: any = {};
   // Control Configuration (EXACTLY matching web version)
   // hideControls: any = {
   //   controlProperties: {

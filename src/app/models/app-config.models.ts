@@ -54,3 +54,6 @@ export interface DeviceInfo {
   browser?: string;
   os?: string;
 }
+ export class EngineResult{
+     controlProperties: any = {};
+}
