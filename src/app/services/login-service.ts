@@ -9,12 +9,17 @@ import {
   Session
 } from '../models/api.models';
 import { CommonService } from './common-service';
+import { ConfigModule, StorageKey } from '../enums/app-constants.enum';
+import { ConfigService } from './config-service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoginService {
-  constructor(private commonService: CommonService) {}
+  constructor(
+    private commonService: CommonService,
+    private configService: ConfigService
+  ) {}
 
   /**
    * Get Roles and Site IDs
@@ -37,14 +42,14 @@ export class LoginService {
   /**
    * Get Messages for Category
    */
-  getMessagesForCategory(clientData: ClientData, category: string = 'COM'): Observable<ApiResponse<any>> {
+  getMessagesForCategory(clientData: ClientData, category: string = ConfigModule.COMMON): Observable<ApiResponse<any>> {
     return this.commonService.postWithClientData(`/common/getMessagesForCategory/${category}`, clientData);
   }
 
   /**
    * Get Control Config
    */
-  getControlConfig(clientData: ClientData, module: string = 'LOGIN'): Observable<ApiResponse<any>> {
+  getControlConfig(clientData: ClientData, module: string = ConfigModule.LOGIN): Observable<ApiResponse<any>> {
     return this.commonService.postWithClientData('/common/getControlConfig', clientData, {
       ControlConfig: { Module: module }
     });
@@ -73,7 +78,8 @@ export class LoginService {
     username: string,
     password: string,
     deviceId: string,
-    releaseVersion: string = '0.0.0'
+    releaseVersion: string,
+    clientName?: string
   ): Observable<{
     roles: any;
     profile: any;
@@ -82,6 +88,23 @@ export class LoginService {
     sessionTime: any;
     menu: any;
   }> {
+    // Get configuration from ConfigService
+    const config = this.configService.getConfig();
+    const sharedSecurity = this.configService.getSharedSecurity();
+
+    // Get site IDs based on client name if provided
+    let dataTypeIdList: string[] = [];
+    if (clientName) {
+      const clientConfig = this.configService.getClientConfig(clientName);
+      dataTypeIdList = clientConfig?.siteIds || [];
+    }
+
+    // If no client name or site IDs found, use first client's site IDs
+    if (dataTypeIdList.length === 0) {
+      const firstClient = this.configService.getAllClients()[0];
+      dataTypeIdList = firstClient?.siteIds || [];
+    }
+
     // Step 1: Initial client data
     const initialClientData: ClientData = {
       Location: '',
@@ -90,14 +113,14 @@ export class LoginService {
       LoggedInUser: username
     };
 
-    // Step 2: Login model
+    // Step 2: Login model using configuration
     const loginModel: LoginModel = {
       UserName: username,
       Password: password,
-      Environment: 'QA026',
-      DataType: 'WAREHOUSE',
-      DataTypeIdList: ['DFW004', 'DFW005', 'DFW009'],
-      Application: 'RMX'
+      Environment: config.env,
+      DataType: sharedSecurity.DataType,
+      DataTypeIdList: dataTypeIdList,
+      Application: sharedSecurity.Application
     };
 
     // Step 3: Get roles and site IDs first
@@ -109,12 +132,12 @@ export class LoginService {
 
         // Save token
         if (rolesResponse.Response.Token) {
-          localStorage.setItem('token', rolesResponse.Response.Token);
+          localStorage.setItem(StorageKey.TOKEN, rolesResponse.Response.Token);
         }
 
         // Update client data with first site
         const siteIds = Object.keys(rolesResponse.Response.rolesList);
-        const firstSite = siteIds[0] || 'DFW009';
+        const firstSite = siteIds[0] || (dataTypeIdList[0] || 'DFW009');
         const roles = rolesResponse.Response.rolesList[firstSite] || [];
 
         const updatedClientData: ClientData = {

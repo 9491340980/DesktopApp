@@ -4,29 +4,22 @@ import { catchError, finalize, Observable, retry, throwError, timeout, TimeoutEr
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiRequestConfig, ApiResponse, ClientData } from '../models/api.models';
 import { Auth } from './auth';
+import { ApiModule, NotificationType } from '../enums/app-constants.enum';
+import { ConfigService } from './config-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CommonService {
-  // private baseUrl: string = 'http://tsgvm04112:8020'; // Default base URL
-  private baseUrl: string = 'https://qaapi-rmxt026.am.gxo.com:8553'; // Default base URL
-
-  // private apiBaseUrl: string = 'http://tsgvm04112:8010/api'; // API base URL
-  private apiBaseUrl: string = 'http://tsgvm04112:8010/api'; // API base URL
-
-  private utlBaseURl:string='https://qaapi-rmxt026.am.gxo.com:8333/api'
-
   private defaultTimeout: number = 30000; // 30 seconds
   private isLoading: boolean = false;
-
-  environment: string = 'QA026';
 
   // Inject services
   private authService = inject(Auth);
   private snackBar = inject(MatSnackBar);
+  private configService = inject(ConfigService);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Generic API call method
@@ -212,7 +205,7 @@ export class CommonService {
   }
 
   /**
-   * Build full URL from endpoint
+   * Build full URL from endpoint using ConfigService
    */
   private buildUrl(endpoint: string): string {
     // If endpoint is already a full URL, return as-is
@@ -220,16 +213,38 @@ export class CommonService {
       return endpoint;
     }
 
-    // If endpoint starts with /LogIn, use baseUrl, otherwise use apiBaseUrl
+    // Determine which base URL to use based on endpoint
+    let baseUrl: string;
+
     if (endpoint.startsWith('/LogIn')) {
-      return `${this.baseUrl}${endpoint}`;
+      baseUrl = this.configService.getModuleUrl(ApiModule.SECURITY);
+    } else if (endpoint.startsWith('/utilities')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.UTILITIES);
+    } else if (endpoint.startsWith('/common')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.COMMON);
+    } else if (endpoint.startsWith('/receiving')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.RECEIVING);
+    } else if (endpoint.startsWith('/warehouse')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.WAREHOUSE);
+    } else if (endpoint.startsWith('/transportation')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.TRANSPORTATION);
+    } else if (endpoint.startsWith('/maintenance')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.MAINTENANCE);
+    } else if (endpoint.startsWith('/configuration')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.CONFIGURATION);
+    } else if (endpoint.startsWith('/testing')) {
+      baseUrl = this.configService.getModuleUrl(ApiModule.TESTING);
+    } else {
+      // Default to common URL
+      baseUrl = this.configService.getModuleUrl(ApiModule.COMMON);
     }
-
-    if(endpoint.startsWith('/utilities')){
-      return `${this.utlBaseURl}${endpoint}`;
+    // Remove trailing slash from baseUrl and leading slash from endpoint if both exist
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    if (endpoint.startsWith('/LogIn')) {
+      return `${cleanBaseUrl}/${cleanEndpoint}`;
     }
-
-    return `${this.apiBaseUrl}${endpoint}`;
+    return `${cleanBaseUrl}/api${cleanEndpoint}`;
   }
 
   /**
@@ -296,7 +311,7 @@ export class CommonService {
 
     // Show error notification
     if (showError) {
-      this.showError(errorMessage);
+      this.showNotification(errorMessage, NotificationType.ERROR);
     }
 
     return throwError(() => ({
@@ -352,14 +367,16 @@ export class CommonService {
   }
 
   /**
-   * Show error notification
+   * Show notification
    */
-  showError(message: string): void {
+  public showNotification(message: string, type: NotificationType): void {
+    const duration = type === NotificationType.SUCCESS ? 3000 : 5000;
+
     this.snackBar.open(message, 'Close', {
-      duration: 5000,
+      duration,
       horizontalPosition: 'center',
       verticalPosition: 'top',
-      panelClass: ['error-snackbar']
+      panelClass: [`${type}-snackbar`]
     });
   }
 
@@ -367,36 +384,28 @@ export class CommonService {
    * Show success notification
    */
   public showSuccess(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
-    });
+    this.showNotification(message, NotificationType.SUCCESS);
+  }
+
+  /**
+   * Show error notification
+   */
+  public showError(message: string): void {
+    this.showNotification(message, NotificationType.ERROR);
   }
 
   /**
    * Show info notification
    */
   public showInfo(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 4000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: ['info-snackbar']
-    });
+    this.showNotification(message, NotificationType.INFO);
   }
 
   /**
    * Show warning notification
    */
   public showWarning(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 4000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: ['warning-snackbar']
-    });
+    this.showNotification(message, NotificationType.WARNING);
   }
 
   /**
@@ -425,14 +434,6 @@ export class CommonService {
   }
 
   /**
-   * Set base URLs
-   */
-  public setBaseUrls(baseUrl: string, apiBaseUrl: string): void {
-    this.baseUrl = baseUrl;
-    this.apiBaseUrl = apiBaseUrl;
-  }
-
-  /**
    * Set default timeout
    */
   public setDefaultTimeout(timeout: number): void {
@@ -440,16 +441,9 @@ export class CommonService {
   }
 
   /**
-   * Get base URL
+   * Get environment
    */
-  public getBaseUrl(): string {
-    return this.baseUrl;
-  }
-
-  /**
-   * Get API base URL
-   */
-  public getApiBaseUrl(): string {
-    return this.apiBaseUrl;
+  public getEnvironment(): string {
+    return this.configService.getEnvironment();
   }
 }

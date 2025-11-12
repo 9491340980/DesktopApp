@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { ConfigService } from './../../services/config-service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Auth } from '../../services/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,21 +12,27 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CryptoService } from '../../services/crypto-service';
+import { forkJoin } from 'rxjs';
+import { DeviceService } from '../../services/device-service';
+import { NotificationType, StorageKey } from '../../enums/app-constants.enum';
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule,
+  standalone: true,
+  imports: [
+    CommonModule,
     FormsModule,
     MatButtonModule,
     MatInputModule,
     MatFormFieldModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule],
+    MatSnackBarModule
+  ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login {
+export class Login implements OnInit, OnDestroy {
   username: string = '';
   password: string = '';
   rememberMe: boolean = false;
@@ -36,13 +43,15 @@ export class Login {
   isCapLockOn: boolean = false;
   showPassword: boolean = false;
 
-  // Environment info
-  environment: string = 'QA026'; // Can be changed to PROD, UAT, etc.
-  releaseVersion: string = '1.0.0';
+  // Environment info (from config)
+  environment: string = '';
+  releaseVersion: string = '';
 
   constructor(
     private loginService: LoginService,
     private cryptoService: CryptoService,
+    private configService: ConfigService,
+    private deviceService: DeviceService,
     private router: Router,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar
@@ -50,28 +59,28 @@ export class Login {
 
   ngOnInit(): void {
     // Check if already logged in
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(StorageKey.TOKEN);
     if (token) {
       this.router.navigate(['/dashboard']);
       return;
     }
 
+    // Load environment from config
+    this.environment = this.configService.getEnvironment();
+    this.releaseVersion = this.getAppVersion();
 
     // Check for timeout message
     this.route.queryParams.subscribe(params => {
       if (params['reason'] === 'timeout') {
         this.showSnackbar(
           'Your session has expired due to inactivity. Please login again.',
-          'warning'
+          NotificationType.WARNING
         );
       }
     });
 
     // Load remembered username
     this.loadRememberedCredentials();
-
-    // Get release version from package or config
-    this.releaseVersion = this.getAppVersion();
   }
 
   ngOnDestroy(): void {
@@ -94,15 +103,33 @@ export class Login {
     const encryptedUsername = this.cryptoService.encrypt(this.username.toLowerCase());
     const encryptedPassword = this.cryptoService.encrypt(this.password);
 
-    // Get device ID
-    const deviceId = this.getDeviceId();
+    // Get device ID first, then perform login
+    this.deviceService.getDeviceId().subscribe({
+      next: (deviceId) => {
+        this.performLogin(encryptedUsername, encryptedPassword, deviceId);
+      },
+      error: (error) => {
+        console.error('Failed to get device ID:', error);
+        // Proceed with login even if device ID fails (use empty string)
+        this.performLogin(encryptedUsername, encryptedPassword, '');
+      }
+    });
+  }
 
-    // Perform login
+  /**
+   * Perform the actual login
+   */
+  private performLogin(
+    encryptedUsername: string,
+    encryptedPassword: string,
+    deviceId: string
+  ): void {
     this.loginService.performLogin(
       encryptedUsername,
       encryptedPassword,
       deviceId,
-      this.releaseVersion
+      this.releaseVersion,
+      'VERIZON' // You can make this dynamic based on user selection or domain
     ).subscribe({
       next: (response: any) => {
         console.log('Login successful:', response);
@@ -112,13 +139,13 @@ export class Login {
 
         // Handle remember me
         if (this.rememberMe) {
-          localStorage.setItem('rememberedUsername', this.username);
+          localStorage.setItem(StorageKey.REMEMBERED_USERNAME, this.username);
         } else {
-          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem(StorageKey.REMEMBERED_USERNAME);
         }
-        debugger
+
         // Show success message
-        this.showSnackbar('Login successful! Welcome back.', 'success');
+        this.showSnackbar('Login successful! Welcome back.', NotificationType.SUCCESS);
 
         // Navigate to dashboard
         setTimeout(() => {
@@ -138,7 +165,7 @@ export class Login {
           this.errorMessage = error.message || 'Login failed. Please try again.';
         }
 
-        this.showSnackbar(this.errorMessage, 'error');
+        this.showSnackbar(this.errorMessage, NotificationType.ERROR);
       },
       complete: () => {
         this.loading = false;
@@ -152,19 +179,19 @@ export class Login {
   private validateForm(): boolean {
     if (!this.username || !this.password) {
       this.errorMessage = 'Please enter username and password';
-      this.showSnackbar(this.errorMessage, 'error');
+      this.showSnackbar(this.errorMessage, NotificationType.ERROR);
       return false;
     }
 
     if (this.username.length < 3) {
       this.errorMessage = 'Username must be at least 3 characters';
-      this.showSnackbar(this.errorMessage, 'error');
+      this.showSnackbar(this.errorMessage, NotificationType.ERROR);
       return false;
     }
 
     if (this.password.length < 6) {
       this.errorMessage = 'Password must be at least 6 characters';
-      this.showSnackbar(this.errorMessage, 'error');
+      this.showSnackbar(this.errorMessage, NotificationType.ERROR);
       return false;
     }
 
@@ -178,52 +205,52 @@ export class Login {
     try {
       // Save token
       if (response.roles?.Response?.Token) {
-        localStorage.setItem('token', response.roles.Response.Token);
+        localStorage.setItem(StorageKey.TOKEN, response.roles.Response.Token);
       }
 
       // Save roles
       if (response.roles?.Response?.rolesList) {
-        localStorage.setItem('rolesList', JSON.stringify(response.roles.Response.rolesList));
-        localStorage.setItem('siteIds', JSON.stringify(Object.keys(response.roles.Response.rolesList)));
+        localStorage.setItem(StorageKey.ROLES_LIST, JSON.stringify(response.roles.Response.rolesList));
+        localStorage.setItem(StorageKey.SITE_IDS, JSON.stringify(Object.keys(response.roles.Response.rolesList)));
       }
 
       // Save user profile
       if (response.profile?.Response?.UserProfile) {
         const profile = response.profile.Response.UserProfile;
-        localStorage.setItem('userProfile', JSON.stringify(profile));
-        localStorage.setItem('clientId', profile.ClientId);
-        localStorage.setItem('siteId', profile.SiteId);
-        localStorage.setItem('location', profile.Loc);
-        localStorage.setItem('userId', profile.UserId);
+        localStorage.setItem(StorageKey.USER_PROFILE, JSON.stringify(profile));
+        localStorage.setItem(StorageKey.CLIENT_ID, profile.ClientId);
+        localStorage.setItem(StorageKey.SITE_ID, profile.SiteId);
+        localStorage.setItem(StorageKey.LOCATION, profile.Loc);
+        localStorage.setItem(StorageKey.USER_ID, profile.UserId);
       }
 
       // Save session
       if (response.profile?.Response?.Session) {
-        localStorage.setItem('session', JSON.stringify(response.profile.Response.Session));
+        localStorage.setItem(StorageKey.SESSION, JSON.stringify(response.profile.Response.Session));
       }
 
       // Save control config
       if (response.config?.Response) {
-        localStorage.setItem('controlConfig', response.config.Response);
+        localStorage.setItem(StorageKey.CONTROL_CONFIG, response.config.Response);
       }
 
       // Save session timeout
       if (response.sessionTime?.Response) {
-        localStorage.setItem('sessionTimeout', response.sessionTime.Response);
+        localStorage.setItem(StorageKey.SESSION_TIMEOUT, response.sessionTime.Response);
       }
 
       // Save menu
       if (response.menu?.Response) {
-        localStorage.setItem('menu', JSON.stringify(response.menu.Response));
+        localStorage.setItem(StorageKey.MENU, JSON.stringify(response.menu.Response));
       }
 
       // Save messages
       if (response.messages?.Response) {
-        localStorage.setItem('messages', JSON.stringify(response.messages.Response));
+        localStorage.setItem(StorageKey.MESSAGES, JSON.stringify(response.messages.Response));
       }
 
       // Save username for display
-      localStorage.setItem('username', this.username);
+      localStorage.setItem(StorageKey.USERNAME, this.username);
 
     } catch (error) {
       console.error('Error saving user data:', error);
@@ -231,58 +258,17 @@ export class Login {
   }
 
   /**
-   * Get or create device ID
-   */
-  private getDeviceId(): string {
-    let deviceId = localStorage.getItem('deviceId');
-    if (!deviceId) {
-      // Try to get computer name or generate unique ID
-      deviceId = this.generateDeviceId();
-      localStorage.setItem('deviceId', deviceId);
-    }
-    return deviceId;
-  }
-
-  /**
-   * Generate unique device ID
-   */
-  private generateDeviceId(): string {
-    const userAgent = navigator.userAgent;
-    const platform = navigator.platform;
-    const timestamp = Date.now();
-
-    // Create a simple unique ID based on browser info
-    const uniqueString = `${userAgent}-${platform}-${timestamp}`;
-    const hash = this.simpleHash(uniqueString);
-
-    return `WEB_${hash.substring(0, 12).toUpperCase()}`;
-  }
-
-  /**
-   * Simple hash function
-   */
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36);
-  }
-
-  /**
    * Get app version
    */
   private getAppVersion(): string {
-    return localStorage.getItem('releaseVersion') || '1.0.0';
+    return localStorage.getItem(StorageKey.RELEASE_VERSION) || '1.0.0';
   }
 
   /**
    * Load remembered credentials
    */
   private loadRememberedCredentials(): void {
-    const rememberedUsername = localStorage.getItem('rememberedUsername');
+    const rememberedUsername = localStorage.getItem(StorageKey.REMEMBERED_USERNAME);
     if (rememberedUsername) {
       this.username = rememberedUsername;
       this.rememberMe = true;
@@ -321,9 +307,9 @@ export class Login {
   /**
    * Show snackbar notification
    */
-  private showSnackbar(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
+  private showSnackbar(message: string, type: NotificationType): void {
     this.snackBar.open(message, 'Close', {
-      duration: type === 'success' ? 3000 : 5000,
+      duration: type === NotificationType.SUCCESS ? 3000 : 5000,
       horizontalPosition: 'center',
       verticalPosition: 'top',
       panelClass: [`${type}-snackbar`]

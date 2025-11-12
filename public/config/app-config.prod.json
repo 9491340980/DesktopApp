@@ -1,0 +1,24 @@
+{
+  "comUrl": "https://qaapi-rmxt026.am.gxo.com:8223/",
+  "utlUrl": "https://qaapi-rmxt026.am.gxo.com:8333/",
+  "secUrl": "https://qaapi-rmxt026.am.gxo.com:8553/",
+  "recUrl": "https://qaapi-rmxt026.am.gxo.com:8663/",
+  "tstUrl": "https://qaapi-rmxt026.am.gxo.com:8773/",
+  "wtUrl": "https://qaapi-rmxt026.am.gxo.com:8883/",
+  "conUrl": "https://qaapi-rmxt026.am.gxo.com:8227/",
+  "mntUrl": "https://qaapi-rmxt026.am.gxo.com:8225/",
+  "trsUrl": "https://qaapi-rmxt026.am.gxo.com:8555/",
+  "env": "PROD",
+  "errorMsg": "7320011: Site configuration is missing in RMX",
+  "invalidUser": "User is already logged in.",
+  "sharedSecurity": {
+    "DataType": "WAREHOUSE",
+    "Application": "RMX"
+  },
+  "clients": [
+    {
+      "clientName": "VERIZON",
+      "siteIds": ["DFW004", "DFW005", "DFW009"]
+    }
+  ]
+}
