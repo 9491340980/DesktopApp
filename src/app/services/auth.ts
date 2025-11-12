@@ -330,33 +330,33 @@ getUpdatedClientData(){
   /**
    * Get client data for API calls
    */
-  public getClientData(): any {
-    const user = this.currentUserValue;
-    const deviceId = localStorage.getItem('deviceId') || '';
-    const location = localStorage.getItem('location') || '';
+  // public getClientData(): any {
+  //   const user = this.currentUserValue;
+  //   const deviceId = localStorage.getItem('deviceId') || '';
+  //   const location = localStorage.getItem('location') || '';
 
-    if (!user) {
-      return {
-        Location: location,
-        ClientId: '9999',
-        SiteId: 'LOGIN',
-        LoggedInUser: '',
-        DeviceId: deviceId
-      };
-    }
+  //   if (!user) {
+  //     return {
+  //       Location: location,
+  //       ClientId: '9999',
+  //       SiteId: 'LOGIN',
+  //       LoggedInUser: '',
+  //       DeviceId: deviceId
+  //     };
+  //   }
 
-    const siteId = user.siteId || this.getUserSites()[0] || '';
-    const roles = this.getUserRoles(siteId);
+  //   const siteId = user.siteId || this.getUserSites()[0] || '';
+  //   const roles = this.getUserRoles(siteId);
 
-    return {
-      Location: location,
-      ClientId: user.clientId,
-      SiteId: siteId,
-      LoggedInUser: user.userId,
-      DeviceId: deviceId,
-      Roles: roles
-    };
-  }
+  //   return {
+  //     Location: location,
+  //     ClientId: user.clientId,
+  //     SiteId: siteId,
+  //     LoggedInUser: user.userId,
+  //     DeviceId: deviceId,
+  //     Roles: roles
+  //   };
+  // }
 
   /**
    * Update user profile

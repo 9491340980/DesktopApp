@@ -91,7 +91,7 @@ export class CommonService {
     const url = this.buildUrl(endpoint);
 
     // Use custom ClientData or get from AuthService
-    const clientData = customClientData || this.authService.getClientData();
+    const clientData = customClientData || this.authService.getUpdatedClientData();
 
     const body = {
       ClientData: clientData,
@@ -165,7 +165,7 @@ export class CommonService {
     options: Partial<ApiRequestConfig> = {}
   ): Observable<ApiResponse<T>> {
     const url = this.buildUrl(endpoint);
-    const clientData = this.authService.getClientData();
+    const clientData = this.authService.getUpdatedClientData();
 
     const body = {
       ClientData: clientData,
@@ -189,7 +189,7 @@ export class CommonService {
     options: Partial<ApiRequestConfig> = {}
   ): Observable<ApiResponse<T>> {
     const url = this.buildUrl(endpoint);
-    const clientData = this.authService.getClientData();
+    const clientData = this.authService.getUpdatedClientData();
 
     const body = {
       ClientData: clientData,
