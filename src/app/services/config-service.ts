@@ -9,7 +9,7 @@ import { ApiModule, StorageKey } from '../enums/app-constants.enum';
 })
 export class ConfigService {
   private config: AppConfig | null = null;
-  private readonly CONFIG_FILE_PATH = '/config/app-config.json';
+  private readonly CONFIG_FILE_PATH = '/assets/config/app-config.json';
   private isLoading = false;
 
   constructor(private http: HttpClient) {

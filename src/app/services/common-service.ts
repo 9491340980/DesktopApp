@@ -238,11 +238,12 @@ export class CommonService {
       // Default to common URL
       baseUrl = this.configService.getModuleUrl(ApiModule.COMMON);
     }
+
     // Remove trailing slash from baseUrl and leading slash from endpoint if both exist
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     if (endpoint.startsWith('/LogIn')) {
-      return `${cleanBaseUrl}/${cleanEndpoint}`;
+       return `${cleanBaseUrl}${cleanEndpoint}`;
     }
     return `${cleanBaseUrl}/api${cleanEndpoint}`;
   }

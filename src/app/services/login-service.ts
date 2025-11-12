@@ -1,16 +1,28 @@
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable, of, forkJoin } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 import {
   ClientData,
   ApiResponse,
   LoginModel,
-  UserProfile,
-  Session
+  UserProfile
 } from '../models/api.models';
 import { CommonService } from './common-service';
 import { ConfigModule, StorageKey } from '../enums/app-constants.enum';
 import { ConfigService } from './config-service';
+
+/**
+ * Login Response Interface
+ */
+export interface LoginResponse {
+  clientData: ClientData;
+  roles: any;
+  profile: any;
+  messages: any;
+  config: any;
+  sessionTime: any;
+  menu: any;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -37,6 +49,13 @@ export class LoginService {
     return this.commonService.postWithClientData('/LogIn/getUserProfile', clientData, {
       UserProfile: userProfile
     });
+  }
+
+  /**
+   * Get Device ID
+   */
+  getDeviceId(clientData: ClientData): Observable<ApiResponse<any>> {
+    return this.commonService.postWithClientData('/utilities/getDeviceId', clientData);
   }
 
   /**
@@ -72,7 +91,7 @@ export class LoginService {
   }
 
   /**
-   * Complete Login Flow - calls all necessary APIs in sequence
+   * Complete Login Flow - Matches existing flow with clientData updates
    */
   performLogin(
     username: string,
@@ -80,14 +99,7 @@ export class LoginService {
     deviceId: string,
     releaseVersion: string,
     clientName?: string
-  ): Observable<{
-    roles: any;
-    profile: any;
-    messages: any;
-    config: any;
-    sessionTime: any;
-    menu: any;
-  }> {
+  ): Observable<LoginResponse> {
     // Get configuration from ConfigService
     const config = this.configService.getConfig();
     const sharedSecurity = this.configService.getSharedSecurity();
@@ -105,8 +117,8 @@ export class LoginService {
       dataTypeIdList = firstClient?.siteIds || [];
     }
 
-    // Step 1: Initial client data
-    const initialClientData: ClientData = {
+    // Step 1: Initial client data for login
+    let clientData: ClientData = {
       Location: '',
       ClientId: '9999',
       SiteId: 'LOGIN',
@@ -124,8 +136,8 @@ export class LoginService {
     };
 
     // Step 3: Get roles and site IDs first
-    return this.getRolesSiteIds(initialClientData, loginModel).pipe(
-      switchMap(rolesResponse => {
+    return this.getRolesSiteIds(clientData, loginModel).pipe(
+      tap(rolesResponse => {
         if (rolesResponse.Status !== 'PASS') {
           throw new Error(rolesResponse.StatusMessage || 'Failed to get roles');
         }
@@ -135,40 +147,137 @@ export class LoginService {
           localStorage.setItem(StorageKey.TOKEN, rolesResponse.Response.Token);
         }
 
-        // Update client data with first site
+        // Save roles data
+        if (rolesResponse.Response.rolesList) {
+          localStorage.setItem(StorageKey.ROLES_LIST, JSON.stringify(rolesResponse.Response.rolesList));
+          localStorage.setItem(StorageKey.SITE_IDS, JSON.stringify(Object.keys(rolesResponse.Response.rolesList)));
+        }
+
+        // Save username
+        localStorage.setItem(StorageKey.USERNAME, username);
+        localStorage.setItem('addWho', username); // For compatibility with existing code
+      }),
+      switchMap(rolesResponse => {
+        // Update client data with first site for subsequent calls
         const siteIds = Object.keys(rolesResponse.Response.rolesList);
         const firstSite = siteIds[0] || (dataTypeIdList[0] || 'DFW009');
-        const roles = rolesResponse.Response.rolesList[firstSite] || [];
 
-        const updatedClientData: ClientData = {
+        // Update clientData for user profile call
+        clientData = {
           Location: '',
           ClientId: '1011',
           SiteId: firstSite,
           LoggedInUser: username,
-          DeviceId: deviceId,
-          Roles: roles
+          DeviceId: deviceId || ''
         };
 
-        // Step 4: Call all other APIs in parallel
+        // Save initial clientData
+        localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData));
+
+        // Get user profile with device ID and release version
+        const userProfileData: Partial<UserProfile> = {
+          ReleaseVersion: releaseVersion
+        };
+
+        if (deviceId) {
+          userProfileData.DeviceId = deviceId;
+        }
+
+        return this.getUserProfile(clientData, userProfileData).pipe(
+          map(profileResponse => ({
+            rolesResponse,
+            profileResponse,
+            clientData
+          }))
+        );
+      }),
+      switchMap(({ rolesResponse, profileResponse, clientData: currentClientData }) => {
+        if (profileResponse.Status !== 'PASS') {
+          // If profile fails, try to get device ID
+          if (!currentClientData.DeviceId) {
+            return this.getDeviceId(currentClientData).pipe(
+              switchMap(deviceResponse => {
+                if (deviceResponse.Status === 'PASS' && deviceResponse.Response?.DeviceId) {
+                  currentClientData.DeviceId = deviceResponse.Response.DeviceId;
+                  let deviceID:any=currentClientData.DeviceId
+                  localStorage.setItem(StorageKey.DEVICE_ID, deviceID);
+                  localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(currentClientData));
+                }
+
+                // Return error response but continue flow
+                return of<LoginResponse>({
+                  clientData: currentClientData,
+                  roles: rolesResponse,
+                  profile: { Status: 'FAIL', Response: null },
+                  messages: null,
+                  config: null,
+                  sessionTime: null,
+                  menu: null
+                });
+              })
+            );
+          }
+          throw new Error(profileResponse.StatusMessage || 'Failed to get user profile');
+        }
+
+        // Update clientData with profile information
+        const profile = profileResponse.Response.UserProfile;
+        currentClientData.Location = profile.Loc;
+        currentClientData.ClientId = profile.ClientId;
+        currentClientData.SiteId = profile.SiteId;
+
+        if (profile.DeviceId) {
+          currentClientData.DeviceId = profile.DeviceId;
+        }
+
+        // Get roles for this specific site (getRolesBySiteId equivalent)
+        const rolesBySiteId = rolesResponse.Response.rolesList[currentClientData.SiteId] || [];
+        currentClientData.Roles = rolesBySiteId;
+
+        // Save updated clientData with all fields including Roles
+        localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(currentClientData));
+        localStorage.setItem(StorageKey.USER_PROFILE, JSON.stringify(profile));
+        localStorage.setItem(StorageKey.CLIENT_ID, profile.ClientId);
+        localStorage.setItem(StorageKey.SITE_ID, profile.SiteId);
+        localStorage.setItem(StorageKey.LOCATION, profile.Loc);
+
+        // Save UserId if present
+        if (profile.UserId) {
+          localStorage.setItem(StorageKey.USER_ID, profile.UserId);
+        }
+
+        // Save Session if present
+        if (profileResponse.Response.Session) {
+          localStorage.setItem(StorageKey.SESSION, JSON.stringify(profileResponse.Response.Session));
+        }
+
+        // Now make parallel calls with the updated clientData
         return forkJoin({
-          roles: Promise.resolve(rolesResponse),
-          profile: this.getUserProfile(updatedClientData, { ReleaseVersion: releaseVersion }),
-          messages: this.getMessagesForCategory(updatedClientData),
-          config: this.getControlConfig(updatedClientData),
-          sessionTime: this.getSessionTime(updatedClientData),
-          menu: this.getMenu(updatedClientData, {
+          messages: this.getMessagesForCategory(currentClientData),
+          config: this.getControlConfig(currentClientData),
+          sessionTime: this.getSessionTime(currentClientData),
+          menu: this.getMenu(currentClientData, {
             Roles: rolesResponse.Response.rolesList
           })
-        });
+        }).pipe(
+          map(parallelResults => ({
+            clientData: currentClientData,
+            roles: rolesResponse,
+            profile: profileResponse,
+            messages: parallelResults.messages,
+            config: parallelResults.config,
+            sessionTime: parallelResults.sessionTime,
+            menu: parallelResults.menu
+          }))
+        );
       })
     );
   }
 
   /**
-   * Logout user (call backend logout API if available)
+   * Logout user
    */
   logout(clientData: ClientData): Observable<ApiResponse<any>> {
-    // If you have a logout endpoint on the backend
     return this.commonService.postWithClientData('/LogIn/logout', clientData);
   }
 
@@ -176,7 +285,6 @@ export class LoginService {
    * Refresh session
    */
   refreshSession(clientData: ClientData): Observable<ApiResponse<any>> {
-    // If you have a refresh session endpoint
     return this.commonService.postWithClientData('/LogIn/refreshSession', clientData);
   }
 
@@ -184,7 +292,6 @@ export class LoginService {
    * Validate session
    */
   validateSession(clientData: ClientData): Observable<ApiResponse<any>> {
-    // If you have a validate session endpoint
     return this.commonService.postWithClientData('/LogIn/validateSession', clientData);
   }
 }

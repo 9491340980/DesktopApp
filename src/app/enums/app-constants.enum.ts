@@ -50,27 +50,49 @@ export enum ErrorMessageKey {
 }
 
 /**
- * Storage Keys
+ * Storage Keys - Comprehensive list for compatibility with existing app
  */
 export enum StorageKey {
+  // Authentication & User
   TOKEN = 'token',
-  ROLES_LIST = 'rolesList',
-  SITE_IDS = 'siteIds',
+  USERNAME = 'username',
+  USER_ID = 'userId',
   USER_PROFILE = 'userProfile',
+  REMEMBERED_USERNAME = 'rememberedUsername',
+  ADD_WHO = 'addWho',
+
+  // Client & Site Data
+  CLIENT_DATA = 'clientData',
   CLIENT_ID = 'clientId',
   SITE_ID = 'siteId',
+  SITE_IDS = 'siteIds',
   LOCATION = 'location',
-  USER_ID = 'userId',
-  SESSION = 'session',
-  CONTROL_CONFIG = 'controlConfig',
+
+  // Roles & Permissions
+  ROLES_LIST = 'rolesList',
+  ROLES_SITE_IDS = 'rolesSiteIds',
+
+  // Session & Configuration
+  SESSION = 'Session',
   SESSION_TIMEOUT = 'sessionTimeout',
+  CONTROL_CONFIG = 'controlConfig',
+  APP_CONFIG = 'appConfig',
+
+  // Menu & Messages
   MENU = 'menu',
   MESSAGES = 'messages',
-  USERNAME = 'username',
+  MODULE = 'module',
+
+  // Device & Workstation
   DEVICE_ID = 'deviceId',
-  REMEMBERED_USERNAME = 'rememberedUsername',
+  WORKSTATION_NAME = 'WorkStationName',
+  WORKSTATION_DETAILS = 'WorkStationDetails',
+
+  // Version & Release
   RELEASE_VERSION = 'releaseVersion',
-  APP_CONFIG = 'appConfig'
+
+  // Other
+  CURRENT_PROFILE = 'currentProfile'
 }
 
 /**
@@ -100,4 +122,14 @@ export enum ConfigModule {
   LOGIN = 'LOGIN',
   DASHBOARD = 'DASHBOARD',
   COMMON = 'COM'
+}
+
+/**
+ * Status Codes (for compatibility with existing StatusCodes enum)
+ */
+export enum StatusCode {
+  PASS = 'PASS',
+  FAIL = 'FAIL',
+  SUCCESS = 'SUCCESS',
+  ERROR = 'ERROR'
 }

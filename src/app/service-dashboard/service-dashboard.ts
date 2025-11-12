@@ -1077,7 +1077,7 @@ export class ServiceDashboard {
       return true;
     }
     if (roles && roles.length) {
-      const clientData = this.authService.getClientData();
+      const clientData = this.authService.getUpdatedClientData();
       return roles.some(role => clientData.Roles?.includes(role));
     }
     return false;
@@ -1085,7 +1085,7 @@ export class ServiceDashboard {
 
   checkDescriptionMatch(roles: string[]): boolean {
     if (roles && roles.length) {
-      const clientData = this.authService.getClientData();
+      const clientData = this.authService.getUpdatedClientData();
       return roles.some(role => clientData.Roles?.includes(role));
     }
     return false;
@@ -1093,7 +1093,7 @@ export class ServiceDashboard {
 
   checkLogsMatch(roles: string[]): boolean {
     if (roles && roles.length) {
-      const clientData = this.authService.getClientData();
+      const clientData = this.authService.getUpdatedClientData();
       return roles.some(role => clientData.Roles?.includes(role));
     }
     return false;
@@ -1101,7 +1101,7 @@ export class ServiceDashboard {
 
   checkTabMatch(roles: string[]): boolean {
     if (roles && roles.length) {
-      const clientData = this.authService.getClientData();
+      const clientData = this.authService.getUpdatedClientData();
       return roles.some(role => clientData.Roles?.includes(role));
     }
     return false;
@@ -1109,7 +1109,7 @@ export class ServiceDashboard {
 
   checkStatusAccessMatch(roles: string[], serviceName?: string): boolean {
     if (roles && roles.length) {
-      const clientData = this.authService.getClientData();
+      const clientData = this.authService.getUpdatedClientData();
       return roles.some(role => clientData.Roles?.includes(role));
     }
     return true;

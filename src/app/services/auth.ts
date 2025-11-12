@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthUser } from '../models/api.models';
+import { StorageKey } from '../enums/app-constants.enum';
 
 export interface User {
   username: string;
@@ -317,6 +318,14 @@ export class Auth {
     const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
     return !publicRoutes.some(route => url.startsWith(route));
   }
+
+getUpdatedClientData(){
+  if(localStorage.getItem(StorageKey.CLIENT_DATA)){
+    const clientData:any=localStorage.getItem(StorageKey.CLIENT_DATA)
+   return JSON.parse(clientData);
+  }
+}
+
 
   /**
    * Get client data for API calls
