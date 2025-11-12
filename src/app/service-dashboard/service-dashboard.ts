@@ -595,64 +595,64 @@ export class ServiceDashboard {
       next: (response) => {
         if (response.Status === 'PASS' && response.Response) {
           this.apiServiceData = response.Response;
-          response.Response = [
-            {
-              "WebAPIName": "CommonAPI:tsgvm04133",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "ReceivingAPI:tsgvm04133",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "TestingAPI:tsgvm04133",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "TransferServicesAPI:tsgvm04133",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "UtilitiesAPI:tsgvm04133",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "VendorTestResultsAPI:tsgvm04133",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "WarehouseTransferAPI:tsgvm04133",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "CommonAPI:tsgvm04155",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "ReceivingAPI:tsgvm04155",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "TestingAPI:tsgvm04155",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "TransferServicesAPI:tsgvm04155",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "UtilitiesAPI:tsgvm04155",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "VendorTestResultsAPI:tsgvm04155",
-              "Status": "Running"
-            },
-            {
-              "WebAPIName": "WarehouseTransferAPI:tsgvm04155",
-              "Status": "Running"
-            }
-          ]
+          // response.Response = [
+          //   {
+          //     "WebAPIName": "CommonAPI:tsgvm04133",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "ReceivingAPI:tsgvm04133",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "TestingAPI:tsgvm04133",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "TransferServicesAPI:tsgvm04133",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "UtilitiesAPI:tsgvm04133",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "VendorTestResultsAPI:tsgvm04133",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "WarehouseTransferAPI:tsgvm04133",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "CommonAPI:tsgvm04155",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "ReceivingAPI:tsgvm04155",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "TestingAPI:tsgvm04155",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "TransferServicesAPI:tsgvm04155",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "UtilitiesAPI:tsgvm04155",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "VendorTestResultsAPI:tsgvm04155",
+          //     "Status": "Running"
+          //   },
+          //   {
+          //     "WebAPIName": "WarehouseTransferAPI:tsgvm04155",
+          //     "Status": "Running"
+          //   }
+          // ]
           // Group API services by server and parse the response
           this.groupedApiServices = this.groupApiServicesByServer(response.Response);
 
