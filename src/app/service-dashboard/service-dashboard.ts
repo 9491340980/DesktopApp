@@ -235,9 +235,9 @@ export class ServiceDashboard {
 
   ngOnInit(): void {
     this.loadControlConfiguration();
-    // let clientData = this.authService.getUpdatedClientData();
-    // clientData.Roles = ['SERVICEADMIN'];
-    // localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
+    let clientData = this.authService.getUpdatedClientData();
+    clientData.Roles = ['SERVICEADMIN'];
+    localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
   }
 
 
@@ -366,14 +366,14 @@ export class ServiceDashboard {
           try {
             // Parse the JSON string response
             let config = JSON.parse(response.Response);
-            // config.taskScheduler = {
-            //   "taskServerName": {
-            //     "roles": ["DEVELOPER", "SERVICEADMIN"],
-            //     "JRSocketClient": "tsgvm04373",
-            //     "JR-WMx CRTC1 Web Socket": "tsgvm03520",
-            //     "JR-WMx CRTC1 Update Order Info Web Socket":"tsgvm03520"
-            //   }
-            // }
+            config.taskScheduler = {
+              "taskServerName": {
+                "roles": ["DEVELOPER", "SERVICEADMIN"],
+                "JRSocketClient": "tsgvm04373",
+                "JR-WMx CRTC1 Web Socket": "tsgvm03520",
+                "JR-WMx CRTC1 Update Order Info Web Socket":"tsgvm03520"
+              }
+            }
             this.applyControlConfiguration(config);
           } catch (error) {
             console.error('Error parsing control config:', error);
@@ -645,14 +645,14 @@ export class ServiceDashboard {
   private startAllPolling(): void {
     // Windows Services Polling - matches web's checkStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
-      timer(0, this.hideControls.controlProperties?.servicePollTimer || 20000)
+      timer(0, this.hideControls.controlProperties?.servicePollTimer || 2000)
         .pipe(takeUntil(this.windowsPolling$))
         .subscribe(() => this.checkStatus());
     }
 
     // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
-      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 20000)
+      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 2000)
         .pipe(takeUntil(this.taskPolling$))
         .subscribe(() => this.getTasksList());
     }
