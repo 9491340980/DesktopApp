@@ -91,7 +91,8 @@
               class="form-control"
               placeholder="Enter location"
               [disabled]="loading || isLocationDisabled"
-              (input)="changeInput($event)"
+              (input)="onLocationInput($event)"
+              style="text-transform: uppercase;"
               maxlength="50">
             <div class="invalid-feedback" *ngIf="userForm.get('location')?.invalid && userForm.get('location')?.touched">
               <i class="fa fa-exclamation-circle"></i>
@@ -112,6 +113,8 @@
               class="form-control"
               placeholder="Device ID"
               (change)="onDeviceIdChange($event)"
+              (input)="onDeviceIdChange($event)"
+              style="text-transform: uppercase;"
               [disabled]="isDeviceIdDisabled">
             <small class="form-text text-muted">Device ID is automatically assigned</small>
           </div>

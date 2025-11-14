@@ -12,8 +12,9 @@ import { ConfigService } from '../services/config-service';
 import { CommonService } from '../services/common-service';
 import { LoginService } from '../services/login-service';
 import { CryptoService } from '../services/crypto-service';
-import { NotificationType, StorageKey } from '../enums/app-constants.enum';
+import { ConfigModule, NotificationType, StorageKey } from '../enums/app-constants.enum';
 import { ClientData } from '../models/api.models';
+import { forkJoin } from 'rxjs';
 
 
 interface SiteIdOption {
@@ -151,8 +152,6 @@ export class UserProfile implements OnInit, OnDestroy {
   private subscribeToFormChanges(): void {
     // Sync form changes to userProfile in real-time
     this.userForm.valueChanges.subscribe(values => {
-      console.log('Form values changed:', values);
-
       // Update userProfile with current form values
       if (values.siteId) {
         this.userProfile.SiteId = values.siteId;
@@ -161,12 +160,11 @@ export class UserProfile implements OnInit, OnDestroy {
         this.userProfile.ClientId = values.clientId;
       }
       if (values.location) {
-        this.userProfile.Loc = values.location;
+        // ✅ Convert to uppercase
+        this.userProfile.Loc = values.location.toUpperCase();
       }
       // DeviceId is read-only but keep it synced
       this.userProfile.DeviceId = this.clientData.DeviceId;
-
-      console.log('Updated userProfile:', this.userProfile);
     });
   }
 
@@ -222,9 +220,6 @@ export class UserProfile implements OnInit, OnDestroy {
    */
   changeSiteId(event: any): void {
     const siteId = event.target.value;
-
-    console.log('Site changed to:', siteId);
-    console.log('Current profile:', this.currentProfile);
 
     // Check if changing back to current profile site
     if (this.currentProfile && this.currentProfile.SiteId === siteId) {
@@ -301,9 +296,9 @@ export class UserProfile implements OnInit, OnDestroy {
               location: location
             });
 
-            // Update userProfile (form subscription will also update it)
+            // Update userProfile
             this.userProfile.ClientId = clientId;
-            this.userProfile.Loc = location;
+            this.userProfile.Loc = location.toUpperCase(); // ✅ Uppercase
             this.clientData.ClientId = clientId;
 
             this.disableControls(false);
@@ -342,9 +337,6 @@ export class UserProfile implements OnInit, OnDestroy {
     const clientId = event.target.value;
     const selectedClient = this.client.find(c => c.ClientId === clientId);
 
-    console.log('Client changed to:', clientId);
-    console.log('Selected client:', selectedClient);
-
     if (selectedClient) {
       // Update userProfile
       this.userProfile.ClientId = selectedClient.ClientId;
@@ -352,10 +344,11 @@ export class UserProfile implements OnInit, OnDestroy {
 
       // Auto-fill location if available
       if (selectedClient.Loc && selectedClient.Loc !== '') {
+        const location = selectedClient.Loc.toUpperCase(); // ✅ Uppercase
         this.userForm.patchValue({
-          location: selectedClient.Loc
+          location: location
         });
-        this.userProfile.Loc = selectedClient.Loc;
+        this.userProfile.Loc = location;
       }
 
       // Focus location
@@ -364,11 +357,32 @@ export class UserProfile implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle device ID change
+   * Handle device ID change (with uppercase)
    */
   onDeviceIdChange(event: any): void {
-    this.clientData.DeviceId = event.target.value;
-    this.userProfile.DeviceId = event.target.value;
+    const deviceId = event.target.value.toUpperCase(); // ✅ Uppercase
+    this.clientData.DeviceId = deviceId;
+    this.userProfile.DeviceId = deviceId;
+
+    // Update form with uppercase value
+    this.userForm.patchValue({
+      deviceId: deviceId
+    }, { emitEvent: false });
+  }
+
+  /**
+   * Handle location input (convert to uppercase)
+   */
+  onLocationInput(event: any): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.toUpperCase(); // ✅ Uppercase
+
+    // Update form with uppercase value
+    this.userForm.patchValue({
+      location: value
+    }, { emitEvent: false });
+
+    this.userProfile.Loc = value;
   }
 
   /**
@@ -376,19 +390,12 @@ export class UserProfile implements OnInit, OnDestroy {
    */
   changeInput(input: any): void {
     // Input changes are handled by form subscription
-    console.log('Location input changed');
   }
 
   /**
    * Validate and save profile
    */
   validateLocation(formValue: any = this.userForm.value, locationInput: any = null): void {
-    console.log('=== Validate Location Called ===');
-    console.log('Form valid:', this.userForm.valid);
-    console.log('Form value:', this.userForm.value);
-    console.log('UserProfile:', this.userProfile);
-    console.log('CurrentProfile:', this.currentProfile);
-
     if (!this.userForm.valid) {
       this.showSnackbar('Please fill in all required fields', NotificationType.ERROR);
       return;
@@ -397,12 +404,10 @@ export class UserProfile implements OnInit, OnDestroy {
     // ✅ Get latest values from form
     const currentFormValue = this.userForm.value;
 
-    // ✅ Update userProfile with latest form values
+    // ✅ Update userProfile with latest form values (uppercase)
     this.userProfile.SiteId = currentFormValue.siteId;
     this.userProfile.ClientId = currentFormValue.clientId;
-    this.userProfile.Loc = currentFormValue.location;
-
-    console.log('Updated userProfile before comparison:', this.userProfile);
+    this.userProfile.Loc = currentFormValue.location.toUpperCase(); // ✅ Uppercase
 
     // Check if profile actually changed
     if (this.currentProfile) {
@@ -410,12 +415,6 @@ export class UserProfile implements OnInit, OnDestroy {
       const clientChanged = this.userProfile.ClientId !== this.currentProfile.ClientId;
       const locationChanged = this.userProfile.Loc !== this.currentProfile.Loc;
       const deviceChanged = !this.isDeviceIdDisabled && this.userProfile.DeviceId !== this.currentProfile.DeviceId;
-
-      console.log('Changes detected:');
-      console.log('  Site:', siteChanged, `(${this.userProfile.SiteId} vs ${this.currentProfile.SiteId})`);
-      console.log('  Client:', clientChanged, `(${this.userProfile.ClientId} vs ${this.currentProfile.ClientId})`);
-      console.log('  Location:', locationChanged, `(${this.userProfile.Loc} vs ${this.currentProfile.Loc})`);
-      console.log('  Device:', deviceChanged);
 
       if (!siteChanged && !clientChanged && !locationChanged && !deviceChanged) {
         this.showSnackbar('No changes to save', NotificationType.INFO);
@@ -433,22 +432,19 @@ export class UserProfile implements OnInit, OnDestroy {
   private userProfileValidate(value: any, locationInput: any): void {
     this.loading = true;
 
-    console.log('=== Validating Location ===');
-    console.log('Value:', value);
-
     // Check if enabling workstation saving
     if (!this.clientData?.Location) {
       this.enableWorkStationSaving = true;
     }
 
-    // Update clientData with form values
+    // Update clientData with form values (uppercase)
     this.clientData.ClientId = value.clientId;
-    this.clientData.Location = value.location;
+    this.clientData.Location = value.location.toUpperCase(); // ✅ Uppercase
     this.clientData.SiteId = value.siteId;
 
     // Prepare location object
     const locationObj = {
-      Loc: value.location
+      Loc: value.location.toUpperCase() // ✅ Uppercase
     };
 
     const requestObj = {
@@ -456,15 +452,11 @@ export class UserProfile implements OnInit, OnDestroy {
       Location: locationObj
     };
 
-    console.log('Calling validateLocation API with:', requestObj);
-
     // Call validateLocation API
     this.commonService.post('/common/validateLocation', requestObj, {
       showLoader: true
     }).subscribe({
       next: (response) => {
-        console.log('validateLocation response:', response);
-
         if (response.Status === 'PASS') {
           // Location valid - proceed to save profile
           this.saveUserProfile();
@@ -489,15 +481,13 @@ export class UserProfile implements OnInit, OnDestroy {
    * Save user profile
    */
   private saveUserProfile(): void {
-    console.log('=== Saving User Profile ===');
-
     // ✅ Get latest form values
     const formValue = this.userForm.value;
 
-    // ✅ Update userProfile with final values
+    // ✅ Update userProfile with final values (uppercase)
     this.userProfile.SiteId = formValue.siteId;
     this.userProfile.ClientId = formValue.clientId;
-    this.userProfile.Loc = formValue.location;
+    this.userProfile.Loc = formValue.location.toUpperCase(); // ✅ Uppercase
     this.userProfile.UserId = this.clientData.LoggedInUser;
 
     // Add release version
@@ -517,14 +507,10 @@ export class UserProfile implements OnInit, OnDestroy {
       Session: session
     };
 
-    console.log('Calling saveUserProfile API with:', requestObj);
-
     this.commonService.post('/LogIn/saveUserProfile', requestObj, {
       showLoader: true
     }).subscribe({
       next: (response) => {
-        console.log('saveUserProfile response:', response);
-
         if (response.Status === 'PASS') {
           // Save workstation information if needed
           if (localStorage.getItem('WorkStationDetails') && this.enableWorkStationSaving) {
@@ -569,8 +555,8 @@ export class UserProfile implements OnInit, OnDestroy {
           // Filter roles for this site
           this.loginService.filterRolesBySite(this.userProfile.SiteId);
 
-          // Get control config (which will trigger getDeviceId and getMenu)
-          this.getControlConfigAfterSave();
+          // ✅ Call all APIs after save (matching web flow)
+          this.callPostSaveAPIs();
 
           this.showSnackbar(response.StatusMessage || 'Profile saved successfully', NotificationType.SUCCESS);
         } else {
@@ -587,18 +573,47 @@ export class UserProfile implements OnInit, OnDestroy {
   }
 
   /**
-   * Get control config after save (matches web flow)
+   * ✅ Call all APIs after save (matching web HAR sequence)
+   * 1. getControlConfig
+   * 2. getSessionTime
+   * 3. getDeviceId
+   * 4. getMenu
    */
-  private getControlConfigAfterSave(): void {
-    this.commonService.post('/common/getControlConfig', {
-      ClientData: this.clientData,
-      ControlConfig: { Module: 'LOGIN' }
-    }, {
-      showLoader: false
+  private callPostSaveAPIs(): void {
+    console.log('=== Calling Post-Save APIs ===');
+
+    // Call all APIs in parallel (matching web behavior)
+    forkJoin({
+      controlConfig: this.loginService.getControlConfig(this.clientData, ConfigModule.LOGIN),
+      sessionTime: this.loginService.getSessionTime(this.clientData),
+      deviceId: this.loginService.getDeviceId(this.clientData),
+      menu: this.loginService.getMenu(this.clientData, {
+        Roles: JSON.parse(localStorage.getItem(StorageKey.ROLES_LIST) || '{}')
+      })
     }).subscribe({
-      next: (response) => {
-        if (response.Status === 'PASS' && response.Response) {
-          localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(response.Response));
+      next: (results:any) => {
+        console.log('Post-save APIs completed:', results);
+
+        // Save control config
+        if (results.controlConfig.Status === 'PASS' && results.controlConfig.Response) {
+          localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(results.controlConfig.Response));
+        }
+
+        // Save session time
+        if (results.sessionTime.Status === 'PASS' && results.sessionTime.Response) {
+          localStorage.setItem(StorageKey.SESSION_TIMEOUT, results.sessionTime.Response);
+        }
+
+        // Update device ID if available
+        if (results.deviceId.Status === 'PASS' && results.deviceId.Response?.DeviceId) {
+          this.clientData.DeviceId = results.deviceId.Response.DeviceId;
+          localStorage.setItem(StorageKey.DEVICE_ID, results.deviceId.Response.DeviceId);
+          localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(this.clientData));
+        }
+
+        // Save menu
+        if (results.menu.Status === 'PASS' && results.menu.Response) {
+          localStorage.setItem(StorageKey.MENU, JSON.stringify(results.menu.Response));
         }
 
         // Navigate to dashboard
@@ -607,10 +622,10 @@ export class UserProfile implements OnInit, OnDestroy {
           this.router.navigate(['/dashboard']);
         }, 500);
       },
-      error: (error) => {
-        console.error('getControlConfig failed:', error);
+      error: (error:any) => {
+        console.error('Post-save APIs failed:', error);
         this.loading = false;
-        // Navigate anyway
+        // Navigate to dashboard anyway
         this.router.navigate(['/dashboard']);
       }
     });
