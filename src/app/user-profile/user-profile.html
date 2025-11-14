@@ -1,0 +1,151 @@
+<div class="user-profile-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="user-info">
+        <div class="user-avatar">
+          <img src="assets/images/rmx-user.png" alt="User Profile">
+        </div>
+        <div class="user-details">
+          <h1 class="page-title">User Profile</h1>
+          <p class="user-name">{{ userName }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Form Card -->
+  <div class="profile-card-container">
+    <div class="profile-card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fa fa-user-edit"></i>
+          Profile Information
+        </h2>
+        <p class="card-subtitle">Update your profile settings</p>
+      </div>
+
+      <div class="card-body">
+        <form [formGroup]="userForm" (ngSubmit)="validateLocation()">
+
+          <!-- Site ID field -->
+          <div class="form-group">
+            <label for="siteId" class="form-label">
+              <i class="fa fa-building"></i>
+              Site <span class="required">*</span>
+            </label>
+            <select
+              id="siteId"
+              formControlName="siteId"
+              class="form-control"
+              (change)="changeSiteId($event)"
+              [disabled]="loading">
+              <option value="">Select Site</option>
+              <option
+                *ngFor="let option of siteIdOptions"
+                [value]="option.siteId">
+                {{ option.siteId }} - {{ option.clientName }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="userForm.get('siteId')?.invalid && userForm.get('siteId')?.touched">
+              <i class="fa fa-exclamation-circle"></i>
+              Site is required
+            </div>
+          </div>
+
+          <!-- Client ID field -->
+          <div class="form-group">
+            <label for="clientId" class="form-label">
+              <i class="fa fa-user-tie"></i>
+              Client <span class="required">*</span>
+            </label>
+            <select
+              id="clientId"
+              formControlName="clientId"
+              class="form-control"
+              (change)="onChangeData($event)"
+              [disabled]="loading || isClientDisable">
+              <option value="">Select Client</option>
+              <option
+                *ngFor="let option of client"
+                [value]="option.ClientId">
+                {{ option.ClientName }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="userForm.get('clientId')?.invalid && userForm.get('clientId')?.touched">
+              <i class="fa fa-exclamation-circle"></i>
+              Client is required
+            </div>
+          </div>
+
+          <!-- Location field -->
+          <div class="form-group">
+            <label for="location" class="form-label">
+              <i class="fa fa-map-marker-alt"></i>
+              Location <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="location"
+              formControlName="location"
+              class="form-control"
+              placeholder="Enter location"
+              [disabled]="loading || isLocationDisabled"
+              (input)="changeInput($event)"
+              maxlength="50">
+            <div class="invalid-feedback" *ngIf="userForm.get('location')?.invalid && userForm.get('location')?.touched">
+              <i class="fa fa-exclamation-circle"></i>
+              Location is required
+            </div>
+          </div>
+
+          <!-- Device ID field (read-only) -->
+          <div class="form-group">
+            <label for="deviceId" class="form-label">
+              <i class="fa fa-desktop"></i>
+              Device ID
+            </label>
+            <input
+              type="text"
+              id="deviceId"
+              formControlName="deviceId"
+              class="form-control"
+              placeholder="Device ID"
+              (change)="onDeviceIdChange($event)"
+              [disabled]="isDeviceIdDisabled">
+            <small class="form-text text-muted">Device ID is automatically assigned</small>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="!userForm.valid || loading || (clientDisabled && locationDisabled)">
+              <i class="fa fa-save" *ngIf="!loading"></i>
+              <i class="fa fa-spinner fa-spin" *ngIf="loading"></i>
+              <span>{{ loading ? 'Saving...' : 'Save Profile' }}</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="cancel()"
+              [disabled]="loading">
+              <i class="fa fa-times"></i>
+              <span>Cancel</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" *ngIf="loading">
+  <div class="spinner-container">
+    <div class="spinner"></div>
+    <p>Processing...</p>
+  </div>
+</div>

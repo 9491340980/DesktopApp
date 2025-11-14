@@ -5,9 +5,6 @@ import { Auth } from './services/auth';
 import { Layout } from './shared/navigation/layout/layout';
 import { authGuard } from './guard/auth-guard';
 
-
-
-
 // Login Guard (redirect if already logged in)
 export const loginGuard = () => {
   const authService = inject(Auth);
@@ -22,7 +19,7 @@ export const loginGuard = () => {
 };
 
 export const routes: Routes = [
-    {
+  {
     path: '',
     redirectTo: '/login',
     pathMatch: 'full'
@@ -49,15 +46,19 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard)
-      },  {
+      },
+      {
         path: 'windowsservices',
         loadComponent: () => import('./service-dashboard/service-dashboard').then(m => m.ServiceDashboard)
       },
       {
         path: 'ios-management',
         loadComponent: () => import('./ios-management/ios-management').then(m => m.IosManagement),
-        // Example: Add roles if this route requires specific permissions
-        // data: { roles: ['ADMIN', 'DEVELOPER', 'MANAGER'] }
+      },
+      // ✅ User Profile route (INSIDE layout - has navigation bar)
+      {
+        path: 'user-profile',
+        loadComponent: () => import('./user-profile/user-profile').then(m => m.UserProfile)
       },
 
       // ADD NEW ROUTES HERE - They will automatically get the navigation bar!

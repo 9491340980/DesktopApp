@@ -1,0 +1,717 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ConfigService } from '../services/config-service';
+import { CommonService } from '../services/common-service';
+import { LoginService } from '../services/login-service';
+import { CryptoService } from '../services/crypto-service';
+import { NotificationType, StorageKey } from '../enums/app-constants.enum';
+import { ClientData } from '../models/api.models';
+
+
+interface SiteIdOption {
+  siteId: string;
+  clientName: string;
+}
+
+interface ClientOption {
+  ClientId: string;
+  ClientName: string;
+  Loc?: string;
+}
+
+@Component({
+  selector: 'app-user-profile',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule
+  ],
+  templateUrl: './user-profile.html',
+  styleUrl: './user-profile.scss',
+})
+export class UserProfile implements OnInit, OnDestroy {
+  userForm: FormGroup;
+  userName: string = '';
+  siteIdOptions: SiteIdOption[] = [];
+  client: ClientOption[] = [];
+  userProfile: any = {};
+  clientData: any={};
+
+  // UI states
+  loading: boolean = false;
+  isSiteIdChanged: boolean = false;
+  isSiteIdChangedandSaved: boolean = false;
+  isClientDisable: boolean = true;
+  isLocationDisabled: boolean = true;
+  isDeviceIdDisabled: boolean = true;
+  clientDisabled: boolean = true;
+  locationDisabled: boolean = true;
+  enableWorkStationSaving: boolean = false;
+
+  // Control config
+  controlConfig: any = {};
+  controlConfigs: any = {};
+  currentProfile: any;
+
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private configService: ConfigService,
+    private commonService: CommonService,
+    private loginService: LoginService,
+    private cryptoService: CryptoService,
+    private snackBar: MatSnackBar
+  ) {
+    // Initialize form
+    this.userForm = this.fb.group({
+      siteId: ['', Validators.required],
+      clientId: ['', Validators.required],
+      location: ['', Validators.required],
+      deviceId: [{ value: '', disabled: true }]
+    });
+  }
+
+  ngOnInit(): void {
+    // Load control configs
+    if (localStorage.getItem(StorageKey.CONTROL_CONFIG)) {
+      this.controlConfigs = JSON.parse(localStorage.getItem(StorageKey.CONTROL_CONFIG) || '{}');
+      this.controlConfig = this.controlConfigs;
+    }
+
+    // Load client data from localStorage
+    this.clientData = JSON.parse(localStorage.getItem(StorageKey.CLIENT_DATA) || '{}');
+
+    // Load username
+    this.userName = this.getUserName();
+
+    // Set DeviceId from clientData or localStorage
+    if (!this.controlConfigs?.checkDeviceId && localStorage.getItem(StorageKey.DEVICE_ID)) {
+      this.clientData.DeviceId = localStorage.getItem(StorageKey.DEVICE_ID) || '';
+    }
+    this.userProfile.DeviceId = this.clientData.DeviceId;
+
+    // DeviceId is always disabled
+    this.isDeviceIdDisabled = this.userProfile.DeviceId ? true : false;
+
+    // Load current user profile if exists
+    const currentProfile = localStorage.getItem(StorageKey.USER_PROFILE);
+    if (currentProfile) {
+      this.currentProfile = JSON.parse(currentProfile);
+      // Deep clone to avoid reference issues
+      this.userProfile = JSON.parse(JSON.stringify(this.currentProfile));
+    }
+
+    // Check if we have valid clientData (not LOGIN state)
+    if (this.clientData && this.clientData.SiteId !== 'LOGIN' && this.clientData.SiteId !== '') {
+      // Load clients for current site
+      this.getStorer(this.clientData.SiteId);
+
+      // Populate form with current profile
+      if (this.userProfile) {
+        this.disableControls(false);
+      }
+    } else {
+      this.disableControls(true);
+    }
+
+    // Load site IDs
+    this.loadSiteIds();
+
+    // Populate form
+    this.populateForm();
+
+    // ✅ Subscribe to form changes to keep userProfile in sync
+    this.subscribeToFormChanges();
+
+    // Focus site ID
+    this.siteIdFocus();
+  }
+
+  ngOnDestroy(): void {
+    // Cleanup
+  }
+
+  /**
+   * ✅ Subscribe to form value changes to keep userProfile in sync
+   */
+  private subscribeToFormChanges(): void {
+    // Sync form changes to userProfile in real-time
+    this.userForm.valueChanges.subscribe(values => {
+      console.log('Form values changed:', values);
+
+      // Update userProfile with current form values
+      if (values.siteId) {
+        this.userProfile.SiteId = values.siteId;
+      }
+      if (values.clientId) {
+        this.userProfile.ClientId = values.clientId;
+      }
+      if (values.location) {
+        this.userProfile.Loc = values.location;
+      }
+      // DeviceId is read-only but keep it synced
+      this.userProfile.DeviceId = this.clientData.DeviceId;
+
+      console.log('Updated userProfile:', this.userProfile);
+    });
+  }
+
+  /**
+   * Load site IDs from localStorage and config
+   */
+  private loadSiteIds(): void {
+    const siteIds: string[] = JSON.parse(localStorage.getItem(StorageKey.SITE_IDS) || '[]');
+    const clientsInfo = this.configService.getAllClients();
+
+    this.siteIdOptions = [];
+    clientsInfo.forEach(client => {
+      client.siteIds.forEach(siteId => {
+        if (siteIds.length && siteIds.indexOf(siteId) > -1) {
+          this.siteIdOptions.push({
+            siteId: siteId,
+            clientName: client.clientName
+          });
+        }
+      });
+    });
+  }
+
+  /**
+   * Get username from localStorage
+   */
+  private getUserName(): string {
+    const username = localStorage.getItem(StorageKey.USERNAME);
+    if (username && this.cryptoService) {
+      try {
+        return this.cryptoService.decrypt(username);
+      } catch {
+        return username;
+      }
+    }
+    return 'User';
+  }
+
+  /**
+   * Populate form with current profile
+   */
+  private populateForm(): void {
+    this.userForm.patchValue({
+      siteId: this.userProfile.SiteId || '',
+      clientId: this.userProfile.ClientId || '',
+      location: this.userProfile.Loc || '',
+      deviceId: this.userProfile.DeviceId || this.clientData.DeviceId || ''
+    });
+  }
+
+  /**
+   * Handle site ID change
+   */
+  changeSiteId(event: any): void {
+    const siteId = event.target.value;
+
+    console.log('Site changed to:', siteId);
+    console.log('Current profile:', this.currentProfile);
+
+    // Check if changing back to current profile site
+    if (this.currentProfile && this.currentProfile.SiteId === siteId) {
+      // Restore current profile values
+      this.userProfile.SiteId = this.currentProfile.SiteId;
+      this.userProfile.Loc = this.currentProfile.Loc;
+      this.userProfile.ClientId = this.currentProfile.ClientId;
+      this.updateClientDataObj(this.currentProfile);
+      this.isSiteIdChanged = false;
+      this.isSiteIdChangedandSaved = false;
+
+      // Restore form values
+      this.userForm.patchValue({
+        siteId: this.currentProfile.SiteId,
+        clientId: this.currentProfile.ClientId,
+        location: this.currentProfile.Loc
+      });
+    } else {
+      // Changing to different site - clear client and location
+      this.userProfile.Loc = '';
+      this.userProfile.ClientId = '';
+      this.userProfile.SiteId = siteId;
+      this.updateClientDataObj(this.userProfile);
+
+      // Clear form values
+      this.userForm.patchValue({
+        siteId: siteId,
+        clientId: '',
+        location: ''
+      });
+
+      this.isSiteIdChanged = true;
+      this.isSiteIdChangedandSaved = true;
+      this.focusClient();
+    }
+  }
+
+  /**
+   * Update ClientData object based on selection
+   */
+  private updateClientDataObj(obj: any): void {
+    this.clientData.SiteId = obj.SiteId;
+    this.clientData.ClientId = obj.ClientId;
+    this.clientData.Location = obj.Loc;
+    this.getStorer(obj.SiteId);
+  }
+
+  /**
+   * Get clients for selected site (getStorer API)
+   */
+  getStorer(siteId: string): void {
+    this.loading = true;
+    this.clientData.SiteId = siteId;
+
+    const requestObj = { ClientData: this.clientData };
+
+    this.commonService.post(`/LogIn/getStorer/${siteId}`, requestObj, {
+      showLoader: true
+    }).subscribe({
+      next: (response) => {
+        this.loading = false;
+
+        if (response.Status === 'PASS' && response.Response) {
+          this.client = response.Response;
+
+          if (this.client.length === 1) {
+            // Single client - auto-select
+            const clientId = this.client[0].ClientId;
+            const location = this.client[0].Loc || '';
+
+            // Update form
+            this.userForm.patchValue({
+              clientId: clientId,
+              location: location
+            });
+
+            // Update userProfile (form subscription will also update it)
+            this.userProfile.ClientId = clientId;
+            this.userProfile.Loc = location;
+            this.clientData.ClientId = clientId;
+
+            this.disableControls(false);
+
+            // Focus location if empty
+            if (!location || location === '') {
+              this.focusLocation();
+            }
+          } else {
+            // Multiple clients
+            if (this.userProfile.SiteId && !this.userProfile.ClientId) {
+              this.focusClient();
+            }
+            this.disableControls(false);
+          }
+        } else {
+          this.client = [];
+          this.disableControls(true);
+          this.showSnackbar('No clients found for selected site', NotificationType.WARNING);
+        }
+      },
+      error: (error) => {
+        console.error('Failed to get clients:', error);
+        this.loading = false;
+        this.client = [];
+        this.disableControls(true);
+        this.showSnackbar('Failed to load clients', NotificationType.ERROR);
+      }
+    });
+  }
+
+  /**
+   * Handle client change
+   */
+  onChangeData(event: any): void {
+    const clientId = event.target.value;
+    const selectedClient = this.client.find(c => c.ClientId === clientId);
+
+    console.log('Client changed to:', clientId);
+    console.log('Selected client:', selectedClient);
+
+    if (selectedClient) {
+      // Update userProfile
+      this.userProfile.ClientId = selectedClient.ClientId;
+      this.clientData.ClientId = selectedClient.ClientId;
+
+      // Auto-fill location if available
+      if (selectedClient.Loc && selectedClient.Loc !== '') {
+        this.userForm.patchValue({
+          location: selectedClient.Loc
+        });
+        this.userProfile.Loc = selectedClient.Loc;
+      }
+
+      // Focus location
+      this.focusLocation();
+    }
+  }
+
+  /**
+   * Handle device ID change
+   */
+  onDeviceIdChange(event: any): void {
+    this.clientData.DeviceId = event.target.value;
+    this.userProfile.DeviceId = event.target.value;
+  }
+
+  /**
+   * Handle input change
+   */
+  changeInput(input: any): void {
+    // Input changes are handled by form subscription
+    console.log('Location input changed');
+  }
+
+  /**
+   * Validate and save profile
+   */
+  validateLocation(formValue: any = this.userForm.value, locationInput: any = null): void {
+    console.log('=== Validate Location Called ===');
+    console.log('Form valid:', this.userForm.valid);
+    console.log('Form value:', this.userForm.value);
+    console.log('UserProfile:', this.userProfile);
+    console.log('CurrentProfile:', this.currentProfile);
+
+    if (!this.userForm.valid) {
+      this.showSnackbar('Please fill in all required fields', NotificationType.ERROR);
+      return;
+    }
+
+    // ✅ Get latest values from form
+    const currentFormValue = this.userForm.value;
+
+    // ✅ Update userProfile with latest form values
+    this.userProfile.SiteId = currentFormValue.siteId;
+    this.userProfile.ClientId = currentFormValue.clientId;
+    this.userProfile.Loc = currentFormValue.location;
+
+    console.log('Updated userProfile before comparison:', this.userProfile);
+
+    // Check if profile actually changed
+    if (this.currentProfile) {
+      const siteChanged = this.userProfile.SiteId !== this.currentProfile.SiteId;
+      const clientChanged = this.userProfile.ClientId !== this.currentProfile.ClientId;
+      const locationChanged = this.userProfile.Loc !== this.currentProfile.Loc;
+      const deviceChanged = !this.isDeviceIdDisabled && this.userProfile.DeviceId !== this.currentProfile.DeviceId;
+
+      console.log('Changes detected:');
+      console.log('  Site:', siteChanged, `(${this.userProfile.SiteId} vs ${this.currentProfile.SiteId})`);
+      console.log('  Client:', clientChanged, `(${this.userProfile.ClientId} vs ${this.currentProfile.ClientId})`);
+      console.log('  Location:', locationChanged, `(${this.userProfile.Loc} vs ${this.currentProfile.Loc})`);
+      console.log('  Device:', deviceChanged);
+
+      if (!siteChanged && !clientChanged && !locationChanged && !deviceChanged) {
+        this.showSnackbar('No changes to save', NotificationType.INFO);
+        return;
+      }
+    }
+
+    // Validate and save
+    this.userProfileValidate(currentFormValue, locationInput);
+  }
+
+  /**
+   * Validate location before saving profile
+   */
+  private userProfileValidate(value: any, locationInput: any): void {
+    this.loading = true;
+
+    console.log('=== Validating Location ===');
+    console.log('Value:', value);
+
+    // Check if enabling workstation saving
+    if (!this.clientData?.Location) {
+      this.enableWorkStationSaving = true;
+    }
+
+    // Update clientData with form values
+    this.clientData.ClientId = value.clientId;
+    this.clientData.Location = value.location;
+    this.clientData.SiteId = value.siteId;
+
+    // Prepare location object
+    const locationObj = {
+      Loc: value.location
+    };
+
+    const requestObj = {
+      ClientData: this.clientData,
+      Location: locationObj
+    };
+
+    console.log('Calling validateLocation API with:', requestObj);
+
+    // Call validateLocation API
+    this.commonService.post('/common/validateLocation', requestObj, {
+      showLoader: true
+    }).subscribe({
+      next: (response) => {
+        console.log('validateLocation response:', response);
+
+        if (response.Status === 'PASS') {
+          // Location valid - proceed to save profile
+          this.saveUserProfile();
+        } else {
+          this.loading = false;
+          this.showSnackbar(response.StatusMessage || 'Invalid location', NotificationType.ERROR);
+
+          if (locationInput) {
+            this.focusLocation();
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Failed to validate location:', error);
+        this.loading = false;
+        this.showSnackbar('Failed to validate location', NotificationType.ERROR);
+      }
+    });
+  }
+
+  /**
+   * Save user profile
+   */
+  private saveUserProfile(): void {
+    console.log('=== Saving User Profile ===');
+
+    // ✅ Get latest form values
+    const formValue = this.userForm.value;
+
+    // ✅ Update userProfile with final values
+    this.userProfile.SiteId = formValue.siteId;
+    this.userProfile.ClientId = formValue.clientId;
+    this.userProfile.Loc = formValue.location;
+    this.userProfile.UserId = this.clientData.LoggedInUser;
+
+    // Add release version
+    if (localStorage.getItem(StorageKey.RELEASE_VERSION)) {
+      this.userProfile.ReleaseVersion = localStorage.getItem(StorageKey.RELEASE_VERSION);
+    }
+
+    // Add session if exists
+    let session: any = {};
+    if (localStorage.getItem(StorageKey.SESSION)) {
+      session = JSON.parse(localStorage.getItem(StorageKey.SESSION) || '{}');
+    }
+
+    const requestObj = {
+      ClientData: this.clientData,
+      UserProfile: this.userProfile,
+      Session: session
+    };
+
+    console.log('Calling saveUserProfile API with:', requestObj);
+
+    this.commonService.post('/LogIn/saveUserProfile', requestObj, {
+      showLoader: true
+    }).subscribe({
+      next: (response) => {
+        console.log('saveUserProfile response:', response);
+
+        if (response.Status === 'PASS') {
+          // Save workstation information if needed
+          if (localStorage.getItem('WorkStationDetails') && this.enableWorkStationSaving) {
+            const workStationDetails = JSON.parse(localStorage.getItem('WorkStationDetails') || '{}');
+            if (workStationDetails) {
+              this.saveWorkStation(this.clientData, workStationDetails);
+            }
+          }
+
+          // Update session
+          if (response.Response?.Session) {
+            localStorage.setItem(StorageKey.SESSION, JSON.stringify(response.Response.Session));
+          }
+
+          // Update userProfile with response
+          this.isSiteIdChangedandSaved = false;
+          localStorage.setItem('isSiteIdChanged', this.isSiteIdChanged.toString());
+
+          if (response.Response?.BookmarkOperations) {
+            this.userProfile.BookmarkOperations = response.Response.BookmarkOperations;
+          }
+          if (response.Response?.DefaultOperations) {
+            this.userProfile.DefaultOperations = response.Response.DefaultOperations;
+          }
+
+          // Save to localStorage
+          localStorage.setItem(StorageKey.USER_PROFILE, JSON.stringify(this.userProfile));
+          localStorage.setItem(StorageKey.LOCATION, this.userProfile.Loc);
+          localStorage.setItem(StorageKey.CLIENT_ID, this.userProfile.ClientId);
+          localStorage.setItem(StorageKey.SITE_ID, this.userProfile.SiteId);
+
+          // Update clientData
+          this.clientData.Location = this.userProfile.Loc;
+          this.clientData.ClientId = this.userProfile.ClientId;
+          this.clientData.SiteId = this.userProfile.SiteId;
+          if (this.userProfile.DeviceId) {
+            this.clientData.DeviceId = this.userProfile.DeviceId;
+          }
+          localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(this.clientData));
+          localStorage.setItem('module', 'COM');
+
+          // Filter roles for this site
+          this.loginService.filterRolesBySite(this.userProfile.SiteId);
+
+          // Get control config (which will trigger getDeviceId and getMenu)
+          this.getControlConfigAfterSave();
+
+          this.showSnackbar(response.StatusMessage || 'Profile saved successfully', NotificationType.SUCCESS);
+        } else {
+          this.loading = false;
+          this.showSnackbar(response.StatusMessage || 'Failed to save profile', NotificationType.ERROR);
+        }
+      },
+      error: (error) => {
+        console.error('Failed to save profile:', error);
+        this.loading = false;
+        this.showSnackbar('Failed to save profile', NotificationType.ERROR);
+      }
+    });
+  }
+
+  /**
+   * Get control config after save (matches web flow)
+   */
+  private getControlConfigAfterSave(): void {
+    this.commonService.post('/common/getControlConfig', {
+      ClientData: this.clientData,
+      ControlConfig: { Module: 'LOGIN' }
+    }, {
+      showLoader: false
+    }).subscribe({
+      next: (response) => {
+        if (response.Status === 'PASS' && response.Response) {
+          localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(response.Response));
+        }
+
+        // Navigate to dashboard
+        this.loading = false;
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 500);
+      },
+      error: (error) => {
+        console.error('getControlConfig failed:', error);
+        this.loading = false;
+        // Navigate anyway
+        this.router.navigate(['/dashboard']);
+      }
+    });
+  }
+
+  /**
+   * Save workstation
+   */
+  private saveWorkStation(clientData: any, workStationDetails: any): void {
+    if (!localStorage.getItem("IsWorkStationSaved")) {
+      const requestObj = {
+        ClientData: clientData,
+        WorkStation: workStationDetails
+      };
+
+      this.commonService.post('/common/saveWorkStation', requestObj, {
+        showLoader: false,
+        showError: false
+      }).subscribe({
+        next: () => {
+          localStorage.setItem("IsWorkStationSaved", "true");
+        },
+        error: (error) => {
+          console.error('Failed to save workstation:', error);
+        }
+      });
+    }
+  }
+
+  /**
+   * Disable/enable form controls
+   */
+  private disableControls(disable: boolean): void {
+    this.clientDisabled = disable;
+    this.locationDisabled = disable;
+    this.isClientDisable = disable;
+    this.isLocationDisabled = disable;
+
+    if (disable) {
+      this.userForm.get('clientId')?.disable();
+      this.userForm.get('location')?.disable();
+    } else {
+      this.userForm.get('clientId')?.enable();
+      this.userForm.get('location')?.enable();
+    }
+  }
+
+  /**
+   * Focus site ID
+   */
+  private siteIdFocus(): void {
+    setTimeout(() => {
+      const element = document.getElementById('siteId');
+      if (element) {
+        element.focus();
+      }
+    }, 100);
+  }
+
+  /**
+   * Focus client dropdown
+   */
+  private focusClient(): void {
+    setTimeout(() => {
+      const element = document.getElementById('clientId');
+      if (element) {
+        element.focus();
+      }
+    }, 100);
+  }
+
+  /**
+   * Focus location input
+   */
+  private focusLocation(): void {
+    setTimeout(() => {
+      const element = document.getElementById('location');
+      if (element) {
+        element.focus();
+        const inputElement = element as HTMLInputElement;
+        inputElement.select();
+      }
+    }, 100);
+  }
+
+  /**
+   * Show snackbar notification
+   */
+  private showSnackbar(message: string, type: NotificationType): void {
+    this.snackBar.open(message, 'Close', {
+      duration: type === NotificationType.SUCCESS ? 3000 : 5000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: [`${type}-snackbar`]
+    });
+  }
+
+  /**
+   * Cancel and go back
+   */
+  cancel(): void {
+    this.router.navigate(['/dashboard']);
+  }
+}

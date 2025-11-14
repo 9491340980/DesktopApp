@@ -112,7 +112,7 @@ export class Login implements OnInit, OnDestroy {
     encryptedUsername: string,
     encryptedPassword: string
   ): void {
-    const clientName = 'VERIZON'; // Or get from domain/user selection
+    const clientName = 'VERIZON';
 
     this.loginService.performLogin(
       encryptedUsername,
@@ -126,7 +126,21 @@ export class Login implements OnInit, OnDestroy {
         // Save all response data
         this.saveUserData(response);
 
-        // ✅ CORRECTED: Filter roles by site AFTER login succeeds (matching web code)
+        // ✅ Check navigateTo signal
+        if (response.navigateTo === 'user-profile') {
+          // getUserProfile failed - navigate to user-profile page
+          console.log('Navigating to user-profile to complete setup');
+          this.showSnackbar('Please complete your profile', NotificationType.INFO);
+
+          setTimeout(() => {
+            this.router.navigate(['/user-profile']);
+          }, 500);
+
+          return; // Don't continue with normal flow
+        }
+
+        // ✅ Normal flow - getUserProfile succeeded
+        // Filter roles by site
         this.loginService.filterRolesBySite(response.clientData.SiteId);
 
         // Handle remember me
@@ -195,7 +209,7 @@ export class Login implements OnInit, OnDestroy {
    */
   private saveUserData(response: LoginResponse): void {
     try {
-      // ClientData is saved in LoginService, verify it's there
+      // ClientData is saved in LoginService
       if (response.clientData) {
         console.log('✅ ClientData saved:', response.clientData);
         localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(response.clientData));
@@ -221,7 +235,7 @@ export class Login implements OnInit, OnDestroy {
         localStorage.setItem(StorageKey.MESSAGES, JSON.stringify(response.messages.Response));
       }
 
-      // Set module (for compatibility)
+      // Set module
       localStorage.setItem('module', 'COM');
 
     } catch (error) {
