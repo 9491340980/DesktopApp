@@ -14,7 +14,7 @@ import { LoginService } from '../services/login-service';
 import { CryptoService } from '../services/crypto-service';
 import { ConfigModule, NotificationType, StorageKey } from '../enums/app-constants.enum';
 import { ClientData } from '../models/api.models';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
 
 interface SiteIdOption {
@@ -573,57 +573,97 @@ export class UserProfile implements OnInit, OnDestroy {
   }
 
   /**
-   * ✅ Call all APIs after save (matching web HAR sequence)
-   * 1. getControlConfig
-   * 2. getSessionTime
-   * 3. getDeviceId
-   * 4. getMenu
+   * ✅ Call all APIs after save with proper error handling
+   * getDeviceId can fail (non-critical) but we still save other results
    */
   private callPostSaveAPIs(): void {
     console.log('=== Calling Post-Save APIs ===');
 
-    // Call all APIs in parallel (matching web behavior)
-    forkJoin({
-      controlConfig: this.loginService.getControlConfig(this.clientData, ConfigModule.LOGIN),
-      sessionTime: this.loginService.getSessionTime(this.clientData),
-      deviceId: this.loginService.getDeviceId(this.clientData),
-      menu: this.loginService.getMenu(this.clientData, {
-        Roles: JSON.parse(localStorage.getItem(StorageKey.ROLES_LIST) || '{}')
+    // ✅ Wrap each API call with catchError to handle failures independently
+    const controlConfig$ = this.loginService.getControlConfig(this.clientData, ConfigModule.LOGIN).pipe(
+      catchError(error => {
+        console.warn('⚠️ getControlConfig failed (continuing anyway):', error);
+        return of({ Status: 'FAIL', Response: null });
       })
-    }).subscribe({
-      next: (results:any) => {
-        console.log('Post-save APIs completed:', results);
+    );
 
-        // Save control config
+    const sessionTime$ = this.loginService.getSessionTime(this.clientData).pipe(
+      catchError(error => {
+        console.warn('⚠️ getSessionTime failed (continuing anyway):', error);
+        return of({ Status: 'FAIL', Response: null });
+      })
+    );
+
+    const deviceId$ = this.loginService.getDeviceId(this.clientData).pipe(
+      catchError(error => {
+        console.warn('⚠️ getDeviceId failed (non-critical, continuing):', error);
+        return of({ Status: 'FAIL', Response: null });
+      })
+    );
+
+    const menu$ = this.loginService.getMenu(this.clientData, {
+      Roles: JSON.parse(localStorage.getItem(StorageKey.ROLES_LIST) || '{}')
+    }).pipe(
+      catchError(error => {
+        console.warn('⚠️ getMenu failed (continuing anyway):', error);
+        return of({ Status: 'FAIL', Response: null });
+      })
+    );
+
+    // Call all APIs in parallel - even if one fails, others will complete
+    forkJoin({
+      controlConfig: controlConfig$,
+      sessionTime: sessionTime$,
+      deviceId: deviceId$,
+      menu: menu$
+    }).subscribe({
+      next: (results) => {
+        console.log('✅ Post-save APIs completed:', results);
+
+        // ✅ Save control config (if succeeded)
         if (results.controlConfig.Status === 'PASS' && results.controlConfig.Response) {
           localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(results.controlConfig.Response));
+          console.log('✅ Saved control config');
+        } else {
+          console.warn('⚠️ Control config not saved (API failed)');
         }
 
-        // Save session time
+        // ✅ Save session time (if succeeded)
         if (results.sessionTime.Status === 'PASS' && results.sessionTime.Response) {
           localStorage.setItem(StorageKey.SESSION_TIMEOUT, results.sessionTime.Response);
+          console.log('✅ Saved session timeout');
+        } else {
+          console.warn('⚠️ Session timeout not saved (API failed)');
         }
 
-        // Update device ID if available
+        // ✅ Update device ID (if succeeded - non-critical)
         if (results.deviceId.Status === 'PASS' && results.deviceId.Response?.DeviceId) {
           this.clientData.DeviceId = results.deviceId.Response.DeviceId;
           localStorage.setItem(StorageKey.DEVICE_ID, results.deviceId.Response.DeviceId);
           localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(this.clientData));
+          console.log('✅ Updated device ID:', results.deviceId.Response.DeviceId);
+        } else {
+          console.warn('⚠️ Device ID not updated (API failed - non-critical)');
         }
 
-        // Save menu
+        // ✅ Save menu (if succeeded)
         if (results.menu.Status === 'PASS' && results.menu.Response) {
           localStorage.setItem(StorageKey.MENU, JSON.stringify(results.menu.Response));
+          console.log('✅ Saved menu');
+        } else {
+          console.warn('⚠️ Menu not saved (API failed)');
         }
 
-        // Navigate to dashboard
+        // ✅ Navigate to dashboard regardless of individual API failures
         this.loading = false;
+        console.log('✅ Navigating to dashboard...');
         setTimeout(() => {
           this.router.navigate(['/dashboard']);
         }, 500);
       },
-      error: (error:any) => {
-        console.error('Post-save APIs failed:', error);
+      error: (error) => {
+        // This should never happen since we catch errors in each observable
+        console.error('❌ Unexpected error in forkJoin:', error);
         this.loading = false;
         // Navigate to dashboard anyway
         this.router.navigate(['/dashboard']);
