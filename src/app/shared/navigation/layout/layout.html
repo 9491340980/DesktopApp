@@ -106,9 +106,10 @@
           <span>Dashboard</span>
         </button>
 
-        <button mat-menu-item disabled>
-          <mat-icon>settings</mat-icon>
-          <span>Settings</span>
+
+        <button mat-menu-item  (click)="navigateToUserProfile()">
+          <mat-icon>person</mat-icon>
+          <span>User Profile</span>
         </button>
 
         <mat-divider></mat-divider>

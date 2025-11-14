@@ -205,6 +205,10 @@ export class Layout {
     this.router.navigate(['/dashboard']);
   }
 
+    navigateToUserProfile(): void {
+    this.router.navigate(['/user-profile']);
+  }
+
   logout(): void {
     this.authService.logout();
   }
