@@ -11,7 +11,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CryptoService } from '../../services/crypto-service';
-import { DeviceService } from '../../services/device-service';
 import { NotificationType, StorageKey } from '../../enums/app-constants.enum';
 
 @Component({
@@ -44,18 +43,20 @@ export class Login implements OnInit, OnDestroy {
   // Environment info (from config)
   environment: string = '';
   releaseVersion: string = '';
+  buildDate: any;
 
   constructor(
     private loginService: LoginService,
     private cryptoService: CryptoService,
     private configService: ConfigService,
-    private deviceService: DeviceService,
     private router: Router,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
+    this.buildDate = new Date().toString();
+
     // Check if already logged in
     const token = localStorage.getItem(StorageKey.TOKEN);
     if (token) {
@@ -79,11 +80,6 @@ export class Login implements OnInit, OnDestroy {
 
     // Load remembered username
     this.loadRememberedCredentials();
-
-    // Initialize workstation details if not present
-    if (!localStorage.getItem('WorkStationDetails')) {
-      this.fetchWorkstationDetails();
-    }
   }
 
   ngOnDestroy(): void {
@@ -106,25 +102,7 @@ export class Login implements OnInit, OnDestroy {
     const encryptedUsername = this.cryptoService.encrypt(this.username.toLowerCase());
     const encryptedPassword = this.cryptoService.encrypt(this.password);
 
-    // Get device ID first (from WorkStationDetails or API)
-    const workstationName = localStorage.getItem('WorkStationName');
-    const deviceId = workstationName || '';
-
-    // If we have a workstation name, use it; otherwise, get from API
-    if (deviceId) {
-      this.performLogin(encryptedUsername, encryptedPassword, deviceId);
-    } else {
-      this.deviceService.getDeviceId().subscribe({
-        next: (deviceId) => {
-          this.performLogin(encryptedUsername, encryptedPassword, deviceId);
-        },
-        error: (error) => {
-          console.error('Failed to get device ID:', error);
-          // Proceed with login even if device ID fails
-          this.performLogin(encryptedUsername, encryptedPassword, '');
-        }
-      });
-    }
+    this.performLogin(encryptedUsername, encryptedPassword);
   }
 
   /**
@@ -132,25 +110,24 @@ export class Login implements OnInit, OnDestroy {
    */
   private performLogin(
     encryptedUsername: string,
-    encryptedPassword: string,
-    deviceId: string
+    encryptedPassword: string
   ): void {
-    // Get client name from config if needed (you can make this dynamic)
     const clientName = 'VERIZON'; // Or get from domain/user selection
 
     this.loginService.performLogin(
       encryptedUsername,
       encryptedPassword,
-      deviceId,
       this.releaseVersion,
       clientName
     ).subscribe({
       next: (response: LoginResponse) => {
         console.log('Login successful:', response);
-        console.log('Updated ClientData with Roles:', response.clientData);
 
         // Save all response data
         this.saveUserData(response);
+
+        // ✅ CORRECTED: Filter roles by site AFTER login succeeds (matching web code)
+        this.loginService.filterRolesBySite(response.clientData.SiteId);
 
         // Handle remember me
         if (this.rememberMe) {
@@ -215,14 +192,12 @@ export class Login implements OnInit, OnDestroy {
 
   /**
    * Save user data to localStorage
-   * The response now includes updated clientData with proper Roles
    */
   private saveUserData(response: LoginResponse): void {
     try {
-      // ClientData is already saved in LoginService with Roles, but verify it's there
+      // ClientData is saved in LoginService, verify it's there
       if (response.clientData) {
-        console.log('✅ ClientData saved with Roles:', response.clientData.Roles);
-        // Re-save to ensure it's properly stored
+        console.log('✅ ClientData saved:', response.clientData);
         localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(response.clientData));
       }
 
@@ -270,16 +245,6 @@ export class Login implements OnInit, OnDestroy {
       this.username = rememberedUsername;
       this.rememberMe = true;
     }
-  }
-
-  /**
-   * Fetch workstation details (if not already present)
-   */
-  private fetchWorkstationDetails(): void {
-    // This would call your existing workstation details service
-    // For now, just log that it should be fetched
-    console.log('WorkStationDetails should be fetched here');
-    // You can integrate with your existing masterPageService.fetchWorkstationDetails()
   }
 
   /**
