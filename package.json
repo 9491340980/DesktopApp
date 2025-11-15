@@ -1,13 +1,13 @@
 {
-  "name": "desktop-app",
-  "version": "1.0.0",
+  "name": "RMX-App",
+  "version": "3.0.1",
   "main": "main.js",
   "description": "Desktop Application",
   "author": "Your Name",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration production",
     "electron": "set ELECTRON_START_URL=http://localhost:4200 && electron .",
     "electron-build": "ng build --configuration production && electron .",
     "package-win": "ng build --configuration production && electron-builder build --win --x64"
@@ -19,22 +19,34 @@
       "output": "release"
     },
     "files": [
-      "dist/**/*",
       "main.js",
-      "package.json"
-    ],
-    "extraResources": [
+      "package.json",
       {
-        "from": "node_modules/electron/dist",
-        "to": "."
+        "from": "dist",
+        "to": "dist",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "forceCodeSigning": false,
       "signAndEditExecutable": false
     },
-    "asar": false
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "private": true,
   "dependencies": {
@@ -47,6 +59,8 @@
     "@angular/platform-browser": "^20.0.0",
     "@angular/router": "^20.0.0",
     "crypto-js": "^4.2.0",
+    "material-design-icons-iconfont": "^6.7.0",
+    "material-icons": "^1.13.14",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

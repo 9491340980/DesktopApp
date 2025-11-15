@@ -293,6 +293,8 @@ export class Auth {
       'messages'
     ];
 
+
+    localStorage.clear();
     keysToRemove.forEach(key => localStorage.removeItem(key));
 
     // Update current user
