@@ -2,15 +2,15 @@
   "comUrl": "http://qaapi-rmxt026.am.gxo.com:8010/",
   "utlUrl": "http://qaapi-rmxt026.am.gxo.com:8015/",
   "secUrl": "http://qaapi-rmxt026.am.gxo.com:8020/",
-  "recUrl": "http://qaapi-rmxt026.am.gxo.com:8663/",
-  "tstUrl": "http://qaapi-rmxt026.am.gxo.com:8773/",
-  "wtUrl": "http://qaapi-rmxt026.am.gxo.com:8883/",
-  "conUrl": "http://qaapi-rmxt026.am.gxo.com:8227/",
-  "mntUrl": "http://qaapi-rmxt026.am.gxo.com:8225/",
-  "trsUrl": "http://qaapi-rmxt026.am.gxo.com:8555/",
-  "env": "DEV",
+  "recUrl": "https://qaapi-rmxt026.am.gxo.com:8663/",
+  "tstUrl": "https://qaapi-rmxt026.am.gxo.com:8773/",
+  "wtUrl": "https://qaapi-rmxt026.am.gxo.com:8883/",
+  "conUrl": "https://qaapi-rmxt026.am.gxo.com:8227/",
+  "mntUrl": "https://qaapi-rmxt026.am.gxo.com:8225/",
+  "trsUrl": "https://qaapi-rmxt026.am.gxo.com:8555/",
+  "env": "QA026",
   "errorMsg": "7320011: Site configuration is missing in RMX",
-  "invalidUser": "Different user already loggedin.",
+  "invalidUser": "User is already logged in.",
   "sharedSecurity": {
     "DataType": "WAREHOUSE",
     "Application": "RMX"
@@ -18,27 +18,7 @@
   "clients": [
     {
       "clientName": "VERIZON",
-      "siteIds": [
-        "DFW004",
-        "DFW005",
-        "DFW009"
-      ]
-    },
-    {
-      "clientName": "WHIRLPOOL",
-      "siteIds": [
-        "MDW001",
-        "SEA002",
-        "DFW001",
-        "SJC001",
-        "MDT001",
-        "LAX001",
-        "EWR003",
-        "ATL002",
-        "MEM005",
-        "SLC001",
-        "MCO001"
-      ]
+      "siteIds": ["DFW004", "DFW005", "DFW009"]
     }
   ]
 }

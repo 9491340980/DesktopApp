@@ -57,69 +57,6 @@ export class ServiceDashboard {
   loadingTasks: Set<string> = new Set();
   hideControls: EngineResult = new EngineResult();
 
-  // Control Configuration (EXACTLY matching web version)
-  // hideControls: any = {
-  //   controlProperties: {
-  //     // Tab visibility controls
-  //     allowWindowsTab: [],  // Empty = show to all
-  //     allowTaskScheTab: [],
-  //     allowApiTab: [],
-  //     allowQueueTab: ['DEVELOPER', 'CLIENTSUPPORT'],
-  //     dbJobs: ['DEVELOPER', 'CLIENTSUPPORT'],
-  //     allowQueueservicesTab: ['DEVELOPER', 'CLIENTSUPPORT'],
-  //     allowQueuepropogatorsTab: ['DEVELOPER', 'CLIENTSUPPORT'],
-
-  //     // Column visibility controls
-  //     description: ['DEVELOPER', 'ADMIN'],
-  //     serverName: ['DEVELOPER', 'ADMIN'],
-  //     logs: ['DEVELOPER', 'ADMIN'],
-  //     memoryUtilization: ['DEVELOPER', 'ADMIN'],
-  //     ThreadCount: ['DEVELOPER', 'ADMIN'],
-  //     processUtilization: ['DEVELOPER', 'ADMIN'],
-  //     CpuUtilization: ['DEVELOPER', 'ADMIN'],
-  //     Threshold: ['DEVELOPER', 'ADMIN'],
-  //     statusAccess: ['DEVELOPER', 'ADMIN'],
-
-  //     // Search configuration
-  //     searchKey: {
-  //       Pattern: '^[a-zA-Z0-9\\s]*$',
-  //       MaxLength: 50,
-  //       TextCase: 'upper'
-  //     },
-
-  //     // Labels (for translation support)
-  //     windowsServices: {
-  //       serviceLbl: 'Service Name',
-  //       statusLbl: 'Status',
-  //       serverNameLbl: 'Server Name',
-  //       logsLbl: 'Logs',
-  //       descriptionLbl: 'Description',
-  //       memoryUtilizationLbl: 'Memory Utilization',
-  //       threadCountLbl: 'Thread Count',
-  //       processUtilizationLbl: 'Process CPU Utilization',
-  //       cpuUtilizationLbl: 'Total CPU Utilization'
-  //     },
-  //     taskScheduler: {
-  //       taskNameLbl: 'Task Name',
-  //       desctiptionLbl: 'Description',
-  //       lastRunTimeLbl: 'Last Run Time',
-  //       statusLbl: 'Status'
-  //     },
-
-  //     // Queue configuration
-  //     queueData: {
-  //       propogation: 'S',
-  //       nonPropogation: 'P'
-  //     },
-
-  //     // Polling intervals (milliseconds)
-  //     servicePollTimer: 2000000,           // 30 seconds
-  //     queueAlertPollTimer: 2000,        // 60 seconds
-  //     apiStatusAlertPollTimer: 60000,    // 60 seconds
-  //     dbJobsPollTimer: 60000             // 60 seconds
-  //   }
-  // };
-
   // UI Data
   uiData: UIData = {
     OperationId: '6850',
@@ -127,16 +64,16 @@ export class ServiceDashboard {
   };
 
   // Service Data
-  services: WindowsService[] = [];  // Web uses 'services'
-  tasks: TaskScheduler[] = [];      // Web uses 'tasks'
-  apiServiceData: ApiService[] = []; // Web uses 'apiServiceData'
-  groupedApiServices: GroupedApiService[] = []; // Grouped API services by server
-  queService: QueueAlert[] = [];     // Web uses 'queService'
-  queService1: QueueAlert[] = [];    // Web uses 'queService1'
-  PropService: QueueAlert[] = [];    // Web uses 'PropService'
-  dbJobsList: DbJob[] = [];          // Web uses 'dbJobsList'
-  dbJobsData: DbJob[] = [];          // Web uses 'dbJobsData'
-  originalDbJobsData: DbJob[] = [];  // Web uses 'originalDbJobsData'
+  services: WindowsService[] = [];
+  tasks: TaskScheduler[] = [];
+  apiServiceData: ApiService[] = [];
+  groupedApiServices: GroupedApiService[] = [];
+  queService: QueueAlert[] = [];
+  queService1: QueueAlert[] = [];
+  PropService: QueueAlert[] = [];
+  dbJobsList: DbJob[] = [];
+  dbJobsData: DbJob[] = [];
+  originalDbJobsData: DbJob[] = [];
 
   // Schema Selection for DB Jobs
   schemaList: { Id: string; Text: string }[] = [];
@@ -159,17 +96,17 @@ export class ServiceDashboard {
     warningServices: 0
   };
 
-  // Status Indicators (EXACTLY matching web)
-  serviceError: boolean = false;                    // Web uses this
-  serviceErrorTaskList: boolean = false;            // Web uses this
-  serviceErrorApilist: boolean = false;             // Web uses this
-  serviceErrorQueuelist: boolean = false;           // Web uses this
-  dbJoblist: boolean = false;                       // Web uses this
-  serviceErrorDbAlertslist: boolean = false;        // Web uses this
-  serviceErrorDbAlertslist1: boolean = false;       // Web uses this
+  // Status Indicators
+  serviceError: boolean = false;
+  serviceErrorTaskList: boolean = false;
+  serviceErrorApilist: boolean = false;
+  serviceErrorQueuelist: boolean = false;
+  dbJoblist: boolean = false;
+  serviceErrorDbAlertslist: boolean = false;
+  serviceErrorDbAlertslist1: boolean = false;
 
   // Polling
-  private deviceStopPolling = new Subject<void>();  // Web uses this name
+  private deviceStopPolling = new Subject<void>();
   private windowsPolling$ = new Subject<void>();
   private taskPolling$ = new Subject<void>();
   private apiPolling$ = new Subject<void>();
@@ -205,7 +142,6 @@ export class ServiceDashboard {
       columns.push('description');
     }
 
-
     if (this.checkRolesMatch(this.hideControls.controlProperties?.memoryUtilization)) {
       columns.push('memoryUtilization');
     }
@@ -239,7 +175,6 @@ export class ServiceDashboard {
     clientData.Roles = ['SERVICEADMIN'];
     localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
   }
-
 
   checkLastRunTimeShow(show?: boolean | string[]): boolean {
     // If not configured, default to false (hide by default)
@@ -422,7 +357,6 @@ export class ServiceDashboard {
       this.hideControls.controlProperties.dbJobs = config.dbJobs;
     }
 
-    // Update column visibility
     if (config.description !== undefined) {
       this.hideControls.controlProperties.description = config.description;
     }
@@ -547,7 +481,6 @@ export class ServiceDashboard {
     // Allow all other columns by default
     return true;
   }
-
 
   shouldShowDbJobColumn(columnName: string): boolean {
     return this.dbJobsDisplayColumns.includes(columnName);
@@ -751,67 +684,7 @@ export class ServiceDashboard {
       next: (response) => {
         if (response.Status === 'PASS' && response.Response) {
           this.apiServiceData = response.Response;
-          // response.Response = [
-          //   {
-          //     "WebAPIName": "CommonAPI:tsgvm04133",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "ReceivingAPI:tsgvm04133",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "TestingAPI:tsgvm04133",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "TransferServicesAPI:tsgvm04133",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "UtilitiesAPI:tsgvm04133",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "VendorTestResultsAPI:tsgvm04133",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "WarehouseTransferAPI:tsgvm04133",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "CommonAPI:tsgvm04155",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "ReceivingAPI:tsgvm04155",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "TestingAPI:tsgvm04155",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "TransferServicesAPI:tsgvm04155",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "UtilitiesAPI:tsgvm04155",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "VendorTestResultsAPI:tsgvm04155",
-          //     "Status": "Running"
-          //   },
-          //   {
-          //     "WebAPIName": "WarehouseTransferAPI:tsgvm04155",
-          //     "Status": "Running"
-          //   }
-          // ]
-          // Group API services by server and parse the response
           this.groupedApiServices = this.groupApiServicesByServer(response.Response);
-
           this.serviceErrorApilist = response.Response.some(a => a.Status !== 'Running');
         }
       },
@@ -837,7 +710,6 @@ export class ServiceDashboard {
       const apiName = parts[0] || api.WebAPIName;
       const serverName = parts[1] || 'Unknown';
 
-      // Get or create server group
       if (!serverMap.has(serverName)) {
         serverMap.set(serverName, {
           serverName: serverName,
@@ -848,19 +720,16 @@ export class ServiceDashboard {
 
       const serverGroup = serverMap.get(serverName)!;
 
-      // Add service to server group
       serverGroup.services.push({
         name: apiName,
         status: api.Status
       });
 
-      // Update error flag
       if (api.Status !== 'Running') {
         serverGroup.hasError = true;
       }
     });
 
-    // Convert map to array and sort by server name
     return Array.from(serverMap.values()).sort((a, b) =>
       a.serverName.localeCompare(b.serverName)
     );
@@ -887,7 +756,6 @@ export class ServiceDashboard {
           const propType = this.hideControls.controlProperties?.queueData?.propogation || 'S';
           const nonPropType = this.hideControls.controlProperties?.queueData?.nonPropogation || 'P';
 
-          // Matching web's variable names exactly
           this.queService = response.Response;
           this.queService1 = response.Response.filter(q => q.QueueType === propType);
           this.PropService = response.Response.filter(q => q.QueueType === nonPropType);
@@ -984,7 +852,7 @@ export class ServiceDashboard {
     this.commonService.post(
       `/utilities/startstop/${serviceName}`,
       { UIData: this.uiData },
-      { showLoader: false, showError: true }  // Changed to false to not show global loader
+      { showLoader: false, showError: true }
     ).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
@@ -1037,7 +905,6 @@ export class ServiceDashboard {
     });
   }
 
-
   isTaskLoading(taskName: string): boolean {
     return this.loadingTasks.has(taskName);
   }
@@ -1070,9 +937,6 @@ export class ServiceDashboard {
     });
   }
 
-  /**
-   * Refresh Services (matching web method name)
-   */
   refreshServices(): void {
     this.searchKey = '';
     this.getServicesList();
@@ -1123,12 +987,12 @@ export class ServiceDashboard {
   }
 
   /**
-   * Get filtered services (matching web with | search pipe)
+   * NEW: Get filtered grouped services with search applied
    */
   getFilteredServices(): WindowsService[] {
     let filtered = this.services;
 
-    // Search filter (matching web's search pipe)
+    // Apply search filter
     if (this.searchKey) {
       const search = this.searchKey.toLowerCase();
       filtered = filtered.filter(s =>
@@ -1138,7 +1002,7 @@ export class ServiceDashboard {
       );
     }
 
-    // Status filter
+    // Apply status filter
     if (this.statusFilter !== 'all') {
       if (this.statusFilter === 'running') {
         filtered = filtered.filter(s => s.Status === 'Running');
@@ -1147,12 +1011,32 @@ export class ServiceDashboard {
       }
     }
 
-    return filtered;
+    // Sort: Stopped services first (regardless of server), then by server name, then by status
+    return filtered.sort((a, b) => {
+      // First priority: Stopped services at top
+      const aIsStopped = a.Status !== 'Running' ? 0 : 1;
+      const bIsStopped = b.Status !== 'Running' ? 0 : 1;
+
+      if (aIsStopped !== bIsStopped) {
+        return aIsStopped - bIsStopped;
+      }
+
+      // Second priority: Group by server name
+      const serverCompare = (a.ServerName || '').localeCompare(b.ServerName || '');
+      if (serverCompare !== 0) {
+        return serverCompare;
+      }
+
+      // Third priority: Within same server, stopped first
+      if (a.Status !== b.Status) {
+        return a.Status === 'Running' ? 1 : -1;
+      }
+
+      // Final: Sort by service name
+      return (a.ServiceName || '').localeCompare(b.ServiceName || '');
+    });
   }
 
-  /**
-   * Get filtered tasks
-   */
   getFilteredTasks(): TaskScheduler[] {
     let filtered = this.tasks;
 
@@ -1167,9 +1051,6 @@ export class ServiceDashboard {
     return filtered;
   }
 
-  /**
-   * Get filtered API services
-   */
   getFilteredApiServices(): ApiService[] {
     let filtered = this.apiServiceData;
 
@@ -1183,9 +1064,6 @@ export class ServiceDashboard {
     return filtered;
   }
 
-  /**
-   * Get filtered queue services
-   */
   getFilteredQueueServices(): QueueAlert[] {
     let filtered = this.queService1;
 
@@ -1225,9 +1103,6 @@ export class ServiceDashboard {
     return Math.round((value / this.statistics.totalServices) * 100);
   }
 
-  /**
-   * Role-based access control helpers (EXACTLY matching web methods)
-   */
   checkRolesMatch(roles: string[], serviceName?: string): boolean {
     if (serviceName === 'Spooler') {
       return true;
@@ -1339,14 +1214,14 @@ interface DbJob {
   ClientId: string | null;
   SiteId: string | null;
   Id: string;
-  Name: string;           // Exact API field name
+  Name: string;
   Schema: string;
-  LastRun: string;        // Exact API field name
-  NextRun: string;        // Exact API field name
+  LastRun: string;
+  NextRun: string;
   Schedule: string;
   Broken: 'Y' | 'N';
-  Active?: 'Y' | 'N';     // Optional - shown based on API config
-  Failures?: number;       // Optional - shown based on API config
+  Active?: 'Y' | 'N';
+  Failures?: number;
 }
 
 interface ServiceStatistics {
@@ -1355,10 +1230,3 @@ interface ServiceStatistics {
   stoppedServices: number;
   warningServices: number;
 }
-
-
-// {
-//   "taskScheduler": {
-//     "lastRunTimeShow": false  // or omit this property entirely
-//   }
-// }

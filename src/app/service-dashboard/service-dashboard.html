@@ -460,7 +460,7 @@
     <mat-tab *ngIf="!checkTabMatch(hideControls.controlProperties?.allowApiTab)">
       <ng-template mat-tab-label>
         <mat-icon class="tab-icon mr-2">api</mat-icon>
-        API Services
+        Web APIs
         <mat-chip *ngIf="serviceErrorApilist" class="error-badge blink">!</mat-chip>
         <mat-chip *ngIf="!serviceErrorApilist && groupedApiServices.length > 0" class="success-badge">✓</mat-chip>
 
@@ -501,7 +501,7 @@
         <!-- Empty State -->
         <div class="empty-state" *ngIf="groupedApiServices.length === 0">
           <mat-icon>inbox</mat-icon>
-          <p>No API services found</p>
+          <p>No Web APIs found</p>
         </div>
       </div>
     </mat-tab>
