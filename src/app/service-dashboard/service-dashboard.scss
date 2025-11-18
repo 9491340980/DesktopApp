@@ -165,11 +165,9 @@ $transition-speed: 0.3s;
 // ===================================================================
 
 .control-bar {
-  background: $card-background;
-  padding: $spacing-md;
-  border-radius: $card-border-radius;
-  margin-bottom: $spacing-lg;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: end;
 }
 
 .search-filter-section {
@@ -181,10 +179,11 @@ $transition-speed: 0.3s;
   .search-field {
     flex: 1;
     min-width: 300px;
-    .mat-mdc-text-field-wrapper{
-      height: 50px !important;
-    }
+    max-width: 300px;
 
+    .mat-mdc-text-field-wrapper {
+      height: 40px !important;
+    }
   }
 
   .status-toggle,
@@ -196,6 +195,17 @@ $transition-speed: 0.3s;
     border: 1px solid $border-color;
     border-radius: $border-radius;
   }
+}
+
+.refresh-btn {
+  background: #f4433638;
+  border-radius: 5px;
+  height: 40px;
+  padding: 7px;
+  width: 40px;
+  color: #f44336;
+  border: 1px #f4b2ad solid !important;
+  margin-bottom: 10px;
 }
 
 // ===================================================================
@@ -229,7 +239,8 @@ $transition-speed: 0.3s;
     }
   }
 }
-     .error-badge {
+
+.error-badge {
   background-color: #f44336 !important;
   color: white !important;
   font-size: 12px !important;
@@ -242,6 +253,7 @@ $transition-speed: 0.3s;
     animation: strongBlink 1s ease-in-out infinite !important;
   }
 }
+
 .success-badge {
   background-color: #4caf50 !important;
   color: white !important;
@@ -251,12 +263,16 @@ $transition-speed: 0.3s;
   font-weight: bold !important;
   margin-left: 8px !important;
 }
+
 @keyframes strongBlink {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
     box-shadow: 0 0 0 rgba(244, 67, 54, 0.7);
   }
+
   50% {
     opacity: 0.3;
     transform: scale(1.1);
@@ -298,11 +314,11 @@ $transition-speed: 0.3s;
       font-weight: 600;
       color: $text-primary;
       border-bottom: 2px solid $border-color;
-      padding: $spacing-md;
+      padding: 8px 16px;
     }
 
     td {
-      padding: $spacing-md;
+      padding: 8px 16px;
       border-bottom: 1px solid $border-color;
     }
 
@@ -771,9 +787,12 @@ $transition-speed: 0.3s;
 
 .schema-filter {
   margin-bottom: $spacing-md;
+  display: flex;
+  justify-content: flex-end;
 
   mat-form-field {
     min-width: 300px;
+    max-width: 300px;
   }
 }
 
@@ -892,7 +911,7 @@ button:focus,
 input:focus,
 select:focus,
 mat-button-toggle:focus {
-  outline: 2px solid $primary-color;
+  outline: 0px solid $primary-color;
   outline-offset: 2px;
 }
 

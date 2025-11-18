@@ -366,14 +366,14 @@ export class ServiceDashboard {
           try {
             // Parse the JSON string response
             let config = JSON.parse(response.Response);
-            config.taskScheduler = {
-              "taskServerName": {
-                "roles": ["DEVELOPER", "SERVICEADMIN"],
-                "JRSocketClient": "tsgvm04373",
-                "JR-WMx CRTC1 Web Socket": "tsgvm03520",
-                "JR-WMx CRTC1 Update Order Info Web Socket":"tsgvm03520"
-              }
-            }
+            // config.taskScheduler = {
+            //   "taskServerName": {
+            //     "roles": ["DEVELOPER", "SERVICEADMIN"],
+            //     "JRSocketClient": "tsgvm04373",
+            //     "JR-WMx CRTC1 Web Socket": "tsgvm03520",
+            //     "JR-WMx CRTC1 Update Order Info Web Socket":"tsgvm03520"
+            //   }
+            // }
             this.applyControlConfiguration(config);
           } catch (error) {
             console.error('Error parsing control config:', error);

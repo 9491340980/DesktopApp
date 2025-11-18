@@ -74,7 +74,7 @@ $border-color: #e5e7eb;
   min-height: 100vh;
   @include flex-center;
   flex-direction: column;
-  background: linear-gradient(135deg, #f44336 0%, #e17754 100%);
+  background: linear-gradient(180deg, #000b27 0%, #000b27 100%);
   position: relative;
   overflow: hidden;
   padding: 20px;
@@ -91,7 +91,7 @@ $border-color: #e5e7eb;
   .bg-shape {
     position: absolute;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
+    background: #0c1d49;
     backdrop-filter: blur(10px);
 
     &.shape-1 {
@@ -142,16 +142,16 @@ $border-color: #e5e7eb;
 // Header section
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 15px;
 
   .logo-container {
-    margin-bottom: 16px;
-
+    margin-top: 10px;
+text-align: left;
     .login-logo {
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: auto;
       object-fit: contain;
-      animation: float 6s ease-in-out infinite;
+      // animation: float 6s ease-in-out infinite;
     }
   }
 

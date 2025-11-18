@@ -47,7 +47,7 @@ $accent-glow: rgba(59, 130, 246, 0.15);
       justify-content: center;
       cursor: pointer;
       padding: 16px;
-      background: rgb(114 153 255 / 74%);
+      background: rgb(148 177 255 / 74%);
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.05);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -175,7 +175,7 @@ $accent-glow: rgba(59, 130, 246, 0.15);
 
         .user-site {
           font-size: 12px;
-          color: $text-secondary;
+          color: #d7d7d7;
           margin-top: 2px;
         }
       }
@@ -249,7 +249,7 @@ $accent-glow: rgba(59, 130, 246, 0.15);
   span[matListItemTitle] {
     font-size: 15px;
     font-weight: 500;
-    color: $primary-color;
+    color: #fff;
     letter-spacing: 0.3px;
   }
 
@@ -327,7 +327,7 @@ background: rgb(6 23 60);
     word-break: break-word;
     line-height: 1.4;
     font-weight: 400;
-    color: $primary-color;
+    color: #fff;
     letter-spacing: 0.2px;
     font-size: 14px;
   }
@@ -354,13 +354,13 @@ background: rgb(6 23 60);
 
   .menu-toggle-btn {
     margin-right: 16px;
-    color: #64748b;
+    color: #06183e;
     transition: all 0.3s ease;
 
     &:hover {
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      color: $primary-color;
-      transform: scale(1.05);
+      background: #06183e;
+    color: #bcceff;
+    transform: scale(1.05);
     }
   }
 
@@ -369,10 +369,10 @@ background: rgb(6 23 60);
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    padding: 10px 16px;
+    // padding: 10px 16px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    // background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    // border: 1px solid rgba(59, 130, 246, 0.2);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
@@ -383,8 +383,8 @@ background: rgb(6 23 60);
     }
 
     .toolbar-logo-img {
-      width: 36px;
-      height: 36px;
+      width: 60px;
+      height: auto;
       object-fit: contain;
     }
 
@@ -450,7 +450,7 @@ background: rgb(6 23 60);
 
 // Content Wrapper
 .content-wrapper {
-  padding: 32px 20px;
+  padding: 0px 0px;
   min-height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow-y: auto;

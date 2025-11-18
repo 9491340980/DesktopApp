@@ -1,5 +1,5 @@
 // Variables
-$primary-color: #3b82f6;
+$primary-color: #698df0;
 $primary-dark: #2563eb;
 $accent-color: #06b6d4;
 $success-color: #10b981;
@@ -195,15 +195,15 @@ $shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
   border: 2px solid $border-color;
 
   &:hover {
-    border-color: $primary-color;
+    border-color: #06173c;
     box-shadow: $shadow-lg;
     transform: translateY(-3px);
   }
 
   &.selected {
-    border-color: $primary-color;
-    box-shadow: 0 0 0 4px rgba($primary-color, 0.08);
-    background: linear-gradient(to bottom, white 0%, rgba($primary-color, 0.02) 100%);
+    border-color: #06173c;
+    box-shadow: 0 0 0 1px rgb(105 141 240);
+    background: linear-gradient(to bottom, white 0%, rgba(#06173c, 0.02) 100%);
   }
 
   &.has-submenu {
@@ -313,7 +313,7 @@ $shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
   padding: 26px;
   margin-top: 6px;
   margin-bottom: 6px;
-  border: 2px solid $primary-color;
+  border: 2px solid #06173c;
   box-shadow: $shadow-md;
 
   .submenu-header {
