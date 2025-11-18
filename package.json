@@ -1,8 +1,9 @@
 {
   "name": "RMX-App",
-  "version": "3.0.1",
+  "version": "4.0.1",
   "main": "main.js",
-  "description": "Desktop Application",
+  "productName": "RMX Desktop",
+  "description": "RMX Desktop Application",
   "author": "Your Name",
   "scripts": {
     "ng": "ng",
@@ -13,14 +14,15 @@
     "package-win": "ng build --configuration production && electron-builder build --win --x64"
   },
   "build": {
-    "appId": "com.company.desktopapp",
-    "productName": "Desktop App",
+    "appId": "com.company.rmxdesktop",
+    "productName": "RMX Desktop",
     "directories": {
       "output": "release"
     },
     "files": [
       "main.js",
       "package.json",
+      "build/icon.ico",
       {
         "from": "dist",
         "to": "dist",
@@ -30,6 +32,7 @@
       }
     ],
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -45,7 +48,10 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
     }
   },
   "private": true,
