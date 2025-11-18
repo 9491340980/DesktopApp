@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -52,6 +52,111 @@ function showErrorDialog(title, message) {
 }
 
 // ============================================
+// APPLICATION MENU WITH ZOOM
+// ============================================
+function createAppMenu() {
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Reload',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.reload();
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Exit',
+          accelerator: 'Alt+F4',
+          click: () => {
+            app.quit();
+          }
+        }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Zoom In',
+          accelerator: 'CmdOrCtrl+Plus',
+          click: () => {
+            if (mainWindow) {
+              const currentZoom = mainWindow.webContents.getZoomFactor();
+              const newZoom = Math.min(currentZoom + 0.1, 3.0);
+              mainWindow.webContents.setZoomFactor(newZoom);
+              logInfo('Zoom In:', newZoom.toFixed(1));
+            }
+          }
+        },
+        {
+          label: 'Zoom Out',
+          accelerator: 'CmdOrCtrl+-',
+          click: () => {
+            if (mainWindow) {
+              const currentZoom = mainWindow.webContents.getZoomFactor();
+              const newZoom = Math.max(currentZoom - 0.1, 0.5);
+              mainWindow.webContents.setZoomFactor(newZoom);
+              logInfo('Zoom Out:', newZoom.toFixed(1));
+            }
+          }
+        },
+        {
+          label: 'Reset Zoom',
+          accelerator: 'CmdOrCtrl+0',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.setZoomFactor(1.0);
+              logInfo('Zoom Reset: 1.0');
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Toggle Developer Tools',
+          accelerator: 'F12',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.toggleDevTools();
+            }
+          }
+        }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'About RMX Desktop',
+              message: 'RMX Desktop Application',
+              detail: `Version: 1.0.0\nElectron: ${process.versions.electron}\nChrome: ${process.versions.chrome}\nNode: ${process.versions.node}`
+            });
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'View Logs',
+          click: () => {
+            require('electron').shell.openPath(logsDir);
+          }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
+// ============================================
 // WINDOW CREATION
 // ============================================
 let mainWindow = null;
@@ -60,24 +165,25 @@ function createWindow() {
   logInfo('Creating window...');
 
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: 1280,
+    height: 720,
     minWidth: 1024,
-    minHeight: 768,
+    minHeight: 600,
     title: 'RMX Desktop',
     icon: path.join(__dirname, 'build', 'icon.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: false,
-      devTools: true
+      devTools: true, // Keep enabled for F12, but don't open by default
+      zoomFactor: 1.0
     },
     show: false,
     backgroundColor: '#ffffff'
   });
 
-  // Open DevTools to see any errors
-  mainWindow.webContents.openDevTools();
+  // Dev tools are available via F12 but not opened by default
+  // mainWindow.webContents.openDevTools(); // REMOVED - no auto-open
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
@@ -105,6 +211,14 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  // Disable zoom with mouse wheel + Ctrl (optional - remove if you want mouse wheel zoom)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && (input.key === '=' || input.key === '-' || input.key === '0')) {
+      // Allow keyboard shortcuts for zoom
+      return;
+    }
   });
 }
 
@@ -191,12 +305,21 @@ app.whenReady().then(() => {
   logInfo('Log file:', logFile);
   logInfo('========================================');
 
+  // Create application menu with zoom controls
+  createAppMenu();
+
   createWindow();
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
   }
 });
 
