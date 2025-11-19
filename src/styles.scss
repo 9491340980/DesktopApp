@@ -650,6 +650,25 @@ body {
   .mat-mdc-tab .mdc-tab-indicator__content--underline {
       border-color: #f44336 !important;
   }
+  .mat-warn{
+    background: #f44336 !important;
+    color: #ffffff !important;
+  }
+  .mat-warn {
+  background: #f44336 !important;
+  color: #ffffff !important;
+  animation: blinkWarn 1s infinite; // duration = 1s, repeats forever
+}
+
+@keyframes blinkWarn {
+  0%, 50%, 100% {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0.3;
+  }
+}
+
   .mat-success{
     background: #0ac773 !important;
     color: #002313 !important;
@@ -680,28 +699,13 @@ body {
     }
     .mat-mdc-form-field-flex{
       height: 40px !important;
+      padding: 10px !important;
     }
     .mdc-text-field--outlined .mat-mdc-form-field-infix{
       padding: 0 !important;
     }
   }
-  .schema-filter{
-     min-width: 300px;
-    max-width: 300px;
-    .mat-mdc-text-field-wrapper{
-      height: 40px !important;
-            .mdc-text-field__input {
-        display: inline-block;
-        height: 40px !important;
-      }
-    }
-    .mat-mdc-form-field-flex{
-      height: 40px !important;
-    }
-    .mdc-text-field--outlined .mat-mdc-form-field-infix{
-      padding: 0 !important;
-    }
-  }
+
   .mat-mdc-floating-label.mdc-floating-label{
     transform: var(--mat-mdc-form-field-label-transform, translateY(-86%) translateX(calc(1 * (52px + var(--mat-mdc-form-field-label-offset-x, 0px))))) !important;
   }
@@ -719,6 +723,33 @@ cubic-bezier(0.4, 0, 0.6, 1);
 }
 .mat-mdc-progress-bar {
     --mat-progress-bar-active-indicator-color: #35c43b;
+  }
+.cdk-overlay-pane{
+  background-color: #ffffff !important;
+}
+  .schema-filter{
+     min-width: 300px;
+    max-width: 300px;
+    .mat-mdc-text-field-wrapper{
+      height: 40px !important;
+            .mdc-text-field__input {
+        display: inline-block;
+        height: 40px !important;
+      }
+    }
+    .mat-mdc-form-field-flex{
+      height: 40px !important;
+      padding: 10px !important;
+      // .mdc-notched-outline{
+      //   display: none !important;
+      // }
+    }
+    .mdc-text-field--outlined .mat-mdc-form-field-infix{
+      padding: 0 !important;
+    }
+  }
+  .mat-mdc-form-field-icon-prefix>.mat-icon{
+    padding: 0 4px !important;
   }
 /* ============================================
    RESPONSIVE UTILITIES

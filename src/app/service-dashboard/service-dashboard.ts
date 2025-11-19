@@ -578,14 +578,14 @@ export class ServiceDashboard {
   private startAllPolling(): void {
     // Windows Services Polling - matches web's checkStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
-      timer(0, this.hideControls.controlProperties?.servicePollTimer || 2000)
+      timer(0, this.hideControls.controlProperties?.servicePollTimer || 20000000)
         .pipe(takeUntil(this.windowsPolling$))
         .subscribe(() => this.checkStatus());
     }
 
     // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
-      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 2000)
+      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 20000000)
         .pipe(takeUntil(this.taskPolling$))
         .subscribe(() => this.getTasksList());
     }

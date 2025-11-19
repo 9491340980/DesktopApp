@@ -2,7 +2,7 @@
 
 .user-profile-page {
   padding: 24px;
-  max-width: 1000px; // Reduced from 1400px since no sidebar
+  max-width: 600px; // Reduced from 1400px since no sidebar
   margin: 0 auto;
   min-height: calc(100vh - 64px);
   background: #f5f7fa;
@@ -21,7 +21,7 @@
     justify-content: space-between;
     align-items: center;
   }
-
+}
   .user-info {
     display: flex;
     align-items: center;
@@ -29,33 +29,30 @@
 
     .user-avatar {
       img {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        border: 3px solid #667eea;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        background: white;
-        padding: 4px;
+width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #5f81de;
+    box-shadow: 0 4px 12px rgb(10 36 90);
+    background: white;
+    padding: 4px;
       }
     }
 
     .user-details {
       .page-title {
-        margin: 0 0 4px 0;
         font-size: 28px;
         font-weight: 600;
-        color: #2d3748;
+        color: #fff;
       }
 
       .user-name {
         margin: 0;
         font-size: 16px;
-        color: #718096;
+        color: #fff;
       }
     }
   }
-}
-
 // Profile Card Container - Single column now
 .profile-card-container {
   display: block; // Changed from grid
@@ -69,7 +66,7 @@
   overflow: hidden;
 
   .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #0a245a;
     color: white;
     padding: 24px;
 
@@ -227,11 +224,11 @@
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #f44336 0%, #f44336 100%);;
           color: white;
 
           &:not(:disabled):hover {
-            background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+            background: #d32d21;
           }
         }
 

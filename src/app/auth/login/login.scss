@@ -146,12 +146,23 @@ $border-color: #e5e7eb;
 
   .logo-container {
     margin-top: 10px;
-text-align: left;
+    text-align: left;
+    display: flex;
+    align-items: center;
+
     .login-logo {
       width: 100px;
       height: auto;
       object-fit: contain;
       // animation: float 6s ease-in-out infinite;
+    }
+
+    .logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    margin-left: 5px;
+    margin-bottom: -8px;
+
     }
   }
 
