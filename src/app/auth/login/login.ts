@@ -207,41 +207,62 @@ export class Login implements OnInit, OnDestroy {
   /**
    * Save user data to localStorage
    */
-  private saveUserData(response: LoginResponse): void {
-    try {
-      // ClientData is saved in LoginService
-      if (response.clientData) {
-        console.log('✅ ClientData saved:', response.clientData);
-        localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(response.clientData));
+ private saveUserData(response: LoginResponse): void {
+  try {
+    // Check if control config has default location
+    let updatedClientData = response.clientData;
+
+    if (response.config?.Response) {
+      // Parse the JSON string ONCE
+      const controlConfig = JSON.parse(response.config.Response);
+
+      // Add defaultLocation temporarily (until it's in DB)
+      controlConfig.defaultLocation = "RTN01";
+
+      if (controlConfig.defaultLocation) {
+        console.log('Default location found in control config:', controlConfig.defaultLocation);
+        if (updatedClientData) {
+          updatedClientData = {
+            ...updatedClientData,
+            Location: controlConfig.defaultLocation
+          };
+          console.log('✅ Location updated in ClientData:', updatedClientData.Location);
+        }
       }
 
-      // Save control config
-      if (response.config?.Response) {
-        localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(response.config.Response));
-      }
-
-      // Save session timeout
-      if (response.sessionTime?.Response) {
-        localStorage.setItem(StorageKey.SESSION_TIMEOUT, response.sessionTime.Response);
-      }
-
-      // Save menu
-      if (response.menu?.Response) {
-        localStorage.setItem(StorageKey.MENU, JSON.stringify(response.menu.Response));
-      }
-
-      // Save messages
-      if (response.messages?.Response) {
-        localStorage.setItem(StorageKey.MESSAGES, JSON.stringify(response.messages.Response));
-      }
-
-      // Set module
-      localStorage.setItem('module', 'COM');
-
-    } catch (error) {
-      console.error('Error saving user data:', error);
+      // Save control config as JSON string (localStorage.setItem automatically stringifies if you pass object)
+      // But it's better to be explicit
+      localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(controlConfig));
     }
+
+    // Save updated ClientData (with location if it was updated)
+    if (updatedClientData) {
+      console.log('✅ ClientData saved:', updatedClientData);
+      localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(updatedClientData));
+    }
+
+    // Save session timeout
+    if (response.sessionTime?.Response) {
+      localStorage.setItem(StorageKey.SESSION_TIMEOUT, response.sessionTime.Response);
+    }
+
+    // Save menu
+    if (response.menu?.Response) {
+      localStorage.setItem(StorageKey.MENU, JSON.stringify(response.menu.Response));
+    }
+
+    // Save messages
+    if (response.messages?.Response) {
+      localStorage.setItem(StorageKey.MESSAGES, JSON.stringify(response.messages.Response));
+    }
+
+    // Set module
+    localStorage.setItem('module', 'COM');
+
+  } catch (error) {
+    console.error('Error saving user data:', error);
   }
+}
 
   /**
    * Get app version

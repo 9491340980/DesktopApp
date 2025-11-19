@@ -171,9 +171,9 @@ export class ServiceDashboard {
 
   ngOnInit(): void {
     this.loadControlConfiguration();
-    let clientData = this.authService.getUpdatedClientData();
-    clientData.Roles = ['SERVICEADMIN'];
-    localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
+    // let clientData = this.authService.getUpdatedClientData();
+    // clientData.Roles = ['SERVICEADMIN'];
+    // localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
   }
 
   checkLastRunTimeShow(show?: boolean | string[]): boolean {
@@ -352,6 +352,12 @@ export class ServiceDashboard {
     }
     if (config.allowQueueTab !== undefined) {
       this.hideControls.controlProperties.allowQueueTab = config.allowQueueTab;
+    }
+    if (config.allowQueueservicesTab !== undefined) {
+      this.hideControls.controlProperties.allowQueueservicesTab = config.allowQueueservicesTab;
+    }
+    if (config.allowQueuepropogatorsTab !== undefined) {
+      this.hideControls.controlProperties.allowQueuepropogatorsTab = config.allowQueuepropogatorsTab;
     }
     if (config.dbJobs !== undefined) {
       this.hideControls.controlProperties.dbJobs = config.dbJobs;
@@ -1131,10 +1137,17 @@ export class ServiceDashboard {
   }
 
   checkTabMatch(roles: string[]): boolean {
+    console.log('checkTabMatch called with:', roles);
+    console.log('hideControls.controlProperties?.allowQueueTab:', this.hideControls.controlProperties?.allowQueueTab);
+
     if (roles && roles.length) {
       const clientData = this.authService.getUpdatedClientData();
-      return roles.some(role => clientData.Roles?.includes(role));
+      console.log('User roles:', clientData.Roles);
+      const result = roles.some(role => clientData.Roles?.includes(role));
+      console.log('Match result:', result);
+      return result;
     }
+    console.log('Returning false - roles empty or undefined');
     return false;
   }
 

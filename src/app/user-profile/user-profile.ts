@@ -50,7 +50,7 @@ export class UserProfile implements OnInit, OnDestroy {
   siteIdOptions: SiteIdOption[] = [];
   client: ClientOption[] = [];
   userProfile: any = {};
-  clientData: any={};
+  clientData: any = {};
 
   // UI states
   loading: boolean = false;
@@ -77,11 +77,11 @@ export class UserProfile implements OnInit, OnDestroy {
     private cryptoService: CryptoService,
     private snackBar: MatSnackBar
   ) {
-    // Initialize form
+    // ✅ Initialize form - location is now optional
     this.userForm = this.fb.group({
       siteId: ['', Validators.required],
       clientId: ['', Validators.required],
-      location: ['', Validators.required],
+      location: [''],  // ✅ REMOVED Validators.required
       deviceId: [{ value: '', disabled: true }]
     });
   }
@@ -116,6 +116,24 @@ export class UserProfile implements OnInit, OnDestroy {
       this.userProfile = JSON.parse(JSON.stringify(this.currentProfile));
     }
 
+    // ✅ NEW: Get location from clientData or control config
+    let defaultLocation = this.clientData.Location || '';
+
+    // ✅ Check if control config has defaultLocation
+    if (!defaultLocation && this.controlConfigs?.defaultLocation) {
+      defaultLocation = this.controlConfigs.defaultLocation;
+      console.log('Using defaultLocation from control config:', defaultLocation);
+    }
+
+    // ✅ Set location in userProfile and clientData
+    if (defaultLocation) {
+      this.userProfile.Loc = defaultLocation.toUpperCase();
+      this.clientData.Location = defaultLocation.toUpperCase();
+      // ✅ Location should be disabled when auto-populated
+      this.isLocationDisabled = true;
+      this.locationDisabled = true;
+    }
+
     // Check if we have valid clientData (not LOGIN state)
     if (this.clientData && this.clientData.SiteId !== 'LOGIN' && this.clientData.SiteId !== '') {
       // Load clients for current site
@@ -124,6 +142,11 @@ export class UserProfile implements OnInit, OnDestroy {
       // Populate form with current profile
       if (this.userProfile) {
         this.disableControls(false);
+        // ✅ Keep location disabled if it has a value
+        if (this.userProfile.Loc) {
+          this.isLocationDisabled = true;
+          this.locationDisabled = true;
+        }
       }
     } else {
       this.disableControls(true);
@@ -149,25 +172,26 @@ export class UserProfile implements OnInit, OnDestroy {
   /**
    * ✅ Subscribe to form value changes to keep userProfile in sync
    */
-  private subscribeToFormChanges(): void {
-    // Sync form changes to userProfile in real-time
-    this.userForm.valueChanges.subscribe(values => {
-      // Update userProfile with current form values
-      if (values.siteId) {
-        this.userProfile.SiteId = values.siteId;
-      }
-      if (values.clientId) {
-        this.userProfile.ClientId = values.clientId;
-      }
-      if (values.location) {
-        // ✅ Convert to uppercase
-        this.userProfile.Loc = values.location.toUpperCase();
-      }
-      // DeviceId is read-only but keep it synced
-      this.userProfile.DeviceId = this.clientData.DeviceId;
-    });
-  }
+private subscribeToFormChanges(): void {
+  // ✅ Use valueChanges with getRawValue to include disabled fields
+  this.userForm.valueChanges.subscribe(() => {
+    const values = this.userForm.getRawValue();
 
+    // Update userProfile with current form values
+    if (values.siteId) {
+      this.userProfile.SiteId = values.siteId;
+    }
+    if (values.clientId) {
+      this.userProfile.ClientId = values.clientId;
+    }
+    // ✅ Update location even if disabled
+    if (values.location !== undefined) {
+      this.userProfile.Loc = values.location.toUpperCase();
+    }
+    // DeviceId is read-only but keep it synced
+    this.userProfile.DeviceId = this.clientData.DeviceId;
+  });
+}
   /**
    * Load site IDs from localStorage and config
    */
@@ -293,18 +317,26 @@ export class UserProfile implements OnInit, OnDestroy {
             // Update form
             this.userForm.patchValue({
               clientId: clientId,
-              location: location
+              location: location || this.userProfile.Loc || ''  // ✅ Keep existing location if available
             });
 
             // Update userProfile
             this.userProfile.ClientId = clientId;
-            this.userProfile.Loc = location.toUpperCase(); // ✅ Uppercase
+            // ✅ Only update location if it's empty
+            if (!this.userProfile.Loc) {
+              this.userProfile.Loc = location.toUpperCase();
+            }
             this.clientData.ClientId = clientId;
 
             this.disableControls(false);
 
-            // Focus location if empty
-            if (!location || location === '') {
+            // ✅ Keep location disabled if it has a value
+            if (this.userProfile.Loc) {
+              this.isLocationDisabled = true;
+              this.locationDisabled = true;
+              this.userForm.get('location')?.disable();
+            } else if (!location || location === '') {
+              // Only focus location if empty
               this.focusLocation();
             }
           } else {
@@ -313,6 +345,13 @@ export class UserProfile implements OnInit, OnDestroy {
               this.focusClient();
             }
             this.disableControls(false);
+
+            // ✅ Keep location disabled if it has a value
+            if (this.userProfile.Loc) {
+              this.isLocationDisabled = true;
+              this.locationDisabled = true;
+              this.userForm.get('location')?.disable();
+            }
           }
         } else {
           this.client = [];
@@ -396,20 +435,17 @@ export class UserProfile implements OnInit, OnDestroy {
    * Validate and save profile
    */
   validateLocation(formValue: any = this.userForm.value, locationInput: any = null): void {
-    if (!this.userForm.valid) {
+    const currentFormValue = this.userForm.getRawValue();
+
+    if (!currentFormValue.siteId || !currentFormValue.clientId) {
       this.showSnackbar('Please fill in all required fields', NotificationType.ERROR);
       return;
     }
 
-    // ✅ Get latest values from form
-    const currentFormValue = this.userForm.value;
-
-    // ✅ Update userProfile with latest form values (uppercase)
     this.userProfile.SiteId = currentFormValue.siteId;
     this.userProfile.ClientId = currentFormValue.clientId;
-    this.userProfile.Loc = currentFormValue.location.toUpperCase(); // ✅ Uppercase
+    this.userProfile.Loc = (currentFormValue.location || '').toUpperCase();
 
-    // Check if profile actually changed
     if (this.currentProfile) {
       const siteChanged = this.userProfile.SiteId !== this.currentProfile.SiteId;
       const clientChanged = this.userProfile.ClientId !== this.currentProfile.ClientId;
@@ -437,20 +473,27 @@ export class UserProfile implements OnInit, OnDestroy {
       this.enableWorkStationSaving = true;
     }
 
-    // Update clientData with form values (uppercase)
+    // ✅ Update clientData with form values (use getRawValue to include disabled fields)
     this.clientData.ClientId = value.clientId;
-    this.clientData.Location = value.location.toUpperCase(); // ✅ Uppercase
+    this.clientData.Location = (value.location || '').toUpperCase(); // ✅ Handle empty location
     this.clientData.SiteId = value.siteId;
 
-    // Prepare location object
+    // ✅ Prepare location object - handle empty location
     const locationObj = {
-      Loc: value.location.toUpperCase() // ✅ Uppercase
+      Loc: (value.location || '').toUpperCase()
     };
 
     const requestObj = {
       ClientData: this.clientData,
       Location: locationObj
     };
+
+    // ✅ If location is empty, skip validation and proceed to save
+    if (!value.location || value.location.trim() === '') {
+      console.log('⚠️ Location is empty - skipping validation');
+      this.saveUserProfile();
+      return;
+    }
 
     // Call validateLocation API
     this.commonService.post('/common/validateLocation', requestObj, {
@@ -481,13 +524,13 @@ export class UserProfile implements OnInit, OnDestroy {
    * Save user profile
    */
   private saveUserProfile(): void {
-    // ✅ Get latest form values
-    const formValue = this.userForm.value;
+    // ✅ Get raw form values (includes disabled fields)
+    const formValue = this.userForm.getRawValue();
 
     // ✅ Update userProfile with final values (uppercase)
     this.userProfile.SiteId = formValue.siteId;
     this.userProfile.ClientId = formValue.clientId;
-    this.userProfile.Loc = formValue.location.toUpperCase(); // ✅ Uppercase
+    this.userProfile.Loc = (formValue.location || '').toUpperCase(); // ✅ Handle empty location
     this.userProfile.UserId = this.clientData.LoggedInUser;
 
     // Add release version
@@ -501,11 +544,18 @@ export class UserProfile implements OnInit, OnDestroy {
       session = JSON.parse(localStorage.getItem(StorageKey.SESSION) || '{}');
     }
 
+    // ✅ Update clientData to match userProfile
+    this.clientData.Location = this.userProfile.Loc;
+    this.clientData.ClientId = this.userProfile.ClientId;
+    this.clientData.SiteId = this.userProfile.SiteId;
+
     const requestObj = {
       ClientData: this.clientData,
       UserProfile: this.userProfile,
       Session: session
     };
+
+    console.log('💾 Saving user profile:', requestObj);
 
     this.commonService.post('/LogIn/saveUserProfile', requestObj, {
       showLoader: true
@@ -578,8 +628,6 @@ export class UserProfile implements OnInit, OnDestroy {
    */
   private callPostSaveAPIs(): void {
     console.log('=== Calling Post-Save APIs ===');
-
-    // ✅ Wrap each API call with catchError to handle failures independently
     const controlConfig$ = this.loginService.getControlConfig(this.clientData, ConfigModule.LOGIN).pipe(
       catchError(error => {
         console.warn('⚠️ getControlConfig failed (continuing anyway):', error);
@@ -620,7 +668,6 @@ export class UserProfile implements OnInit, OnDestroy {
       next: (results) => {
         console.log('✅ Post-save APIs completed:', results);
 
-        // ✅ Save control config (if succeeded)
         if (results.controlConfig.Status === 'PASS' && results.controlConfig.Response) {
           localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(results.controlConfig.Response));
           console.log('✅ Saved control config');
@@ -628,7 +675,6 @@ export class UserProfile implements OnInit, OnDestroy {
           console.warn('⚠️ Control config not saved (API failed)');
         }
 
-        // ✅ Save session time (if succeeded)
         if (results.sessionTime.Status === 'PASS' && results.sessionTime.Response) {
           localStorage.setItem(StorageKey.SESSION_TIMEOUT, results.sessionTime.Response);
           console.log('✅ Saved session timeout');
@@ -636,7 +682,6 @@ export class UserProfile implements OnInit, OnDestroy {
           console.warn('⚠️ Session timeout not saved (API failed)');
         }
 
-        // ✅ Update device ID (if succeeded - non-critical)
         if (results.deviceId.Status === 'PASS' && results.deviceId.Response?.DeviceId) {
           this.clientData.DeviceId = results.deviceId.Response.DeviceId;
           localStorage.setItem(StorageKey.DEVICE_ID, results.deviceId.Response.DeviceId);
@@ -700,19 +745,24 @@ export class UserProfile implements OnInit, OnDestroy {
    */
   private disableControls(disable: boolean): void {
     this.clientDisabled = disable;
-    this.locationDisabled = disable;
+    if (!this.userProfile.Loc) {
+      this.locationDisabled = disable;
+      this.isLocationDisabled = disable;
+    }
     this.isClientDisable = disable;
-    this.isLocationDisabled = disable;
 
     if (disable) {
       this.userForm.get('clientId')?.disable();
-      this.userForm.get('location')?.disable();
+      if (!this.userProfile.Loc) {
+        this.userForm.get('location')?.disable();
+      }
     } else {
       this.userForm.get('clientId')?.enable();
-      this.userForm.get('location')?.enable();
+      if (!this.userProfile.Loc) {
+        this.userForm.get('location')?.enable();
+      }
     }
   }
-
   /**
    * Focus site ID
    */
