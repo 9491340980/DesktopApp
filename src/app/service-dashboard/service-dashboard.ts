@@ -117,6 +117,8 @@ export class ServiceDashboard {
   configLoaded: boolean = false;
   // DB Jobs column configuration
   dbJobsDisplayColumns: string[] = [];
+  // Queue Alerts column configuration
+  queueDisplayColumns: string[] = ['QueueName', 'QueueDesc', 'LastHour', 'New', 'Inprocess', 'Error', 'Completed', 'Threshold', 'LastRun', 'QueueType', 'Color'];
   private taskServerMapping: Map<string, string> = new Map();
 
   // Common Enum (matching web)
@@ -1064,6 +1066,23 @@ export class ServiceDashboard {
       const search = this.searchKey.toLowerCase();
       filtered = filtered.filter(a =>
         a.WebAPIName && a.WebAPIName.toLowerCase().includes(search)
+      );
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Get filtered queue alerts (combines all queues regardless of type)
+   */
+  getFilteredQueueAlerts(): QueueAlert[] {
+    let filtered = this.queService; // All queues combined
+
+    if (this.searchKey) {
+      const search = this.searchKey.toLowerCase();
+      filtered = filtered.filter(q =>
+        (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
+        (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
       );
     }
 
