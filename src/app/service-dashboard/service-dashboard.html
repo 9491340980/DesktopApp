@@ -516,94 +516,53 @@
       </ng-template>
 
       <div class="tab-content">
-        <div class="table-container mat-elevation-z2">
-          <table mat-table [dataSource]="getFilteredQueueAlerts()" class="services-table">
+        <div class="queue-alerts-container">
+          <div class="queue-alert-row" *ngFor="let queue of getFilteredQueueAlerts()"
+            [class.queue-error]="queue.Color !== commonEnum.GREEN"
+            [class.queue-success]="queue.Color === commonEnum.GREEN">
 
-            <!-- Queue Name Column -->
-            <ng-container matColumnDef="QueueName">
-              <th mat-header-cell *matHeaderCellDef>Queue Name</th>
-              <td mat-cell *matCellDef="let queue">
-                <div class="service-name-cell">
-                  <mat-icon class="service-icon">queue</mat-icon>
-                  <strong>{{ queue.QueueName }}</strong>
-                </div>
-              </td>
-            </ng-container>
+            <!-- Service Name Section (25% width) -->
+            <div class="queue-name-section">
+              <div class="queue-name">
+                {{ queue.QueueName }}
+              </div>
+              <div class="queue-meta">
+                <span *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
+                  Threshold: {{ queue.Threshold }}
+                </span>
+                <span>Last 15 min: {{ queue.LastRun }}</span>
+              </div>
+            </div>
 
-            <!-- Queue Description Column -->
-            <ng-container matColumnDef="QueueDesc">
-              <th mat-header-cell *matHeaderCellDef>Description</th>
-              <td mat-cell *matCellDef="let queue">{{ queue.QueueDesc }}</td>
-            </ng-container>
+            <!-- Description Section (30% width) -->
+            <div class="queue-description">
+              {{ queue.QueueDesc }}
+            </div>
 
-            <!-- Last Hour Column -->
-            <ng-container matColumnDef="LastHour">
-              <th mat-header-cell *matHeaderCellDef>Last 15 Min</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip class="value">{{ queue.LastHour }}</mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- New Column -->
-            <ng-container matColumnDef="New">
-              <th mat-header-cell *matHeaderCellDef>New</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip class="value">{{ queue.New }}</mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- In Process Column -->
-            <ng-container matColumnDef="Inprocess">
-              <th mat-header-cell *matHeaderCellDef>In Process</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip class="value">{{ queue.Inprocess }}</mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- Error Column -->
-            <ng-container matColumnDef="Error">
-              <th mat-header-cell *matHeaderCellDef>Error</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip class="value error">{{ queue.Error }}</mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- Completed Column -->
-            <ng-container matColumnDef="Completed">
-              <th mat-header-cell *matHeaderCellDef>Completed</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip class="value success">{{ queue.Completed }}</mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- Threshold Column -->
-            <ng-container matColumnDef="Threshold">
-              <th mat-header-cell *matHeaderCellDef>Threshold</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip class="value">{{ queue.Threshold }}</mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- Last Run Column -->
-            <ng-container matColumnDef="LastRun">
-              <th mat-header-cell *matHeaderCellDef>Last Run</th>
-              <td mat-cell *matCellDef="let queue">{{ queue.LastRun }}</td>
-            </ng-container>
-
-            <!-- Color/Status Column -->
-            <ng-container matColumnDef="Color">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip [color]="queue.Color === commonEnum.GREEN ? 'accent' : 'warn'" selected>
-                  {{ queue.Color }}
-                </mat-chip>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="['QueueName', 'QueueDesc', 'LastHour', 'New', 'Inprocess', 'Error', 'Completed', 'Threshold', 'LastRun', 'Color']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['QueueName', 'QueueDesc', 'LastHour', 'New', 'Inprocess', 'Error', 'Completed', 'Threshold', 'LastRun', 'Color'];"
-              [class.error-row]="row.Color !== commonEnum.GREEN"></tr>
-          </table>
+            <!-- Metrics Section (45% width) -->
+            <div class="queue-metrics">
+              <div class="metric-item">
+                <span class="metric-label">Last Hour</span>
+                <span class="metric-value">{{ queue.LastHour }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">New</span>
+                <span class="metric-value">{{ queue.New }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">In Process</span>
+                <span class="metric-value">{{ queue.Inprocess }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Error</span>
+                <span class="metric-value metric-error">{{ queue.Error }}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Completed</span>
+                <span class="metric-value metric-success">{{ queue.Completed }}</span>
+              </div>
+            </div>
+          </div>
 
           <!-- Empty State -->
           <div class="empty-state" *ngIf="getFilteredQueueAlerts().length === 0">
@@ -613,7 +572,6 @@
         </div>
       </div>
     </mat-tab>
-
     <!-- DB Jobs Tab -->
     <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.dbJobs)">
       <ng-template mat-tab-label>
