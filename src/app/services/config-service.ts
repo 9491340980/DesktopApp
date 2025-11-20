@@ -192,9 +192,9 @@ export class ConfigService {
   private getDefaultConfig(): AppConfig {
     console.log('🔄 ConfigService: Creating default configuration');
     return {
-      "comUrl": "https://qaapi-rmxt026.am.gxo.com:8223/",
-      "utlUrl": "https://qaapi-rmxt026.am.gxo.com:8333/",
-      "secUrl": "https://qaapi-rmxt026.am.gxo.com:8553/",
+      "comUrl": "http://qaapi-rmxt026.am.gxo.com:8010/",
+      "utlUrl": "http://qaapi-rmxt026.am.gxo.com:8015/",
+      "secUrl": "http://qaapi-rmxt026.am.gxo.com:8020/",
       "recUrl": "https://qaapi-rmxt026.am.gxo.com:8663/",
       "tstUrl": "https://qaapi-rmxt026.am.gxo.com:8773/",
       "wtUrl": "https://qaapi-rmxt026.am.gxo.com:8883/",

@@ -77,7 +77,7 @@ export class ServiceDashboard {
 
   // Schema Selection for DB Jobs
   schemaList: { Id: string; Text: string }[] = [];
-  selectedSchema: string = '';
+  selectedSchema: string = 'All'; // Default to "All"
 
   // UI State
   selectedTab: number = 0;
@@ -115,10 +115,8 @@ export class ServiceDashboard {
 
   // Add property to track if config is loaded
   configLoaded: boolean = false;
-  // DB Jobs column configuration
-  dbJobsDisplayColumns: string[] = [];
-  // Queue Alerts column configuration
-  queueDisplayColumns: string[] = ['QueueName', 'QueueDesc', 'LastHour', 'New', 'Inprocess', 'Error', 'Completed', 'Threshold', 'LastRun', 'QueueType', 'Color'];
+  // DB Jobs column configuration (excludes ClientId and SiteId)
+  dbJobsDisplayColumns: string[] = ['Id', 'Name', 'Schema', 'Broken', 'Active', 'LastRun', 'NextRun', 'Schedule', 'Failures'];
   private taskServerMapping: Map<string, string> = new Map();
 
   // Common Enum (matching web)
@@ -443,8 +441,8 @@ export class ServiceDashboard {
     if (config.gridDataOrder && config.gridDataOrder.length > 0) {
       this.dbJobsDisplayColumns = this.getDbJobsColumns(config.gridDataOrder, config.gridReqCols || config.gridDataOrder);
     } else {
-      // Default columns if not specified - use API field names
-      this.dbJobsDisplayColumns = ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
+      // Default columns if not specified - use API field names (without ClientId and SiteId)
+      this.dbJobsDisplayColumns = ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule', 'Failures'];
     }
 
     // Save updated config to localStorage
@@ -454,9 +452,16 @@ export class ServiceDashboard {
 
   private getDbJobsColumns(gridDataOrder: string[], gridReqCols: string[]): string[] {
     const columns: string[] = [];
+    // Excluded columns that should not be displayed
+    const excludedColumns = ['ClientId', 'SiteId'];
 
     // Add columns based on gridDataOrder - use API field names directly
     gridDataOrder.forEach(col => {
+      // Skip excluded columns
+      if (excludedColumns.includes(col)) {
+        return;
+      }
+
       if (gridReqCols.includes(col)) {
         // Check role-based permission for this column
         if (this.checkDbJobColumnPermission(col)) {
@@ -465,9 +470,9 @@ export class ServiceDashboard {
       }
     });
 
-    // If no columns determined, use defaults
+    // If no columns determined, use defaults (without ClientId and SiteId)
     if (columns.length === 0) {
-      return ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule'];
+      return ['Id', 'Name', 'Schema', 'Broken', 'Active', 'LastRun', 'NextRun', 'Schedule', 'Failures'];
     }
 
     return columns;
@@ -832,17 +837,20 @@ export class ServiceDashboard {
 
   /**
    * Schema change handler (matching web method name)
+   * Empty value "" means "All" schemas
    */
   onSchima(schema: string): void {
-    if (schema) {
-      this.selectedSchema = schema;
-      this.dbJobsData = this.originalDbJobsData.filter(job => job.Schema === schema);
-      this.dbJobsList = this.dbJobsData;
-      this.dbJoblist = this.dbJobsData.some(job => job.Broken === 'Y');
-    } else {
+    if (schema === 'All') {
+      // "All" selected - show all jobs
       this.dbJobsData = this.originalDbJobsData;
       this.dbJobsList = this.originalDbJobsData;
+    } else {
+      // Specific schema selected - filter by schema
+      this.dbJobsData = this.originalDbJobsData.filter(job => job.Schema === schema);
+      this.dbJobsList = this.dbJobsData;
     }
+    // Update error badge
+    this.dbJoblist = this.dbJobsList.some(job => job.Broken === 'Y');
   }
 
   /**

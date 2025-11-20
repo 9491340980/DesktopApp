@@ -590,16 +590,6 @@
               <td mat-cell *matCellDef="let queue">{{ queue.LastRun }}</td>
             </ng-container>
 
-            <!-- Queue Type Column -->
-            <ng-container matColumnDef="QueueType">
-              <th mat-header-cell *matHeaderCellDef>Queue Type</th>
-              <td mat-cell *matCellDef="let queue">
-                <mat-chip [color]="queue.QueueType === 'S' ? 'primary' : 'accent'" selected>
-                  {{ queue.QueueType === 'S' ? 'Services' : 'Propagators' }}
-                </mat-chip>
-              </td>
-            </ng-container>
-
             <!-- Color/Status Column -->
             <ng-container matColumnDef="Color">
               <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -610,8 +600,8 @@
               </td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="queueDisplayColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: queueDisplayColumns;"
+            <tr mat-header-row *matHeaderRowDef="['QueueName', 'QueueDesc', 'LastHour', 'New', 'Inprocess', 'Error', 'Completed', 'Threshold', 'LastRun', 'Color']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['QueueName', 'QueueDesc', 'LastHour', 'New', 'Inprocess', 'Error', 'Completed', 'Threshold', 'LastRun', 'Color'];"
               [class.error-row]="row.Color !== commonEnum.GREEN"></tr>
           </table>
 
@@ -707,18 +697,6 @@
             <ng-container matColumnDef="Schedule">
               <th mat-header-cell *matHeaderCellDef>Schedule</th>
               <td mat-cell *matCellDef="let job">{{ job.Schedule }}</td>
-            </ng-container>
-
-            <!-- ClientId Column -->
-            <ng-container matColumnDef="ClientId">
-              <th mat-header-cell *matHeaderCellDef>ClientId</th>
-              <td mat-cell *matCellDef="let job">{{ job.ClientId }}</td>
-            </ng-container>
-
-            <!-- SiteId Column -->
-            <ng-container matColumnDef="SiteId">
-              <th mat-header-cell *matHeaderCellDef>SiteId</th>
-              <td mat-cell *matCellDef="let job">{{ job.SiteId }}</td>
             </ng-container>
 
             <!-- Failures Column -->
