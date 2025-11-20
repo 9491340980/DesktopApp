@@ -507,71 +507,77 @@
     </mat-tab>
 
     <!-- Queue Alerts Tab -->
-    <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.allowQueueTab)">
-      <ng-template mat-tab-label>
-        <mat-icon class="tab-icon mr-2">queue</mat-icon>
-        Queue Alerts
-        <mat-chip *ngIf="serviceErrorQueuelist" class="error-badge blink">!</mat-chip>
-        <mat-chip *ngIf="!serviceErrorQueuelist && queService.length > 0" class="success-badge">✓</mat-chip>
-      </ng-template>
+   <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.allowQueueTab)">
+  <ng-template mat-tab-label>
+    <mat-icon class="tab-icon mr-2">queue</mat-icon>
+    Queue Alerts
+    <mat-chip *ngIf="serviceErrorQueuelist" class="error-badge blink">!</mat-chip>
+    <mat-chip *ngIf="!serviceErrorQueuelist && queService.length > 0" class="success-badge">✓</mat-chip>
+  </ng-template>
 
-      <div class="tab-content">
-        <div class="queue-alerts-container">
-          <div class="queue-alert-row" *ngFor="let queue of getFilteredQueueAlerts()"
-            [class.queue-error]="queue.Color !== commonEnum.GREEN"
-            [class.queue-success]="queue.Color === commonEnum.GREEN">
+  <div class="tab-content">
+    <div class="table-container mat-elevation-z2">
+      <div class="queue-alerts-table">
+        <!-- Table Header -->
+        <div class="queue-header-row">
+          <div class="queue-header-cell service-name-col">Service Name</div>
+          <div class="queue-header-cell description-col">Description</div>
+          <div class="queue-header-cell metric-col">Last Hour</div>
+          <div class="queue-header-cell metric-col">New</div>
+          <div class="queue-header-cell metric-col">Inprocess</div>
+          <div class="queue-header-cell metric-col">Error</div>
+          <div class="queue-header-cell metric-col">Completed</div>
+        </div>
 
-            <!-- Service Name Section (25% width) -->
-            <div class="queue-name-section">
-              <div class="queue-name">
-                {{ queue.QueueName }}
-              </div>
-              <div class="queue-meta">
-                <span *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
-                  Threshold: {{ queue.Threshold }}
-                </span>
-                <span>Last 15 min: {{ queue.LastRun }}</span>
-              </div>
-            </div>
+        <!-- Table Rows -->
+        <div class="queue-alert-row"
+             *ngFor="let queue of getFilteredQueueAlerts()"
+             [class.queue-error]="queue.Color !== commonEnum.GREEN"
+             [class.queue-success]="queue.Color === commonEnum.GREEN">
 
-            <!-- Description Section (30% width) -->
-            <div class="queue-description">
-              {{ queue.QueueDesc }}
-            </div>
-
-            <!-- Metrics Section (45% width) -->
-            <div class="queue-metrics">
-              <div class="metric-item">
-                <span class="metric-label">Last Hour</span>
-                <span class="metric-value">{{ queue.LastHour }}</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">New</span>
-                <span class="metric-value">{{ queue.New }}</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">In Process</span>
-                <span class="metric-value">{{ queue.Inprocess }}</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">Error</span>
-                <span class="metric-value metric-error">{{ queue.Error }}</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">Completed</span>
-                <span class="metric-value metric-success">{{ queue.Completed }}</span>
-              </div>
+          <!-- Service Name Section -->
+          <div class="queue-cell service-name-col">
+            <div class="queue-name">{{ queue.QueueName }}</div>
+            <div class="queue-meta">
+              <span *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
+                Threshold: {{ queue.Threshold }}
+              </span>
+              <span>Last 15 min: {{ queue.LastRun }}</span>
             </div>
           </div>
 
-          <!-- Empty State -->
-          <div class="empty-state" *ngIf="getFilteredQueueAlerts().length === 0">
-            <mat-icon>inbox</mat-icon>
-            <p>No queue alerts found</p>
+          <!-- Description Section -->
+          <div class="queue-cell description-col">
+            {{ queue.QueueDesc }}
+          </div>
+
+          <!-- Metrics Sections -->
+          <div class="queue-cell metric-col">
+            <span class="metric-value">{{ queue.LastHour }}</span>
+          </div>
+          <div class="queue-cell metric-col">
+            <span class="metric-value">{{ queue.New }}</span>
+          </div>
+          <div class="queue-cell metric-col">
+            <span class="metric-value">{{ queue.Inprocess }}</span>
+          </div>
+          <div class="queue-cell metric-col">
+            <span class="metric-value metric-error">{{ queue.Error }}</span>
+          </div>
+          <div class="queue-cell metric-col">
+            <span class="metric-value metric-success">{{ queue.Completed }}</span>
           </div>
         </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="getFilteredQueueAlerts().length === 0">
+          <mat-icon>inbox</mat-icon>
+          <p>No queue alerts found</p>
+        </div>
       </div>
-    </mat-tab>
+    </div>
+  </div>
+</mat-tab>
     <!-- DB Jobs Tab -->
     <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.dbJobs)">
       <ng-template mat-tab-label>

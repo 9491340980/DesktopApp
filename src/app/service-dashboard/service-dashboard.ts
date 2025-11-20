@@ -1054,18 +1054,35 @@ export class ServiceDashboard {
   }
 
   getFilteredTasks(): TaskScheduler[] {
-    let filtered = this.tasks;
+  let filtered = this.tasks;
 
-    if (this.searchKey) {
-      const search = this.searchKey.toLowerCase();
-      filtered = filtered.filter(t =>
-        (t.TaskName && t.TaskName.toLowerCase().includes(search)) ||
-        (t.Description && t.Description.toLowerCase().includes(search))
-      );
+  if (this.searchKey) {
+    const search = this.searchKey.toLowerCase();
+    filtered = filtered.filter(t =>
+      (t.TaskName && t.TaskName.toLowerCase().includes(search)) ||
+      (t.Description && t.Description.toLowerCase().includes(search))
+    );
+  }
+
+  // Sort: Stopped/Ready tasks first, then by task name
+  return filtered.sort((a, b) => {
+    // First priority: Non-running tasks at top (Ready, Stopped, etc.)
+    const aIsRunning = a.Status === 'Running' ? 1 : 0;
+    const bIsRunning = b.Status === 'Running' ? 1 : 0;
+
+    if (aIsRunning !== bIsRunning) {
+      return aIsRunning - bIsRunning;
     }
 
-    return filtered;
-  }
+    // Second priority: Sort by status name (Ready before Stopped)
+    if (a.Status !== b.Status) {
+      return a.Status.localeCompare(b.Status);
+    }
+
+    // Final: Sort by task name
+    return (a.TaskName || '').localeCompare(b.TaskName || '');
+  });
+}
 
   getFilteredApiServices(): ApiService[] {
     let filtered = this.apiServiceData;
