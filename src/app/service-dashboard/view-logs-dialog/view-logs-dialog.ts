@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnDestroy } from '@angular/core';
 import { CommonService } from '../../services/common-service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-view-logs-dialog',
   imports: [
@@ -21,12 +22,13 @@ import { FormsModule } from '@angular/forms';
     MatIconModule,
     MatSelectModule,
     MatFormFieldModule,
-    MatProgressSpinnerModule],
+    MatProgressSpinnerModule
+  ],
   templateUrl: './view-logs-dialog.html',
   styleUrl: './view-logs-dialog.scss',
 })
-export class ViewLogsDialog {
-serviceName: string = '';
+export class ViewLogsDialog implements OnDestroy {
+  serviceName: string = '';
   serverName: string = '';
   uiData: any;
 
@@ -42,6 +44,9 @@ serviceName: string = '';
   selectedFilePath: string = '';
   expandedIndex: number = 0;
   loading: boolean = false;
+  noLogsFound: boolean = false;
+  autoCloseTimer: any;
+  countdown: number = 3;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -63,15 +68,17 @@ serviceName: string = '';
    */
   getLogFiles(): void {
     this.loading = true;
+    this.noLogsFound = false;
 
     this.commonService.post(
       `/utilities/GetServiceLogFilesDates/${this.serviceName}/${this.serverName}`,
       { UIData: this.uiData },
       { showLoader: false }
     ).subscribe({
-      next: (response:any) => {
+      next: (response: any) => {
         this.loading = false;
-        if (response.Status === 'PASS' && response.Response) {
+
+        if (response.Status === 'PASS' && response.Response && response.Response.length > 0) {
           this.mainLogData = response.Response;
           this.logFileList = [];
 
@@ -89,14 +96,40 @@ serviceName: string = '';
             this.selectedLogFile = fileNames[0];
             this.onLogFileChange(this.selectedLogFile);
           }
+        } else {
+          // No logs found - trigger auto-close
+          this.handleNoLogsFound();
         }
       },
-      error: (error:any) => {
+      error: (error: any) => {
         this.loading = false;
         console.error('Error loading log files:', error);
         this.commonService.showError('Failed to load log files');
+        // Also close on error after showing message
+        this.handleNoLogsFound();
       }
     });
+  }
+
+  /**
+   * Handle no logs found scenario
+   */
+  handleNoLogsFound(): void {
+    this.noLogsFound = true;
+    this.countdown = 3;
+
+    // Start countdown
+    const countdownInterval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        clearInterval(countdownInterval);
+      }
+    }, 1000);
+
+    // Auto-close after 3 seconds
+    this.autoCloseTimer = setTimeout(() => {
+      this.dialogRef.close();
+    }, 3000);
   }
 
   /**
@@ -154,7 +187,7 @@ serviceName: string = '';
       },
       { showLoader: false }
     ).subscribe({
-      next: (response:any) => {
+      next: (response: any) => {
         this.loading = false;
         if (response.Status === 'PASS' && response.Response) {
           this.txtContentArr = [];
@@ -179,7 +212,7 @@ serviceName: string = '';
           });
         }
       },
-      error: (error:any) => {
+      error: (error: any) => {
         this.loading = false;
         console.error('Error loading log content:', error);
         this.commonService.showError('Failed to load log content');
@@ -215,13 +248,25 @@ serviceName: string = '';
    * Close dialog
    */
   cancelPopup(): void {
+    this.clearAutoCloseTimer();
     this.dialogRef.close();
   }
 
+  /**
+   * Clear auto-close timer
+   */
+  clearAutoCloseTimer(): void {
+    if (this.autoCloseTimer) {
+      clearTimeout(this.autoCloseTimer);
+      this.autoCloseTimer = null;
+    }
+  }
+
   ngOnDestroy(): void {
-    // Cleanup if needed
+    this.clearAutoCloseTimer();
   }
 }
+
 interface LogFile {
   Id: string;
   Text: string;
