@@ -328,8 +328,8 @@ export class ServiceDashboard {
         if (response.Status === 'PASS' && response.Response) {
           try {
             // Parse the JSON string response
-            let config:any = JSON.parse(response.Response);
-            config.logs=["DEVELOPER"]
+            let config: any = JSON.parse(response.Response);
+            config.logs = ["DEVELOPER"]
 
             // config.taskScheduler = {
             //   "taskServerName": {
@@ -658,7 +658,7 @@ export class ServiceDashboard {
   /**
    * Get Windows Services (matching web method name)
    */
- getServicesList(serviceName?: any): void {
+  getServicesList(serviceName?: any): void {
     this.commonService.post<WindowsService[]>(
       '/utilities/getServicesList',
       { UIData: this.uiData },
@@ -713,7 +713,7 @@ export class ServiceDashboard {
   /**
    * Get Task Schedulers (matching web method name)
    */
-getTasksList(taskName?: any): void {
+  getTasksList(taskName?: any): void {
     this.commonService.post<TaskScheduler[]>(
       '/utilities/getTasksList',
       { UIData: this.uiData },
@@ -846,7 +846,7 @@ getTasksList(taskName?: any): void {
   /**
    * Get Queue Alerts (matching web method name)
    */
- getQueueAlerts(): void {
+  getQueueAlerts(): void {
     this.commonService.post<QueueAlert[]>(
       '/utilities/getQueueAlerts',
       { UIData: this.uiData },
@@ -951,39 +951,39 @@ getTasksList(taskName?: any): void {
       }
     });
   }
- private handleApiError(tabName: keyof typeof this.apiErrors, message: string): void {
-  this.apiErrors[tabName] = true;
-  this.errorMessages[tabName] = message;
+  private handleApiError(tabName: keyof typeof this.apiErrors, message: string): void {
+    this.apiErrors[tabName] = true;
+    this.errorMessages[tabName] = message;
 
-  // Clear data when error occurs - no data should be shown
-  switch (tabName) {
-    case 'windowsServices':
-      this.services = [];
-      this.updateStatistics();
-      break;
-    case 'taskScheduler':
-      this.tasks = [];
-      break;
-    case 'apiServices':
-      this.apiServiceData = [];
-      this.groupedApiServices = [];
-      break;
-    case 'queueAlerts':
-      this.queService = [];
-      this.queService1 = [];
-      this.PropService = [];
-      break;
-    case 'dbJobs':
-      this.dbJobsData = [];
-      this.dbJobsList = [];
-      this.originalDbJobsData = [];
-      this.schemaList = [];
-      break;
+    // Clear data when error occurs - no data should be shown
+    switch (tabName) {
+      case 'windowsServices':
+        this.services = [];
+        this.updateStatistics();
+        break;
+      case 'taskScheduler':
+        this.tasks = [];
+        break;
+      case 'apiServices':
+        this.apiServiceData = [];
+        this.groupedApiServices = [];
+        break;
+      case 'queueAlerts':
+        this.queService = [];
+        this.queService1 = [];
+        this.PropService = [];
+        break;
+      case 'dbJobs':
+        this.dbJobsData = [];
+        this.dbJobsList = [];
+        this.originalDbJobsData = [];
+        this.schemaList = [];
+        break;
+    }
   }
-}
 
 
- retryLoadData(tabName: string): void {
+  retryLoadData(tabName: string): void {
     switch (tabName) {
       case 'windowsServices':
         this.getServicesList();
@@ -1229,35 +1229,35 @@ getTasksList(taskName?: any): void {
   }
 
   getFilteredTasks(): TaskScheduler[] {
-  let filtered = this.tasks;
+    let filtered = this.tasks;
 
-  if (this.searchKey) {
-    const search = this.searchKey.toLowerCase();
-    filtered = filtered.filter(t =>
-      (t.TaskName && t.TaskName.toLowerCase().includes(search)) ||
-      (t.Description && t.Description.toLowerCase().includes(search))
-    );
+    if (this.searchKey) {
+      const search = this.searchKey.toLowerCase();
+      filtered = filtered.filter(t =>
+        (t.TaskName && t.TaskName.toLowerCase().includes(search)) ||
+        (t.Description && t.Description.toLowerCase().includes(search))
+      );
+    }
+
+    // Sort: Stopped/Ready tasks first, then by task name
+    return filtered.sort((a, b) => {
+      // First priority: Non-running tasks at top (Ready, Stopped, etc.)
+      const aIsRunning = a.Status === 'Running' ? 1 : 0;
+      const bIsRunning = b.Status === 'Running' ? 1 : 0;
+
+      if (aIsRunning !== bIsRunning) {
+        return aIsRunning - bIsRunning;
+      }
+
+      // Second priority: Sort by status name (Ready before Stopped)
+      if (a.Status !== b.Status) {
+        return a.Status.localeCompare(b.Status);
+      }
+
+      // Final: Sort by task name
+      return (a.TaskName || '').localeCompare(b.TaskName || '');
+    });
   }
-
-  // Sort: Stopped/Ready tasks first, then by task name
-  return filtered.sort((a, b) => {
-    // First priority: Non-running tasks at top (Ready, Stopped, etc.)
-    const aIsRunning = a.Status === 'Running' ? 1 : 0;
-    const bIsRunning = b.Status === 'Running' ? 1 : 0;
-
-    if (aIsRunning !== bIsRunning) {
-      return aIsRunning - bIsRunning;
-    }
-
-    // Second priority: Sort by status name (Ready before Stopped)
-    if (a.Status !== b.Status) {
-      return a.Status.localeCompare(b.Status);
-    }
-
-    // Final: Sort by task name
-    return (a.TaskName || '').localeCompare(b.TaskName || '');
-  });
-}
 
   getFilteredApiServices(): ApiService[] {
     let filtered = this.apiServiceData;
@@ -1286,40 +1286,70 @@ getTasksList(taskName?: any): void {
       );
     }
 
-    return filtered;
+    // Sort: Error queues (non-GREEN) first, then by queue name
+    return filtered.sort((a, b) => {
+      // First priority: Non-GREEN (error) queues at top
+      const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
+      const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
+
+      if (aIsError !== bIsError) {
+        return aIsError - bIsError;
+      }
+
+      // Second priority: Sort by queue name
+      return (a.QueueName || '').localeCompare(b.QueueName || '');
+    });
+  }
+getFilteredQueueServices(): QueueAlert[] {
+  let filtered = this.queService1;
+
+  if (this.searchKey) {
+    const search = this.searchKey.toLowerCase();
+    filtered = filtered.filter(q =>
+      (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
+      (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
+    );
   }
 
-  getFilteredQueueServices(): QueueAlert[] {
-    let filtered = this.queService1;
+  // Sort: Error queues first
+  return filtered.sort((a, b) => {
+    const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
+    const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
 
-    if (this.searchKey) {
-      const search = this.searchKey.toLowerCase();
-      filtered = filtered.filter(q =>
-        (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
-        (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
-      );
+    if (aIsError !== bIsError) {
+      return aIsError - bIsError;
     }
 
-    return filtered;
-  }
+    return (a.QueueName || '').localeCompare(b.QueueName || '');
+  });
+}
 
   /**
    * Get filtered queue propagators
    */
-  getFilteredQueuePropagators(): QueueAlert[] {
-    let filtered = this.PropService;
+ getFilteredQueuePropagators(): QueueAlert[] {
+  let filtered = this.PropService;
 
-    if (this.searchKey) {
-      const search = this.searchKey.toLowerCase();
-      filtered = filtered.filter(q =>
-        (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
-        (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
-      );
-    }
-
-    return filtered;
+  if (this.searchKey) {
+    const search = this.searchKey.toLowerCase();
+    filtered = filtered.filter(q =>
+      (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
+      (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
+    );
   }
 
+  // Sort: Error queues first
+  return filtered.sort((a, b) => {
+    const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
+    const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
+
+    if (aIsError !== bIsError) {
+      return aIsError - bIsError;
+    }
+
+    return (a.QueueName || '').localeCompare(b.QueueName || '');
+  });
+}
   /**
    * Get percentage
    */

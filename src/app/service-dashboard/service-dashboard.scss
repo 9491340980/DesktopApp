@@ -1374,7 +1374,7 @@ mat-button-toggle:focus {
     display: flex;
     align-items: center;
     background-color: #f5f5f5;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 2px solid #e0e0e0;
     padding: 12px 16px;
     font-weight: 600;
     font-size: 14px;
@@ -1418,8 +1418,25 @@ mat-button-toggle:focus {
     }
 
     &.queue-error {
-      background-color: #fef5f5;
-      border-left: 3px solid #f44336;
+      background-color: #ffebee;
+      border-left: 4px solid #d32f2f;
+      border: 2px solid #ef5350;
+
+      // Add subtle animation to draw attention
+      animation: errorPulse 2s ease-in-out infinite;
+
+      .queue-name {
+        color: #c62828 !important;
+        font-weight: 700 !important;
+      }
+
+      .metric-value {
+        &.metric-error {
+          background-color: #ef5350 !important;
+          color: white !important;
+          font-weight: 700 !important;
+        }
+      }
     }
 
     &:hover {
@@ -1437,7 +1454,7 @@ mat-button-toggle:focus {
         .queue-name {
           font-weight: 600;
           font-size: 14px;
-          color: rgba(0, 0, 0, 0.87);
+          color: rgba(0, 0, 0, 0.87); // Black color for normal rows
           margin-bottom: 4px;
         }
 
@@ -1483,6 +1500,7 @@ mat-button-toggle:focus {
           &.metric-error {
             background-color: #ffcdd2;
             color: #c62828;
+            font-weight: 700;
           }
 
           &.metric-success {
@@ -1492,6 +1510,16 @@ mat-button-toggle:focus {
         }
       }
     }
+  }
+}
+
+// Subtle pulse animation for error rows
+@keyframes errorPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(211, 47, 47, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(211, 47, 47, 0.3);
   }
 }
 
