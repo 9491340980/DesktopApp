@@ -126,6 +126,34 @@ export class ServiceDashboard {
     GREEN: 'GREEN'
   };
 
+  // API Error States for each tab
+  apiErrors = {
+    windowsServices: false,
+    taskScheduler: false,
+    apiServices: false,
+    queueAlerts: false,
+    dbJobs: false
+  };
+
+  // Error messages for each tab
+  errorMessages = {
+    windowsServices: '',
+    taskScheduler: '',
+    apiServices: '',
+    queueAlerts: '',
+    dbJobs: ''
+  };
+
+  // Track if data has been loaded at least once
+  dataLoadedOnce = {
+    windowsServices: false,
+    taskScheduler: false,
+    apiServices: false,
+    queueAlerts: false,
+    dbJobs: false
+  };
+
+
   // Column definitions for Material Table
   get displayedColumns(): string[] {
     const columns = ['serviceName'];
@@ -300,7 +328,9 @@ export class ServiceDashboard {
         if (response.Status === 'PASS' && response.Response) {
           try {
             // Parse the JSON string response
-            let config = JSON.parse(response.Response);
+            let config:any = JSON.parse(response.Response);
+            config.logs=["DEVELOPER"]
+
             // config.taskScheduler = {
             //   "taskServerName": {
             //     "roles": ["DEVELOPER", "SERVICEADMIN"],
@@ -591,35 +621,35 @@ export class ServiceDashboard {
   private startAllPolling(): void {
     // Windows Services Polling - matches web's checkStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
-      timer(0, this.hideControls.controlProperties?.servicePollTimer || 20000000)
+      timer(0, this.hideControls.controlProperties?.servicePollTimer || 2000)
         .pipe(takeUntil(this.windowsPolling$))
         .subscribe(() => this.checkStatus());
     }
 
     // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
-      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 20000000)
+      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 2000)
         .pipe(takeUntil(this.taskPolling$))
         .subscribe(() => this.getTasksList());
     }
 
     // API Services Polling - matches web's checkApiServiceStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowApiTab)) {
-      timer(0, this.hideControls.controlProperties?.apiStatusAlertPollTimer || 60000)
+      timer(0, this.hideControls.controlProperties?.apiStatusAlertPollTimer || 6000)
         .pipe(takeUntil(this.apiPolling$))
         .subscribe(() => this.checkApiServiceStatus());
     }
 
     // Queue Alerts Polling - matches web's checkQueAlertStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.allowQueueTab)) {
-      timer(0, this.hideControls.controlProperties?.queueAlertPollTimer || 60000)
+      timer(0, this.hideControls.controlProperties?.queueAlertPollTimer || 6000)
         .pipe(takeUntil(this.queuePolling$))
         .subscribe(() => this.checkQueAlertStatus());
     }
 
     // DB Jobs Polling - matches web's checkDbJobsStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.dbJobs)) {
-      timer(0, this.hideControls.controlProperties?.dbJobsPollTimer || 60000)
+      timer(0, this.hideControls.controlProperties?.dbJobsPollTimer || 6000)
         .pipe(takeUntil(this.dbJobsPolling$))
         .subscribe(() => this.checkDbJobsStatus());
     }
@@ -628,7 +658,7 @@ export class ServiceDashboard {
   /**
    * Get Windows Services (matching web method name)
    */
-  getServicesList(serviceName?: any): void {
+ getServicesList(serviceName?: any): void {
     this.commonService.post<WindowsService[]>(
       '/utilities/getServicesList',
       { UIData: this.uiData },
@@ -643,14 +673,35 @@ export class ServiceDashboard {
           this.services = response.Response;
           this.serviceError = response.Response.some(s => s.Status !== 'Running');
           this.updateStatistics();
+
+          // Clear error state on success
+          this.apiErrors.windowsServices = false;
+          this.errorMessages.windowsServices = '';
+          this.dataLoadedOnce.windowsServices = true;
+        } else {
+          // API returned but with error status
+          this.handleApiError('windowsServices', 'Failed to load Windows Services data');
         }
       },
       error: (error) => {
         console.error('Error loading Windows services:', error);
         this.serviceError = true;
+
+        // Determine error message based on error type
+        let errorMsg = 'Unable to connect to server. Please check your network connection.';
+        if (error.status === 0) {
+          errorMsg = 'Network connection lost. Please check your VPN or internet connection.';
+        } else if (error.status === 504 || error.status === 408) {
+          errorMsg = 'Request timeout. The server is taking too long to respond.';
+        } else if (error.status >= 500) {
+          errorMsg = 'Server error occurred. Please try again later.';
+        }
+
+        this.handleApiError('windowsServices', errorMsg);
       }
     });
   }
+
 
   /**
    * Check status with polling (matching web method)
@@ -662,7 +713,7 @@ export class ServiceDashboard {
   /**
    * Get Task Schedulers (matching web method name)
    */
-  getTasksList(taskName?: any): void {
+getTasksList(taskName?: any): void {
     this.commonService.post<TaskScheduler[]>(
       '/utilities/getTasksList',
       { UIData: this.uiData },
@@ -676,14 +727,33 @@ export class ServiceDashboard {
         if (response.Status === 'PASS' && response.Response) {
           this.tasks = response.Response;
           this.serviceErrorTaskList = response.Response.some(t => t.Status !== 'Running');
+
+          // Clear error state on success
+          this.apiErrors.taskScheduler = false;
+          this.errorMessages.taskScheduler = '';
+          this.dataLoadedOnce.taskScheduler = true;
+        } else {
+          this.handleApiError('taskScheduler', 'Failed to load Task Scheduler data');
         }
       },
       error: (error) => {
         console.error('Error loading task schedulers:', error);
         this.serviceErrorTaskList = true;
+
+        let errorMsg = 'Unable to connect to server. Please check your network connection.';
+        if (error.status === 0) {
+          errorMsg = 'Network connection lost. Please check your VPN or internet connection.';
+        } else if (error.status === 504 || error.status === 408) {
+          errorMsg = 'Request timeout. The server is taking too long to respond.';
+        } else if (error.status >= 500) {
+          errorMsg = 'Server error occurred. Please try again later.';
+        }
+
+        this.handleApiError('taskScheduler', errorMsg);
       }
     });
   }
+
 
   /**
    * Get API Services (matching web method name)
@@ -699,11 +769,29 @@ export class ServiceDashboard {
           this.apiServiceData = response.Response;
           this.groupedApiServices = this.groupApiServicesByServer(response.Response);
           this.serviceErrorApilist = response.Response.some(a => a.Status !== 'Running');
+
+          // Clear error state on success
+          this.apiErrors.apiServices = false;
+          this.errorMessages.apiServices = '';
+          this.dataLoadedOnce.apiServices = true;
+        } else {
+          this.handleApiError('apiServices', 'Failed to load API Services data');
         }
       },
       error: (error) => {
         console.error('Error loading API services:', error);
         this.serviceErrorApilist = true;
+
+        let errorMsg = 'Unable to connect to server. Please check your network connection.';
+        if (error.status === 0) {
+          errorMsg = 'Network connection lost. Please check your VPN or internet connection.';
+        } else if (error.status === 504 || error.status === 408) {
+          errorMsg = 'Request timeout. The server is taking too long to respond.';
+        } else if (error.status >= 500) {
+          errorMsg = 'Server error occurred. Please try again later.';
+        }
+
+        this.handleApiError('apiServices', errorMsg);
       }
     });
   }
@@ -758,7 +846,7 @@ export class ServiceDashboard {
   /**
    * Get Queue Alerts (matching web method name)
    */
-  getQueueAlerts(): void {
+ getQueueAlerts(): void {
     this.commonService.post<QueueAlert[]>(
       '/utilities/getQueueAlerts',
       { UIData: this.uiData },
@@ -776,11 +864,29 @@ export class ServiceDashboard {
           this.serviceErrorDbAlertslist1 = this.queService1.some(q => q.Color !== 'GREEN');
           this.serviceErrorDbAlertslist = this.PropService.some(q => q.Color !== 'GREEN');
           this.serviceErrorQueuelist = this.serviceErrorDbAlertslist1 || this.serviceErrorDbAlertslist;
+
+          // Clear error state on success
+          this.apiErrors.queueAlerts = false;
+          this.errorMessages.queueAlerts = '';
+          this.dataLoadedOnce.queueAlerts = true;
+        } else {
+          this.handleApiError('queueAlerts', 'Failed to load Queue Alerts data');
         }
       },
       error: (error) => {
         console.error('Error loading queue alerts:', error);
         this.serviceErrorQueuelist = true;
+
+        let errorMsg = 'Unable to connect to server. Please check your network connection.';
+        if (error.status === 0) {
+          errorMsg = 'Network connection lost. Please check your VPN or internet connection.';
+        } else if (error.status === 504 || error.status === 408) {
+          errorMsg = 'Request timeout. The server is taking too long to respond.';
+        } else if (error.status >= 500) {
+          errorMsg = 'Server error occurred. Please try again later.';
+        }
+
+        this.handleApiError('queueAlerts', errorMsg);
       }
     });
   }
@@ -808,7 +914,7 @@ export class ServiceDashboard {
           this.dbJobsList = response.Response;
           this.dbJoblist = response.Response.some(job => job.Broken === 'Y');
 
-          // Extract unique schemas (matching web logic)
+          // Extract unique schemas
           const schemas = [...new Set(response.Response.map(job => job.Schema))];
           this.schemaList = schemas.map(schema => ({
             Id: schema as string,
@@ -819,13 +925,82 @@ export class ServiceDashboard {
             this.selectedSchema = this.schemaList[0].Id;
             this.onSchima(this.selectedSchema);
           }
+
+          // Clear error state on success
+          this.apiErrors.dbJobs = false;
+          this.errorMessages.dbJobs = '';
+          this.dataLoadedOnce.dbJobs = true;
+        } else {
+          this.handleApiError('dbJobs', 'Failed to load DB Jobs data');
         }
       },
       error: (error) => {
         console.error('Error loading DB jobs:', error);
         this.dbJoblist = true;
+
+        let errorMsg = 'Unable to connect to server. Please check your network connection.';
+        if (error.status === 0) {
+          errorMsg = 'Network connection lost. Please check your VPN or internet connection.';
+        } else if (error.status === 504 || error.status === 408) {
+          errorMsg = 'Request timeout. The server is taking too long to respond.';
+        } else if (error.status >= 500) {
+          errorMsg = 'Server error occurred. Please try again later.';
+        }
+
+        this.handleApiError('dbJobs', errorMsg);
       }
     });
+  }
+ private handleApiError(tabName: keyof typeof this.apiErrors, message: string): void {
+  this.apiErrors[tabName] = true;
+  this.errorMessages[tabName] = message;
+
+  // Clear data when error occurs - no data should be shown
+  switch (tabName) {
+    case 'windowsServices':
+      this.services = [];
+      this.updateStatistics();
+      break;
+    case 'taskScheduler':
+      this.tasks = [];
+      break;
+    case 'apiServices':
+      this.apiServiceData = [];
+      this.groupedApiServices = [];
+      break;
+    case 'queueAlerts':
+      this.queService = [];
+      this.queService1 = [];
+      this.PropService = [];
+      break;
+    case 'dbJobs':
+      this.dbJobsData = [];
+      this.dbJobsList = [];
+      this.originalDbJobsData = [];
+      this.schemaList = [];
+      break;
+  }
+}
+
+
+ retryLoadData(tabName: string): void {
+    switch (tabName) {
+      case 'windowsServices':
+        this.getServicesList();
+        break;
+      case 'taskScheduler':
+        this.getTasksList();
+        break;
+      case 'apiServices':
+        this.getApiList();
+        break;
+      case 'queueAlerts':
+        this.getQueueAlerts();
+        break;
+      case 'dbJobs':
+        this.getdbJobs();
+        break;
+    }
   }
 
   /**

@@ -1534,3 +1534,103 @@ mat-button-toggle:focus {
     }
   }
 }
+// API Error State Styles
+
+.api-error-container {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+
+  .error-card {
+    max-width: 600px;
+    width: 100%;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+    border: 2px solid #ff5252;
+  }
+
+  .error-content {
+    text-align: center;
+    padding: 2rem;
+
+    .error-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: #ff5252;
+      margin: 0 auto 1.5rem;
+      display: block;
+    }
+
+    h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.5rem;
+      color: #d32f2f;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0 0 1.5rem 0;
+      color: #666;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+
+      button {
+        min-width: 140px;
+      }
+    }
+
+    .reconnect-warning {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      padding: 0.75rem 1rem;
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      color: #856404;
+      font-size: 0.9rem;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #ff9800;
+      }
+    }
+  }
+}
+
+// Stale data overlay - shows data but with reduced opacity
+.stale-data-overlay {
+  position: relative;
+  opacity: 0.6;
+  pointer-events: none; // Disable interactions with stale data
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 193, 7, 0.05) 10px,
+      rgba(255, 193, 7, 0.05) 20px
+    );
+    pointer-events: none;
+  }
+}
