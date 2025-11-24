@@ -486,3 +486,86 @@ background: rgb(6 23 60);
     padding: 20px;
   }
 }
+// ===================================================================
+// DYNAMIC SCREEN TITLE IN TOOLBAR
+// ===================================================================
+
+.screen-title-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+
+  .screen-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    letter-spacing: 0.5px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 600px;
+
+    // Animation when title changes
+    animation: fadeInTitle 0.3s ease;
+  }
+}
+
+@keyframes fadeInTitle {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Adjust toolbar layout to accommodate title
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .menu-toggle-btn {
+    flex-shrink: 0;
+  }
+
+  .toolbar-logo {
+    flex-shrink: 0;
+  }
+
+  .toolbar-spacer {
+    // Remove or minimize this if you want title centered
+    flex: 0;
+  }
+
+  .toolbar-btn {
+    flex-shrink: 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .screen-title-container {
+    padding: 0 8px;
+
+    .screen-title {
+      font-size: 16px;
+      max-width: 300px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .screen-title-container {
+    .screen-title {
+      font-size: 14px;
+      max-width: 200px;
+    }
+  }
+}

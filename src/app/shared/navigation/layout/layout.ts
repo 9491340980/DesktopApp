@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +13,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Auth } from '../../../services/auth';
 import { StorageKey } from '../../../enums/app-constants.enum';
 import { CryptoService } from '../../../services/crypto-service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-layout',
@@ -36,27 +37,32 @@ export class Layout {
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
   menuItems: MenuItem[] = [];
-  filteredMenuItems: MenuItem[] = []; // For display
+  filteredMenuItems: MenuItem[] = [];
   username: string = '';
   siteId: string = '';
   expandedMenuTitle: string | null = null;
   isSidenavOpen: boolean = false;
 
+  // ✅ NEW: Dynamic screen title
+  currentScreenTitle: string = 'Dashboard';
+
   constructor(
     private authService: Auth,
     private router: Router,
-    private cryto:CryptoService
+    private crypto: CryptoService
   ) { }
 
   ngOnInit(): void {
     this.loadUserInfo();
     this.loadMenuItems();
+    this.setupRouteListener();
+    this.loadCurrentScreenTitle(); // Load title on init
   }
 
   private loadUserInfo(): void {
-    let USERNAME:any = localStorage.getItem(StorageKey.USERNAME);
+    let USERNAME: any = localStorage.getItem(StorageKey.USERNAME);
     let SITEID = localStorage.getItem(StorageKey.SITE_ID);
-    this.username = this.cryto.decrypt(USERNAME) || '';
+    this.username = this.crypto.decrypt(USERNAME) || '';
     this.siteId = SITEID || '';
   }
 
@@ -116,6 +122,96 @@ export class Layout {
         console.error('Error parsing menu:', error);
       }
     }
+  }
+
+  // ✅ NEW: Setup route change listener
+  private setupRouteListener(): void {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.updateScreenTitle(event.urlAfterRedirects);
+    });
+  }
+
+  // ✅ NEW: Update screen title based on current route
+  private updateScreenTitle(url: string): void {
+    // Check if there's operation info in localStorage
+    const operationStr = localStorage.getItem('currentOperation');
+
+    if (operationStr) {
+      try {
+        const operation = JSON.parse(operationStr);
+        this.currentScreenTitle = operation.title || 'Dashboard';
+        return;
+      } catch (error) {
+        console.error('Error parsing current operation:', error);
+      }
+    }
+
+    // Fallback: Try to match URL to menu items
+    const foundItem = this.findMenuItemByUrl(url);
+    if (foundItem) {
+      this.currentScreenTitle = foundItem.Title;
+    } else {
+      // Default based on route
+      this.currentScreenTitle = this.getDefaultTitleFromUrl(url);
+    }
+  }
+
+  // ✅ NEW: Load current screen title on component init
+  private loadCurrentScreenTitle(): void {
+    const currentUrl = this.router.url;
+    this.updateScreenTitle(currentUrl);
+  }
+
+  // ✅ NEW: Find menu item by URL
+  private findMenuItemByUrl(url: string): MenuItem | SubMenuItem | null {
+    // Remove leading slash and query params
+    const cleanUrl = url.split('?')[0].replace(/^\//, '');
+
+    // Search main menu items
+    for (const item of this.menuItems) {
+      const itemUrl = item.RouterLink?.replace(/^\//, '');
+      if (itemUrl === cleanUrl) {
+        return item;
+      }
+
+      // Search submenu items
+      if (item.SubMenu) {
+        for (const subItem of item.SubMenu) {
+          const subItemUrl = subItem.RouterLink?.replace(/^\//, '');
+          if (subItemUrl === cleanUrl) {
+            return subItem;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  // ✅ NEW: Get default title from URL path
+  private getDefaultTitleFromUrl(url: string): string {
+    const path = url.split('?')[0].replace(/^\//, '').split('/')[0];
+
+    const titleMap: { [key: string]: string } = {
+      'dashboard': 'Dashboard',
+      'user-profile': 'User Profile',
+      'service-dashboard': 'Service Dashboard',
+      'utilities': 'Utilities',
+      'settings': 'Settings',
+      '': 'Dashboard'
+    };
+
+    return titleMap[path] || this.formatPathAsTitle(path);
+  }
+
+  // ✅ NEW: Format URL path as readable title
+  private formatPathAsTitle(path: string): string {
+    return path
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   private getDefaultIcon(moduleOrTitle: string): string {
@@ -181,6 +277,7 @@ export class Layout {
   navigateToItem(item: MenuItem): void {
     if (!item.HasSubMenu && item.RouterLink) {
       this.storeOperationInfo(item);
+      this.currentScreenTitle = item.Title; // ✅ Update title immediately
       this.router.navigate([item.RouterLink]);
     }
   }
@@ -188,6 +285,7 @@ export class Layout {
   navigateToSubItem(mainItem: MenuItem, subItem: SubMenuItem): void {
     if (subItem.RouterLink) {
       this.storeOperationInfo(subItem);
+      this.currentScreenTitle = subItem.Title; // ✅ Update title immediately
       this.router.navigate([subItem.RouterLink]);
     }
   }
@@ -202,10 +300,19 @@ export class Layout {
   }
 
   navigateToDashboard(): void {
+    this.currentScreenTitle = 'Dashboard'; // ✅ Update title immediately
+    localStorage.removeItem('currentOperation'); // Clear operation info
     this.router.navigate(['/dashboard']);
   }
 
-    navigateToUserProfile(): void {
+  navigateToUserProfile(): void {
+    this.currentScreenTitle = 'User Profile'; // ✅ Update title immediately
+    localStorage.setItem('currentOperation', JSON.stringify({
+      operationId: 'USER_PROFILE',
+      module: 'SETTINGS',
+      category: 'USER',
+      title: 'User Profile'
+    }));
     this.router.navigate(['/user-profile']);
   }
 
@@ -215,16 +322,15 @@ export class Layout {
 
   getSubMenuCount(item: MenuItem): number {
     if (!item.SubMenu) return 0;
-    // Count only items where isDesktopApp = true
     return item.SubMenu.filter(sub => sub.isDesktopApp === true).length;
   }
 
-  // Filter submenu to show only isDesktopApp items
   getFilteredSubMenu(item: MenuItem): SubMenuItem[] {
     if (!item.SubMenu) return [];
     return item.SubMenu.filter(sub => sub.isDesktopApp === true);
   }
 }
+
 interface MenuItem {
   Title: string;
   OperationId: string;
@@ -234,7 +340,7 @@ interface MenuItem {
   HasSubMenu: boolean;
   SubMenu?: SubMenuItem[];
   Icon?: string;
-  isDesktopApp?: boolean; // Added for filtering
+  isDesktopApp?: boolean;
 }
 
 interface SubMenuItem {
@@ -245,5 +351,5 @@ interface SubMenuItem {
   RouterLink: string;
   AppEnabled: boolean;
   Icon?: string;
-  isDesktopApp?: boolean; // Added for filtering
+  isDesktopApp?: boolean;
 }
