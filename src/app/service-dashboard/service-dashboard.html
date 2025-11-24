@@ -580,82 +580,180 @@
       </ng-template>
 
       <div class="tab-content">
-        <div class="table-container mat-elevation-z2">
-          <div class="queue-alerts-table">
-            <!-- Table Header -->
-            <div class="queue-header-row">
-              <div class="queue-header-cell service-name-col">Service Name</div>
-              <div class="queue-header-cell description-col">Description</div>
-              <div class="queue-header-cell metric-col">Last Hour</div>
-              <div class="queue-header-cell metric-col">New</div>
-              <div class="queue-header-cell metric-col">Inprocess</div>
-              <div class="queue-header-cell metric-col">Error</div>
-              <div class="queue-header-cell metric-col">Completed</div>
-            </div>
+        <!-- ✅ NEW: Nested Tab Group for Services and Propagators -->
+        <mat-tab-group class="nested-tabs">
 
-            <!-- Table Rows -->
-            <div class="queue-alert-row"
-                 *ngFor="let queue of getFilteredQueueAlerts()"
-                 [class.queue-error]="queue.Color !== commonEnum.GREEN"
-                 [class.queue-success]="queue.Color === commonEnum.GREEN">
+          <!-- Queue Services Subtab -->
+          <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.allowQueueservicesTab)">
+            <ng-template mat-tab-label>
+              Queue Services
+              <mat-chip *ngIf="serviceErrorDbAlertslist1" class="error-badge">!</mat-chip>
+              <mat-chip *ngIf="!serviceErrorDbAlertslist1 && queService1.length > 0" class="success-badge">✓</mat-chip>
+            </ng-template>
 
-              <div class="queue-cell service-name-col">
-                <div class="queue-name">{{ queue.QueueName }}</div>
-                <div class="queue-meta">
-                  <span *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
-                    Threshold: {{ queue.Threshold }}
-                  </span>
-                  <span>Last 15 min: {{ queue.LastRun }}</span>
+            <div class="table-container mat-elevation-z2">
+              <div class="queue-alerts-table">
+                <!-- Table Header -->
+                <div class="queue-header-row">
+                  <div class="queue-header-cell service-name-col">Service Name</div>
+                  <div class="queue-header-cell description-col">Description</div>
+                  <div class="queue-header-cell metric-col">Last Hour</div>
+                  <div class="queue-header-cell metric-col">New</div>
+                  <div class="queue-header-cell metric-col">Inprocess</div>
+                  <div class="queue-header-cell metric-col">Error</div>
+                  <div class="queue-header-cell metric-col">Completed</div>
                 </div>
-              </div>
 
-              <div class="queue-cell description-col">
-                {{ queue.QueueDesc }}
-              </div>
+                <!-- Table Rows -->
+                <div class="queue-alert-row" *ngFor="let queue of getFilteredQueueServices()"
+                  [class.queue-error]="queue.Color !== commonEnum.GREEN"
+                  [class.queue-success]="queue.Color === commonEnum.GREEN">
 
-              <div class="queue-cell metric-col">
-                <span class="metric-value">{{ queue.LastHour }}</span>
-              </div>
-              <div class="queue-cell metric-col">
-                <span class="metric-value">{{ queue.New }}</span>
-              </div>
-              <div class="queue-cell metric-col">
-                <span class="metric-value">{{ queue.Inprocess }}</span>
-              </div>
-              <div class="queue-cell metric-col">
-                <span class="metric-value metric-error">{{ queue.Error }}</span>
-              </div>
-              <div class="queue-cell metric-col">
-                <span class="metric-value metric-success">{{ queue.Completed }}</span>
-              </div>
-            </div>
+                  <div class="queue-cell service-name-col">
+                    <div class="queue-name">{{ queue.QueueName }}</div>
+                    <div class="queue-meta">
+                      <span *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
+                        Threshold: {{ queue.Threshold }}
+                      </span>
+                      <span>Last 15 min: {{ queue.LastRun }}</span>
+                    </div>
+                  </div>
 
-            <!-- Empty State -->
-            <div class="empty-state" *ngIf="!apiErrors.queueAlerts && getFilteredQueueAlerts().length === 0">
-              <mat-icon>inbox</mat-icon>
-              <p>No queue alerts found</p>
-            </div>
-          </div>
+                  <div class="queue-cell description-col">
+                    {{ queue.QueueDesc }}
+                  </div>
 
-          <!-- API Error State -->
-          <div class="api-error-container" *ngIf="apiErrors.queueAlerts">
-            <mat-card class="error-card">
-              <mat-card-content>
-                <div class="error-content">
-                  <mat-icon class="error-icon">cloud_off</mat-icon>
-                  <h3>Unable to Load Data</h3>
-                  <p>{{ errorMessages.queueAlerts }}</p>
-                  <div class="error-actions">
-                    <button mat-raised-button color="primary" (click)="retryLoadData('queueAlerts')">
-                      <mat-icon>refresh</mat-icon>
-                      Retry Connection
-                    </button>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value">{{ queue.LastHour }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value">{{ queue.New }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value">{{ queue.Inprocess }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value metric-error">{{ queue.Error }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value metric-success">{{ queue.Completed }}</span>
                   </div>
                 </div>
-              </mat-card-content>
-            </mat-card>
-          </div>
-        </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" *ngIf="!apiErrors.queueAlerts && getFilteredQueueServices().length === 0">
+                  <mat-icon>inbox</mat-icon>
+                  <p>No queue services found</p>
+                </div>
+              </div>
+
+              <!-- API Error State -->
+              <div class="api-error-container" *ngIf="apiErrors.queueAlerts">
+                <mat-card class="error-card">
+                  <mat-card-content>
+                    <div class="error-content">
+                      <mat-icon class="error-icon">cloud_off</mat-icon>
+                      <h3>Unable to Load Data</h3>
+                      <p>{{ errorMessages.queueAlerts }}</p>
+                      <div class="error-actions">
+                        <button mat-raised-button color="primary" (click)="retryLoadData('queueAlerts')">
+                          <mat-icon>refresh</mat-icon>
+                          Retry Connection
+                        </button>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Queue Propagators Subtab -->
+          <mat-tab *ngIf="checkTabMatch(hideControls.controlProperties?.allowQueuepropogatorsTab)">
+            <ng-template mat-tab-label>
+              Queue Propagators
+              <mat-chip *ngIf="serviceErrorDbAlertslist" class="error-badge">!</mat-chip>
+              <mat-chip *ngIf="!serviceErrorDbAlertslist && PropService.length > 0" class="success-badge">✓</mat-chip>
+            </ng-template>
+
+            <div class="table-container mat-elevation-z2">
+              <div class="queue-alerts-table">
+                <!-- Table Header -->
+                <div class="queue-header-row">
+                  <div class="queue-header-cell service-name-col">Service Name</div>
+                  <div class="queue-header-cell description-col">Description</div>
+                  <div class="queue-header-cell metric-col">Last Hour</div>
+                  <div class="queue-header-cell metric-col">New</div>
+                  <div class="queue-header-cell metric-col">Inprocess</div>
+                  <div class="queue-header-cell metric-col">Error</div>
+                  <div class="queue-header-cell metric-col">Completed</div>
+                </div>
+
+                <!-- Table Rows -->
+                <div class="queue-alert-row" *ngFor="let queue of getFilteredQueuePropagators()"
+                  [class.queue-error]="queue.Color !== commonEnum.GREEN"
+                  [class.queue-success]="queue.Color === commonEnum.GREEN">
+
+                  <div class="queue-cell service-name-col">
+                    <div class="queue-name">{{ queue.QueueName }}</div>
+                    <div class="queue-meta">
+                      <span *ngIf="checkRolesMatch(hideControls.controlProperties?.Threshold)">
+                        Threshold: {{ queue.Threshold }}
+                      </span>
+                      <span>Last 15 min: {{ queue.LastRun }}</span>
+                    </div>
+                  </div>
+
+                  <div class="queue-cell description-col">
+                    {{ queue.QueueDesc }}
+                  </div>
+
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value">{{ queue.LastHour }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value">{{ queue.New }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value">{{ queue.Inprocess }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value metric-error">{{ queue.Error }}</span>
+                  </div>
+                  <div class="queue-cell metric-col">
+                    <span class="metric-value metric-success">{{ queue.Completed }}</span>
+                  </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" *ngIf="!apiErrors.queueAlerts && getFilteredQueuePropagators().length === 0">
+                  <mat-icon>inbox</mat-icon>
+                  <p>No queue propagators found</p>
+                </div>
+              </div>
+
+              <!-- API Error State -->
+              <div class="api-error-container" *ngIf="apiErrors.queueAlerts">
+                <mat-card class="error-card">
+                  <mat-card-content>
+                    <div class="error-content">
+                      <mat-icon class="error-icon">cloud_off</mat-icon>
+                      <h3>Unable to Load Data</h3>
+                      <p>{{ errorMessages.queueAlerts }}</p>
+                      <div class="error-actions">
+                        <button mat-raised-button color="primary" (click)="retryLoadData('queueAlerts')">
+                          <mat-icon>refresh</mat-icon>
+                          Retry Connection
+                        </button>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </div>
+          </mat-tab>
+
+        </mat-tab-group>
       </div>
     </mat-tab>
 

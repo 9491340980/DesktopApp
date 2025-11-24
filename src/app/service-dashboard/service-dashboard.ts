@@ -1300,56 +1300,56 @@ export class ServiceDashboard {
       return (a.QueueName || '').localeCompare(b.QueueName || '');
     });
   }
-getFilteredQueueServices(): QueueAlert[] {
-  let filtered = this.queService1;
+  getFilteredQueueServices(): QueueAlert[] {
+    let filtered = this.queService1;
 
-  if (this.searchKey) {
-    const search = this.searchKey.toLowerCase();
-    filtered = filtered.filter(q =>
-      (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
-      (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
-    );
-  }
-
-  // Sort: Error queues first
-  return filtered.sort((a, b) => {
-    const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
-    const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
-
-    if (aIsError !== bIsError) {
-      return aIsError - bIsError;
+    if (this.searchKey) {
+      const search = this.searchKey.toLowerCase();
+      filtered = filtered.filter(q =>
+        (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
+        (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
+      );
     }
 
-    return (a.QueueName || '').localeCompare(b.QueueName || '');
-  });
-}
+    // Sort: Error queues first
+    return filtered.sort((a, b) => {
+      const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
+      const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
+
+      if (aIsError !== bIsError) {
+        return aIsError - bIsError;
+      }
+
+      return (a.QueueName || '').localeCompare(b.QueueName || '');
+    });
+  }
 
   /**
    * Get filtered queue propagators
    */
- getFilteredQueuePropagators(): QueueAlert[] {
-  let filtered = this.PropService;
+  getFilteredQueuePropagators(): QueueAlert[] {
+    let filtered = this.PropService;
 
-  if (this.searchKey) {
-    const search = this.searchKey.toLowerCase();
-    filtered = filtered.filter(q =>
-      (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
-      (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
-    );
-  }
-
-  // Sort: Error queues first
-  return filtered.sort((a, b) => {
-    const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
-    const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
-
-    if (aIsError !== bIsError) {
-      return aIsError - bIsError;
+    if (this.searchKey) {
+      const search = this.searchKey.toLowerCase();
+      filtered = filtered.filter(q =>
+        (q.QueueName && q.QueueName.toLowerCase().includes(search)) ||
+        (q.QueueDesc && q.QueueDesc.toLowerCase().includes(search))
+      );
     }
 
-    return (a.QueueName || '').localeCompare(b.QueueName || '');
-  });
-}
+    // Sort: Error queues first
+    return filtered.sort((a, b) => {
+      const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
+      const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
+
+      if (aIsError !== bIsError) {
+        return aIsError - bIsError;
+      }
+
+      return (a.QueueName || '').localeCompare(b.QueueName || '');
+    });
+  }
   /**
    * Get percentage
    */
