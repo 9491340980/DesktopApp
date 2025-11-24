@@ -1662,3 +1662,196 @@ mat-button-toggle:focus {
     pointer-events: none;
   }
 }
+.compact-control-bar {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .control-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 28px;
+    padding: 6px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2),
+                  0 3px 6px rgba(0, 0, 0, 0.12);
+      transform: translateY(-1px);
+    }
+  }
+
+  .action-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    &:hover::before {
+      opacity: 0.1;
+      background: currentColor;
+    }
+
+    &.search-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+      }
+
+      &.active {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
+        animation: pulse 2s ease-in-out infinite;
+
+        mat-icon {
+          transform: rotate(90deg);
+        }
+      }
+    }
+
+    &.refresh-btn {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(250, 112, 154, 0.4);
+
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(250, 112, 154, 0.5);
+      }
+
+      &:active mat-icon {
+        animation: spin 0.6s ease-in-out;
+      }
+    }
+  }
+}
+
+// Pulse animation for active search button
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(245, 87, 108, 0.6);
+  }
+}
+
+// Spin animation for refresh
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ===================================================================
+// EXPANDABLE SEARCH BAR - ENHANCED
+// ===================================================================
+
+.expandable-search-bar {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12),
+              0 4px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 0;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+  z-index: 99;
+
+  &.expanded {
+    max-height: 100px;
+    opacity: 1;
+    margin-bottom: $spacing-md;
+    animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .search-content {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-md $spacing-lg;
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    animation: fadeIn 0.3s ease 0.2s both;
+
+    .search-field {
+      flex: 1;
+      margin: 0;
+
+      ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+          background-color: white;
+          border-radius: 8px;
+        }
+
+        .mat-mdc-form-field-subscript-wrapper {
+          display: none;
+        }
+
+        .mat-mdc-form-field-focus-overlay {
+          background-color: rgba(102, 126, 234, 0.05);
+        }
+      }
+    }
+
+    .close-search-btn {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: #f5576c;
+      background-color: rgba(245, 87, 108, 0.1);
+      transition: all 0.2s ease;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      &:hover {
+        color: white;
+        background-color: #f5576c;
+        transform: rotate(90deg);
+      }
+    }
+  }
+}

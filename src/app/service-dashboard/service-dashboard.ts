@@ -153,6 +153,8 @@ export class ServiceDashboard {
     dbJobs: false
   };
 
+  isSearchExpanded: boolean = false;
+
 
   // Column definitions for Material Table
   get displayedColumns(): string[] {
@@ -202,6 +204,29 @@ export class ServiceDashboard {
     // let clientData = this.authService.getUpdatedClientData();
     // clientData.Roles = ['SERVICEADMIN'];
     // localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
+  }
+
+
+  toggleSearchPanel(): void {
+    this.isSearchExpanded = !this.isSearchExpanded;
+
+    // Focus search input when expanded
+    if (this.isSearchExpanded) {
+      setTimeout(() => {
+        const searchInput = document.querySelector('.expandable-search-input') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 300);
+    } else {
+      // Clear search when collapsed
+      this.searchKey = '';
+    }
+  }
+
+  closeSearchPanel(): void {
+    this.isSearchExpanded = false;
+    this.searchKey = '';
   }
 
   checkLastRunTimeShow(show?: boolean | string[]): boolean {
