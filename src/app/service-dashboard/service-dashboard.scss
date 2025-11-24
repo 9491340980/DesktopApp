@@ -197,16 +197,6 @@ $transition-speed: 0.3s;
   }
 }
 
-.refresh-btn {
-  background: #f4433638;
-  border-radius: 5px;
-  height: 40px;
-  padding: 7px;
-  width: 40px;
-  color: #f44336;
-  border: 1px #f4b2ad solid !important;
-  margin-bottom: 10px;
-}
 
 // ===================================================================
 // MAIN TABS
@@ -1413,20 +1403,24 @@ mat-button-toggle:focus {
     min-height: 52px;
 
     &.queue-success {
-      background-color: #f1f8f4;
+      background-color: #e4fbee;
       border-left: 3px solid #4caf50;
+      &:hover {
+      background-color:  rgb(192 251 218);
+    }
     }
 
     &.queue-error {
-      background-color: #ffebee;
+      background-color:rgb(244 67 54 / 28%);
       border-left: 4px solid #d32f2f;
       border: 2px solid #ef5350;
 
       // Add subtle animation to draw attention
       animation: errorPulse 2s ease-in-out infinite;
-
+&:hover {
+      background-color: rgb(244 67 54 / 38%);
+    }
       .queue-name {
-        color: #c62828 !important;
         font-weight: 700 !important;
       }
 
@@ -1672,27 +1666,19 @@ mat-button-toggle:focus {
   gap: 12px;
 
   .control-actions {
-    display: flex;
+display: flex;
     align-items: center;
     gap: 12px;
-    background: white;
     border-radius: 28px;
-    padding: 6px 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
-                0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    margin-top: -7px;
+    margin-right: 100px;
+    padding: 4px 4px;
     transition: all 0.3s ease;
-
-    &:hover {
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2),
-                  0 3px 6px rgba(0, 0, 0, 0.12);
-      transform: translateY(-1px);
-    }
   }
 
   .action-btn {
-    width: 44px;
-    height: 44px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     transition: all 0.3s ease;
     display: flex;
@@ -1721,19 +1707,15 @@ mat-button-toggle:focus {
     }
 
     &.search-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #64748b;
       color: white;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
 
       &:hover {
-        transform: scale(1.05);
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
       }
 
       &.active {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
-        animation: pulse 2s ease-in-out infinite;
+        background: #64748b;
 
         mat-icon {
           transform: rotate(90deg);
@@ -1742,18 +1724,8 @@ mat-button-toggle:focus {
     }
 
     &.refresh-btn {
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      background: #64748b;
       color: white;
-      box-shadow: 0 2px 8px rgba(250, 112, 154, 0.4);
-
-      &:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(250, 112, 154, 0.5);
-      }
-
-      &:active mat-icon {
-        animation: spin 0.6s ease-in-out;
-      }
     }
   }
 }

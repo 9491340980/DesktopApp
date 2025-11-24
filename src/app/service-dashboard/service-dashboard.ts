@@ -646,35 +646,35 @@ export class ServiceDashboard {
   private startAllPolling(): void {
     // Windows Services Polling - matches web's checkStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
-      timer(0, this.hideControls.controlProperties?.servicePollTimer || 2000)
+      timer(0, this.hideControls.controlProperties?.servicePollTimer || 200000000)
         .pipe(takeUntil(this.windowsPolling$))
         .subscribe(() => this.checkStatus());
     }
 
     // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
-      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 2000)
+      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 200000000)
         .pipe(takeUntil(this.taskPolling$))
         .subscribe(() => this.getTasksList());
     }
 
     // API Services Polling - matches web's checkApiServiceStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowApiTab)) {
-      timer(0, this.hideControls.controlProperties?.apiStatusAlertPollTimer || 6000)
+      timer(0, this.hideControls.controlProperties?.apiStatusAlertPollTimer || 6000000)
         .pipe(takeUntil(this.apiPolling$))
         .subscribe(() => this.checkApiServiceStatus());
     }
 
     // Queue Alerts Polling - matches web's checkQueAlertStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.allowQueueTab)) {
-      timer(0, this.hideControls.controlProperties?.queueAlertPollTimer || 6000)
+      timer(0, this.hideControls.controlProperties?.queueAlertPollTimer || 60000000)
         .pipe(takeUntil(this.queuePolling$))
         .subscribe(() => this.checkQueAlertStatus());
     }
 
     // DB Jobs Polling - matches web's checkDbJobsStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.dbJobs)) {
-      timer(0, this.hideControls.controlProperties?.dbJobsPollTimer || 6000)
+      timer(0, this.hideControls.controlProperties?.dbJobsPollTimer || 60000000)
         .pipe(takeUntil(this.dbJobsPolling$))
         .subscribe(() => this.checkDbJobsStatus());
     }

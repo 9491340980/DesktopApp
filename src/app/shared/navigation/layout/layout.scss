@@ -367,7 +367,7 @@ background: rgb(6 23 60);
   .toolbar-logo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 5px;
     cursor: pointer;
     // padding: 10px 16px;
     border-radius: 10px;
@@ -412,7 +412,10 @@ background: rgb(6 23 60);
     }
   }
 }
-
+.toolbar-logo-text{
+  font-size: 22px;
+  font-weight: 800;
+}
 // User Menu
 .user-menu-header {
   padding: 24px;
