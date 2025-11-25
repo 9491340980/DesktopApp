@@ -401,12 +401,12 @@ export class IosManagement {
 
     // Draw legend
     ctx.font = '12px Arial';
-    ctx.textAlign = 'right';
+    ctx.textAlign = 'left';
 
     // Main line legend
     ctx.fillStyle = '#000';
     ctx.fillRect(this.CHART_WIDTH - 280, 20, 15, 15);
-    ctx.fillText('Cumulative Time (seconds)', this.CHART_WIDTH - 300, 30);
+    ctx.fillText('Cumulative Time (seconds)', this.CHART_WIDTH - 260, 30);
 
     // Time difference legend (vertical red text)
     ctx.save();
@@ -417,8 +417,8 @@ export class IosManagement {
     ctx.fillText('+1.5s', 0, 0);
     ctx.restore();
 
-    // ctx.fillStyle = '#000';
-    // ctx.fillText('Time Difference (vertical)', this.CHART_WIDTH - 260, 55);
+    ctx.fillStyle = '#000';
+    ctx.fillText('Time Difference (vertical)', this.CHART_WIDTH - 260, 55);
   }
 
   drawGrid(ctx: CanvasRenderingContext2D, width: number, height: number, maxY: number) {
