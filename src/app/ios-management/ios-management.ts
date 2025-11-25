@@ -251,28 +251,11 @@ export class IosManagement {
       ctx.fill();
     });
 
-    // Draw time difference labels between points with vertical text (no borders)
-    // Smart positioning: above the line when going down, below when going up
-    // Positioned higher to avoid overlap with x-axis step names
+    // Draw time difference labels between points
+    ctx.font = 'bold 11px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Calculate label positions
-    interface LabelInfo {
-      x: number;
-      y: number;
-      label: string;
-      isHighlight: boolean;
-      midX: number;
-      midY: number;
-      segmentStartY: number;
-      segmentEndY: number;
-      isGoingUp: boolean;
-    }
-
-    const labels: LabelInfo[] = [];
-
-    // First pass: Create all labels and calculate their dimensions
     for (let i = 1; i < this.chartPoints.length; i++) {
       const prevPoint = this.chartPoints[i - 1];
       const currPoint = this.chartPoints[i];
@@ -283,11 +266,9 @@ export class IosManagement {
         const x2 = this.PADDING_LEFT + currPoint.x * scaleX;
         const y2 = this.CHART_HEIGHT - this.PADDING_BOTTOM - currPoint.y * scaleY;
 
+        // Calculate midpoint
         const midX = (x1 + x2) / 2;
         const midY = (y1 + y2) / 2;
-
-        // Determine if line is going up (y2 < y1 because canvas y increases downward)
-        const isGoingUp = y2 < y1;
 
         // Format the time difference
         const timeDiff = currPoint.timeDifference;
@@ -298,68 +279,54 @@ export class IosManagement {
           label = `+${(timeDiff * 1000).toFixed(0)}ms`;
         } else if (timeDiff < 60) {
           label = `+${timeDiff.toFixed(2)}s`;
-          if (timeDiff > 10) isHighlight = true;
+          if (timeDiff > 10) isHighlight = true; // Highlight larger durations
         } else {
           const minutes = Math.floor(timeDiff / 60);
           const seconds = Math.round(timeDiff % 60);
           label = `+${minutes}m ${seconds}s`;
-          isHighlight = true;
+          isHighlight = true; // Always highlight minute-level durations
         }
 
-        // Measure text to calculate offset (using smaller font)
-        ctx.font = isHighlight ? 'bold 10px Arial' : 'bold 9px Arial';
+        // Draw background rectangle for label
         const textMetrics = ctx.measureText(label);
-        const textWidth = textMetrics.width;
+        const padding = 6;
+        const rectWidth = textMetrics.width + padding * 2;
+        const rectHeight = 20;
 
-        // Position label based on line direction
-        // Use larger offsets to keep labels away from x-axis
-        let labelY;
-        const baseOffset = 35; // Increased offset to avoid x-axis labels
-
-        if (isGoingUp) {
-          // Line going up - place label BELOW but still away from bottom
-          labelY = Math.min(midY + textWidth / 2 + baseOffset, this.CHART_HEIGHT - this.PADDING_BOTTOM - 60);
-        } else {
-          // Line going down or flat - place label ABOVE
-          // For low lines (near bottom), position higher up
-          const minDistanceFromBottom = 80; // Minimum distance from x-axis
-          const calculatedY = midY - textWidth / 2 - baseOffset;
-          const bottomThreshold = this.CHART_HEIGHT - this.PADDING_BOTTOM - minDistanceFromBottom;
-
-          labelY = Math.min(calculatedY, bottomThreshold);
+        // Determine position offset based on line slope to avoid overlap
+        let offsetY = -25; // Default above the line
+        if (y2 < y1) {
+          // Line going up, place label below
+          offsetY = 25;
         }
 
-        labels.push({
-          x: midX,
-          y: labelY,
-          label,
-          isHighlight,
-          midX,
-          midY,
-          segmentStartY: y1,
-          segmentEndY: y2,
-          isGoingUp
-        });
+        const labelX = midX;
+        const labelY = midY + offsetY;
+
+        // Draw connecting indicator line (subtle)
+        ctx.strokeStyle = isHighlight ? '#ff6b00' : '#ff9800';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(midX, midY);
+        ctx.lineTo(labelX, labelY + (offsetY > 0 ? -rectHeight / 2 : rectHeight / 2));
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw white background with border
+        ctx.fillStyle = isHighlight ? '#fff3cd' : '#ffffff';
+        ctx.strokeStyle = isHighlight ? '#ff6b00' : '#ff9800';
+        ctx.lineWidth = isHighlight ? 2.5 : 2;
+        ctx.beginPath();
+        ctx.roundRect(labelX - rectWidth / 2, labelY - rectHeight / 2, rectWidth, rectHeight, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw the text
+        ctx.fillStyle = isHighlight ? '#d84315' : '#ff6b00';
+        ctx.font = isHighlight ? 'bold 12px Arial' : 'bold 11px Arial';
+        ctx.fillText(label, labelX, labelY);
       }
-    }
-
-    // Draw all labels as vertical text
-    for (const labelInfo of labels) {
-      const { x, y, label, isHighlight } = labelInfo;
-
-      // Set color based on highlight status (using smaller font)
-      ctx.fillStyle = isHighlight ? '#d32f2f' : '#e64a19'; // Red colors: dark red for highlights, orange-red for normal
-      ctx.font = isHighlight ? 'bold 10px Arial' : 'bold 9px Arial';
-
-      // Save context and rotate for vertical text
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
-
-      // Draw the text (now it will appear vertical in the final render)
-      ctx.fillText(label, 0, 0);
-
-      ctx.restore();
     }
 
     // Draw x-axis labels (rotated step names)
@@ -408,17 +375,16 @@ export class IosManagement {
     ctx.fillRect(this.CHART_WIDTH - 280, 20, 15, 15);
     ctx.fillText('Cumulative Time (seconds)', this.CHART_WIDTH - 260, 30);
 
-    // Time difference legend (vertical red text)
-    ctx.save();
-    ctx.translate(this.CHART_WIDTH - 272, 55);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = '#e64a19';
-    ctx.font = 'bold 11px Arial';
-    ctx.fillText('+1.5s', 0, 0);
-    ctx.restore();
-
-    ctx.fillStyle = '#000';
-    ctx.fillText('Time Difference (vertical)', this.CHART_WIDTH - 260, 55);
+    // Time difference legend
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#ff9800';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(this.CHART_WIDTH - 280, 45, 15, 15, 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ff6b00';
+    ctx.fillText('Time Difference', this.CHART_WIDTH - 260, 55);
   }
 
   drawGrid(ctx: CanvasRenderingContext2D, width: number, height: number, maxY: number) {
