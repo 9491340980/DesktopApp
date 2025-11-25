@@ -8,11 +8,7 @@ const fs = require('fs');
 // This MUST be false so the app loads from dist, not localhost:4200
 const isDevelopment = false;
 
-console.log('========================================');
-console.log('Electron App Starting');
-console.log('Mode: PRODUCTION (forced)');
-console.log('Will load from: dist folder (NOT localhost)');
-console.log('========================================');
+
 
 // ============================================
 // LOGGING SYSTEM
@@ -28,12 +24,10 @@ function log(level, ...args) {
   const timestamp = new Date().toISOString();
   const message = `[${timestamp}] [${level}] ${args.join(' ')}`;
 
-  console.log(message);
 
   try {
     fs.appendFileSync(logFile, message + '\n');
   } catch (err) {
-    console.error('Failed to write log:', err);
   }
 }
 
@@ -47,7 +41,6 @@ function logError(...args) {
 
 function showErrorDialog(title, message) {
   const fullMsg = message + `\n\nLog: ${logFile}`;
-  console.error('ERROR:', title, fullMsg);
   dialog.showErrorBox(title, fullMsg);
 }
 

@@ -121,7 +121,6 @@ export class Login implements OnInit, OnDestroy {
       clientName
     ).subscribe({
       next: (response: LoginResponse) => {
-        console.log('Login successful:', response);
 
         // Save all response data
         this.saveUserData(response);
@@ -129,7 +128,6 @@ export class Login implements OnInit, OnDestroy {
         // ✅ Check navigateTo signal
         if (response.navigateTo === 'user-profile') {
           // getUserProfile failed - navigate to user-profile page
-          console.log('Navigating to user-profile to complete setup');
           this.showSnackbar('Please complete your profile', NotificationType.INFO);
 
           setTimeout(() => {
@@ -159,7 +157,6 @@ export class Login implements OnInit, OnDestroy {
         }, 500);
       },
       error: (error) => {
-        console.error('Login failed:', error);
         this.loading = false;
 
         // Handle specific error cases
@@ -220,13 +217,11 @@ export class Login implements OnInit, OnDestroy {
       controlConfig.defaultLocation = "RTN01";
 
       if (controlConfig.defaultLocation) {
-        console.log('Default location found in control config:', controlConfig.defaultLocation);
         if (updatedClientData) {
           updatedClientData = {
             ...updatedClientData,
             Location: controlConfig.defaultLocation
           };
-          console.log('✅ Location updated in ClientData:', updatedClientData.Location);
         }
       }
 
@@ -237,7 +232,6 @@ export class Login implements OnInit, OnDestroy {
 
     // Save updated ClientData (with location if it was updated)
     if (updatedClientData) {
-      console.log('✅ ClientData saved:', updatedClientData);
       localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(updatedClientData));
     }
 

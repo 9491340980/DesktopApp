@@ -121,10 +121,8 @@ export class Dashboard implements OnInit {
         // AUTO-EXPAND if only 1 module
         if (this.filteredMenuItems.length === 1 && this.filteredMenuItems[0].HasSubMenu) {
           this.selectedModuleTitle = this.filteredMenuItems[0].Title;
-          console.log(`Auto-expanded single module: ${this.selectedModuleTitle}`);
         }
 
-        console.log('Dashboard - Filtered items:', this.filteredMenuItems.length);
       } catch (error) {
         console.error('Error parsing menu from localStorage:', error);
         this.menuItems = [];

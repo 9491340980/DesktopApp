@@ -25,7 +25,6 @@ export const authGuard: CanActivateFn = (
       const hasRequiredRole = authService.hasAnyRole(siteId, requiredRoles);
 
       if (!hasRequiredRole) {
-        console.warn('User does not have required roles:', requiredRoles);
         router.navigate(['/unauthorized']);
         return false;
       }

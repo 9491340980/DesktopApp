@@ -276,30 +276,28 @@ export class Auth {
     this.clearSessionTimeouts();
 
     // Clear localStorage
-    const keysToRemove = [
-      'token',
-      'userId',
-      'username',
-      'clientId',
-      'siteId',
-      'location',
-      'rolesList',
-      'siteIds',
-      'userProfile',
-      'session',
-      'controlConfig',
-      'sessionTimeout',
-      'menu',
-      'messages'
-    ];
+    // const keysToRemove = [
+    //   'token',
+    //   'userId',
+    //   'username',
+    //   'clientId',
+    //   'siteId',
+    //   'location',
+    //   'rolesList',
+    //   'siteIds',
+    //   'userProfile',
+    //   'session',
+    //   'controlConfig',
+    //   'sessionTimeout',
+    //   'menu',
+    //   'messages'
+    // ];
 
 
-    localStorage.clear();
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-
+    // keysToRemove.forEach(key => localStorage.removeItem(key));
     // Update current user
     this.currentUserSubject.next(null);
-
+    localStorage.clear();
     // Navigate to login with reason
     if (isTimeout) {
       this.router.navigate(['/login'], {
