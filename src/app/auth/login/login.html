@@ -1,1 +1,161 @@
-<app-ios-management></app-ios-management>
+<div class="login-container">
+  <!-- Background decoration -->
+  <div class="login-background">
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+  </div>
+
+  <!-- Login box -->
+  <div class="login-box">
+    <!-- Logo and header -->
+    <div class="login-header">
+      <div class="company-name"><img src="images/GXO-logo.png" alt="GXO Logo" class="gxo-logo"></div>
+      <div class="logo-container">
+        <img src="images/RMx-logo.png" alt="RMx Logo" class="login-logo"> <span class="logo-text">Desktop</span>
+      </div>
+    </div>
+
+    <!-- Login form -->
+    <form class="login-form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+
+      <!-- Error message banner -->
+      <div class="error-banner" *ngIf="errorMessage" [@slideInDown]>
+        <i class="fa fa-exclamation-circle"></i>
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="close-btn" (click)="clearError()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Username field -->
+      <div class="form-group">
+        <label for="username" class="form-label">
+          <i class="fa fa-user"></i>
+          Username
+        </label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-input"
+            [(ngModel)]="username"
+            (focus)="clearError()"
+            (keypress)="onKeyPress($event)"
+            placeholder="Enter your username"
+            [disabled]="loading"
+            autocomplete="username"
+            required
+            #usernameInput="ngModel">
+          <i class="input-icon fa fa-user"></i>
+        </div>
+        <div class="field-error" *ngIf="usernameInput.invalid && usernameInput.touched">
+          <i class="fa fa-exclamation-circle"></i>
+          <span>Username is required</span>
+        </div>
+      </div>
+
+      <!-- Password field -->
+      <div class="form-group">
+        <label for="password" class="form-label">
+          <i class="fa fa-lock"></i>
+          Password
+        </label>
+        <div class="input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            name="password"
+            class="form-input"
+            [(ngModel)]="password"
+            (focus)="clearError()"
+            (keydown)="checkCapsLock($event)"
+            (keypress)="onKeyPress($event)"
+            placeholder="Enter your password"
+            [disabled]="loading"
+            autocomplete="current-password"
+            required
+            #passwordInput="ngModel">
+          <i class="input-icon fa fa-lock"></i>
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility()"
+            [disabled]="loading"
+            tabindex="-1">
+            <i [class]="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </button>
+        </div>
+
+        <!-- Caps lock warning -->
+        <div class="caps-lock-warning" *ngIf="isCapLockOn">
+          <i class="fa fa-exclamation-triangle"></i>
+          <span>Caps Lock is ON</span>
+        </div>
+
+        <div class="field-error" *ngIf="passwordInput.invalid && passwordInput.touched">
+          <i class="fa fa-exclamation-circle"></i>
+          <span>Password is required</span>
+        </div>
+      </div>
+
+      <!-- Remember me and forgot password -->
+      <div class="form-options">
+        <label class="checkbox-container">
+          <input
+            type="checkbox"
+            [(ngModel)]="rememberMe"
+            name="rememberMe"
+            [disabled]="loading">
+          <span class="checkmark"></span>
+          <span class="checkbox-label">Remember me</span>
+        </label>
+
+        <button
+          type="button"
+          class="forgot-password-link"
+          (click)="forgotPassword()"
+          [disabled]="loading">
+          Forgot password?
+        </button>
+      </div>
+
+      <!-- Submit button -->
+      <button
+        type="submit"
+        class="login-button"
+        [disabled]="loading || !username || !password || loginForm.invalid"
+        [class.loading]="loading">
+        <span class="button-content" *ngIf="!loading">
+          <i class="fa fa-sign-in-alt"></i>
+          <span>Sign In</span>
+        </span>
+        <span class="button-content" *ngIf="loading">
+          <i class="fa fa-spinner fa-spin"></i>
+          <span>Signing in...</span>
+        </span>
+      </button>
+
+    </form>
+
+    <!-- Additional info -->
+    <div class="login-footer">
+      <div class="environment-badge">
+        <i class="fa fa-server"></i>
+        <span>{{ environment }}</span>
+      </div>
+      <div class="version-info">
+        <span>Version {{ releaseVersion }}</span>
+        <p>Build Date: {{ buildDate | date:'medium' }}</p>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Footer -->
+  <div class="login-page-footer">
+    <p>&copy; 2025 GXO Logistics. All rights reserved.</p>
+  </div>
+</div>
