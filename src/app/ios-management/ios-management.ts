@@ -21,7 +21,7 @@ import jsPDF from 'jspdf';
 
 
 export class IosManagement {
- @ViewChild('chartCanvas', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartCanvas', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('exportContainer', { static: false }) exportContainer!: ElementRef<HTMLDivElement>;
 
   processSteps: ProcessStep[] = [];
@@ -41,7 +41,7 @@ export class IosManagement {
   private readonly CHART_HEIGHT = 500;
   private readonly PADDING_LEFT = 80;
   private readonly PADDING_RIGHT = 50;
-  private readonly PADDING_TOP = 80; // Increased for legend
+  private readonly PADDING_TOP = 40;
   private readonly PADDING_BOTTOM = 150;
 
   constructor() {
@@ -115,50 +115,11 @@ export class IosManagement {
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
 
-        // Map the data to our format
-        this.processSteps = jsonData.map((row: any) => {
-          // Support multiple column name formats
-          const stepName = row['Step name'] || row['Step'] || row['step'] || '';
-          
-          // Handle timestamp - could be string or Date object
-          let timestampStr = row['Time Stamp'] || row['Timestamp'] || row['timestamp'] || '';
-          
-          // If timestamp is a number (Excel serial date), convert it
-          if (typeof timestampStr === 'number') {
-            // Excel serial date conversion
-            const excelEpoch = new Date(1899, 11, 30);
-            const date = new Date(excelEpoch.getTime() + timestampStr * 86400000);
-            timestampStr = date.toLocaleString();
-          } else if (timestampStr instanceof Date) {
-            timestampStr = timestampStr.toLocaleString();
-          }
-          
-          // Get duration - check if it's in milliseconds or seconds
-          let durationValue = parseFloat(
-            row['Duration (milli seconds)'] || 
-            row['Duration (Milliseconds)'] ||
-            row['Duration (milliseconds)'] ||
-            row['Duration (Seconds)'] || 
-            row['Duration'] || 
-            row['duration'] || 
-            0
-          );
-
-          // Convert milliseconds to seconds if the column name indicates milliseconds
-          if (row['Duration (milli seconds)'] !== undefined || 
-              row['Duration (Milliseconds)'] !== undefined ||
-              row['Duration (milliseconds)'] !== undefined) {
-            // Values are in milliseconds - convert to seconds
-            durationValue = durationValue / 1000;
-          }
-          // Otherwise, assume values are already in seconds (backward compatibility)
-
-          return {
-            step: stepName,
-            timestamp: timestampStr.toString(),
-            duration: durationValue // Now in seconds
-          };
-        });
+        this.processSteps = jsonData.map((row: any) => ({
+          step: row['Step'] || row['step'] || '',
+          timestamp: row['Timestamp'] || row['timestamp'] || '',
+          duration: parseFloat(row['Duration (Seconds)'] || row['duration'] || 0)
+        }));
 
         this.calculateStatistics();
         this.generateChartPoints();
@@ -199,7 +160,7 @@ export class IosManagement {
         step: step.step,
         duration: step.duration,
         timestamp: step.timestamp,
-        timeDifference: index > 0 ? step.duration : 0
+        timeDifference: index > 0 ? cumulativeTime - this.chartPoints[index - 1].y : 0
       };
       this.chartPoints.push(point);
       cumulativeTime += step.duration;
@@ -225,6 +186,23 @@ export class IosManagement {
     const canvas = this.chartCanvas.nativeElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Add roundRect polyfill for older browsers
+    if (!ctx.roundRect) {
+      ctx.roundRect = function(x: number, y: number, width: number, height: number, radius: number) {
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.lineTo(x + width - radius, y);
+        this.arcTo(x + width, y, x + width, y + radius, radius);
+        this.lineTo(x + width, y + height - radius);
+        this.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+        this.lineTo(x + radius, y + height);
+        this.arcTo(x, y + height, x, y + height - radius, radius);
+        this.lineTo(x, y + radius);
+        this.arcTo(x, y, x + radius, y, radius);
+        this.closePath();
+      };
+    }
 
     // Set canvas size
     canvas.width = this.CHART_WIDTH;
@@ -273,84 +251,115 @@ export class IosManagement {
       ctx.fill();
     });
 
-    // Draw time difference labels with vertical text
+    // Draw time difference labels between points with vertical text (no borders)
+    // Smart positioning: above the line when going down, below when going up
+    // Positioned higher to avoid overlap with x-axis step names
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    
-    for (let i = 1; i < this.processSteps.length; i++) {
+
+    // Calculate label positions
+    interface LabelInfo {
+      x: number;
+      y: number;
+      label: string;
+      isHighlight: boolean;
+      midX: number;
+      midY: number;
+      segmentStartY: number;
+      segmentEndY: number;
+      isGoingUp: boolean;
+    }
+
+    const labels: LabelInfo[] = [];
+
+    // First pass: Create all labels and calculate their dimensions
+    for (let i = 1; i < this.chartPoints.length; i++) {
       const prevPoint = this.chartPoints[i - 1];
       const currPoint = this.chartPoints[i];
-      
+
       if (currPoint.timeDifference && currPoint.timeDifference > 0) {
         const x1 = this.PADDING_LEFT + prevPoint.x * scaleX;
         const y1 = this.CHART_HEIGHT - this.PADDING_BOTTOM - prevPoint.y * scaleY;
         const x2 = this.PADDING_LEFT + currPoint.x * scaleX;
         const y2 = this.CHART_HEIGHT - this.PADDING_BOTTOM - currPoint.y * scaleY;
-        
+
         const midX = (x1 + x2) / 2;
         const midY = (y1 + y2) / 2;
-        
-        // Determine if line is going up
+
+        // Determine if line is going up (y2 < y1 because canvas y increases downward)
         const isGoingUp = y2 < y1;
-        
+
         // Format the time difference
         const timeDiff = currPoint.timeDifference;
         let label = '';
         let isHighlight = false;
-        
+
         if (timeDiff < 1) {
-          // Less than 1 second - show in milliseconds
           label = `+${(timeDiff * 1000).toFixed(0)}ms`;
         } else if (timeDiff < 60) {
-          // Less than 1 minute - show in seconds
           label = `+${timeDiff.toFixed(2)}s`;
           if (timeDiff > 10) isHighlight = true;
-        } else if (timeDiff < 3600) {
-          // Less than 1 hour - show in minutes and seconds
+        } else {
           const minutes = Math.floor(timeDiff / 60);
           const seconds = Math.round(timeDiff % 60);
           label = `+${minutes}m ${seconds}s`;
           isHighlight = true;
-        } else {
-          // 1 hour or more - show in hours, minutes, and seconds
-          const hours = Math.floor(timeDiff / 3600);
-          const minutes = Math.floor((timeDiff % 3600) / 60);
-          const seconds = Math.round(timeDiff % 60);
-          label = `+${hours}h ${minutes}m ${seconds}s`;
-          isHighlight = true;
         }
-        
-        // Set font and measure text (increased size)
-        ctx.font = isHighlight ? 'bold 11px Arial' : 'bold 10px Arial';
+
+        // Measure text to calculate offset (using smaller font)
+        ctx.font = isHighlight ? 'bold 10px Arial' : 'bold 9px Arial';
         const textMetrics = ctx.measureText(label);
         const textWidth = textMetrics.width;
-        
-        // Calculate position
+
+        // Position label based on line direction
+        // Use larger offsets to keep labels away from x-axis
         let labelY;
-        const baseOffset = 35;
-        
+        const baseOffset = 35; // Increased offset to avoid x-axis labels
+
         if (isGoingUp) {
+          // Line going up - place label BELOW but still away from bottom
           labelY = Math.min(midY + textWidth / 2 + baseOffset, this.CHART_HEIGHT - this.PADDING_BOTTOM - 60);
         } else {
-          const minDistanceFromBottom = 80;
+          // Line going down or flat - place label ABOVE
+          // For low lines (near bottom), position higher up
+          const minDistanceFromBottom = 80; // Minimum distance from x-axis
           const calculatedY = midY - textWidth / 2 - baseOffset;
           const bottomThreshold = this.CHART_HEIGHT - this.PADDING_BOTTOM - minDistanceFromBottom;
+
           labelY = Math.min(calculatedY, bottomThreshold);
         }
-        
-        // Validate bounds - skip if outside chart area
-        if (labelY >= this.PADDING_TOP + 20 && labelY <= this.CHART_HEIGHT - this.PADDING_BOTTOM - 20) {
-          // Set color
-          ctx.fillStyle = isHighlight ? '#d32f2f' : '#e64a19';
-          
-          // Draw vertical text
-          ctx.save();
-          ctx.translate(midX, labelY);
-          ctx.rotate(-Math.PI / 2);
-          ctx.fillText(label, 0, 0);
-          ctx.restore();
-        }
+
+        labels.push({
+          x: midX,
+          y: labelY,
+          label,
+          isHighlight,
+          midX,
+          midY,
+          segmentStartY: y1,
+          segmentEndY: y2,
+          isGoingUp
+        });
       }
+    }
+
+    // Draw all labels as vertical text
+    for (const labelInfo of labels) {
+      const { x, y, label, isHighlight } = labelInfo;
+
+      // Set color based on highlight status (using smaller font)
+      ctx.fillStyle = isHighlight ? '#d32f2f' : '#e64a19'; // Red colors: dark red for highlights, orange-red for normal
+      ctx.font = isHighlight ? 'bold 10px Arial' : 'bold 9px Arial';
+
+      // Save context and rotate for vertical text
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
+
+      // Draw the text (now it will appear vertical in the final render)
+      ctx.fillText(label, 0, 0);
+
+      ctx.restore();
     }
 
     // Draw x-axis labels (rotated step names)
@@ -390,26 +399,26 @@ export class IosManagement {
     ctx.fillText('Time Taken (Seconds)', 0, 0);
     ctx.restore();
 
-    // Draw legend at top-left corner
+    // Draw legend
     ctx.font = '12px Arial';
-    ctx.textAlign = 'left';
-    
-    // Main line legend - moved to top-left
-    // ctx.fillStyle = '#000';
-    // ctx.fillRect(this.PADDING_LEFT + 10, 20, 15, 15);
-    ctx.fillText('Cumulative Time (seconds)', this.PADDING_LEFT + 50, 50);
-    
-    // Time difference legend (vertical red text) - below cumulative time legend
+    ctx.textAlign = 'right';
+
+    // Main line legend
+    ctx.fillStyle = '#000';
+    ctx.fillRect(this.CHART_WIDTH - 280, 20, 15, 15);
+    ctx.fillText('Cumulative Time (seconds)', this.CHART_WIDTH - 300, 30);
+
+    // Time difference legend (vertical red text)
     ctx.save();
-    ctx.translate(this.PADDING_LEFT + 17, 60);
+    ctx.translate(this.CHART_WIDTH - 272, 55);
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = '#e64a19';
-    ctx.font = 'bold 10px Arial';
+    ctx.font = 'bold 11px Arial';
     ctx.fillText('+1.5s', 0, 0);
     ctx.restore();
-    
+
     // ctx.fillStyle = '#000';
-    // ctx.fillText('Time Difference (vertical)', this.PADDING_LEFT + 30, 60);
+    // ctx.fillText('Time Difference (vertical)', this.CHART_WIDTH - 260, 55);
   }
 
   drawGrid(ctx: CanvasRenderingContext2D, width: number, height: number, maxY: number) {
@@ -513,12 +522,6 @@ export class IosManagement {
     }, 'image/jpeg', 0.95);
   }
 }
-
-
-
-
-
-
 interface ProcessStep {
   step: string;
   timestamp: string;
