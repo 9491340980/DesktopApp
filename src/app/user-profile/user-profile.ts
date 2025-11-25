@@ -16,7 +16,6 @@ import { ConfigModule, NotificationType, StorageKey } from '../enums/app-constan
 import { ClientData } from '../models/api.models';
 import { catchError, forkJoin, of } from 'rxjs';
 
-
 interface SiteIdOption {
   siteId: string;
   clientName: string;
@@ -81,13 +80,13 @@ export class UserProfile implements OnInit, OnDestroy {
     this.userForm = this.fb.group({
       siteId: ['', Validators.required],
       clientId: ['', Validators.required],
-      location: [''],  // ✅ REMOVED Validators.required
+      location: [''], // ✅ REMOVED Validators.required
       deviceId: [{ value: '', disabled: true }]
     });
   }
 
   ngOnInit(): void {
-    // Load control configs
+    // Load control configs if available
     if (localStorage.getItem(StorageKey.CONTROL_CONFIG)) {
       this.controlConfigs = JSON.parse(localStorage.getItem(StorageKey.CONTROL_CONFIG) || '{}');
       this.controlConfig = this.controlConfigs;
@@ -116,7 +115,7 @@ export class UserProfile implements OnInit, OnDestroy {
       this.userProfile = JSON.parse(JSON.stringify(this.currentProfile));
     }
 
-    // ✅ NEW: Get location from clientData or control config
+    // ✅ Get location from clientData or control config
     let defaultLocation = this.clientData.Location || '';
 
     // ✅ Check if control config has defaultLocation
@@ -125,7 +124,7 @@ export class UserProfile implements OnInit, OnDestroy {
       console.log('Using defaultLocation from control config:', defaultLocation);
     }
 
-    // ✅ Set location in userProfile and clientData
+    // ✅ Set location in userProfile and clientData if available
     if (defaultLocation) {
       this.userProfile.Loc = defaultLocation.toUpperCase();
       this.clientData.Location = defaultLocation.toUpperCase();
@@ -172,26 +171,28 @@ export class UserProfile implements OnInit, OnDestroy {
   /**
    * ✅ Subscribe to form value changes to keep userProfile in sync
    */
-private subscribeToFormChanges(): void {
-  // ✅ Use valueChanges with getRawValue to include disabled fields
-  this.userForm.valueChanges.subscribe(() => {
-    const values = this.userForm.getRawValue();
+  private subscribeToFormChanges(): void {
+    // ✅ Use valueChanges with getRawValue to include disabled fields
+    this.userForm.valueChanges.subscribe(() => {
+      const values = this.userForm.getRawValue();
 
-    // Update userProfile with current form values
-    if (values.siteId) {
-      this.userProfile.SiteId = values.siteId;
-    }
-    if (values.clientId) {
-      this.userProfile.ClientId = values.clientId;
-    }
-    // ✅ Update location even if disabled
-    if (values.location !== undefined) {
-      this.userProfile.Loc = values.location.toUpperCase();
-    }
-    // DeviceId is read-only but keep it synced
-    this.userProfile.DeviceId = this.clientData.DeviceId;
-  });
-}
+      // Update userProfile with current form values
+      if (values.siteId) {
+        this.userProfile.SiteId = values.siteId;
+      }
+      if (values.clientId) {
+        this.userProfile.ClientId = values.clientId;
+      }
+      // ✅ Update location even if disabled
+      if (values.location !== undefined) {
+        this.userProfile.Loc = values.location.toUpperCase();
+      }
+
+      // DeviceId is read-only but keep it synced
+      this.userProfile.DeviceId = this.clientData.DeviceId;
+    });
+  }
+
   /**
    * Load site IDs from localStorage and config
    */
@@ -240,10 +241,76 @@ private subscribeToFormChanges(): void {
   }
 
   /**
+   * ✅ NEW: Call getControlConfig API and update location
+   */
+  private callGetControlConfig(updatedClientData: any, onSuccess?: (location: string) => void): void {
+    console.log('📞 Calling getControlConfig with ClientData:', updatedClientData);
+
+    this.loginService.getControlConfig(updatedClientData, ConfigModule.LOGIN).subscribe({
+      next: (response) => {
+        console.log('✅ getControlConfig response:', response);
+        if (response.Status === 'PASS' && response.Response) {
+          try {
+            // Parse the JSON string
+            const controlConfig = JSON.parse(response.Response);
+
+            // ⚠️ Temporarily add defaultLocation (until it's in DB)
+            controlConfig.defaultLocation = "RTN01";
+
+            console.log('📋 Control Config:', controlConfig);
+
+            // Save control config
+            localStorage.setItem(StorageKey.CONTROL_CONFIG, JSON.stringify(controlConfig));
+            this.controlConfigs = controlConfig;
+            this.controlConfig = controlConfig;
+
+            // ✅ Update location from defaultLocation if available
+            if (controlConfig.defaultLocation) {
+              const defaultLocation = controlConfig.defaultLocation.toUpperCase();
+              console.log('✅ Default location found:', defaultLocation);
+
+              // Update ClientData
+              updatedClientData.Location = defaultLocation;
+              this.clientData.Location = defaultLocation;
+
+              // Update userProfile
+              this.userProfile.Loc = defaultLocation;
+
+              // Update form
+              this.userForm.patchValue({
+                location: defaultLocation
+              });
+
+              // Disable location field
+              this.isLocationDisabled = true;
+              this.locationDisabled = true;
+              this.userForm.get('location')?.disable();
+
+              console.log('✅ Location updated in ClientData:', this.clientData.Location);
+
+              // Call success callback if provided
+              if (onSuccess) {
+                onSuccess(defaultLocation);
+              }
+            }
+          } catch (error) {
+            console.error('❌ Failed to parse control config:', error);
+          }
+        }
+      },
+      error: (error) => {
+        console.error('❌ getControlConfig API failed:', error);
+        // Don't block the flow if API fails
+      }
+    });
+  }
+
+  /**
    * Handle site ID change
    */
   changeSiteId(event: any): void {
     const siteId = event.target.value;
+    const previousSiteId = this.userProfile.SiteId;
 
     // Check if changing back to current profile site
     if (this.currentProfile && this.currentProfile.SiteId === siteId) {
@@ -251,6 +318,7 @@ private subscribeToFormChanges(): void {
       this.userProfile.SiteId = this.currentProfile.SiteId;
       this.userProfile.Loc = this.currentProfile.Loc;
       this.userProfile.ClientId = this.currentProfile.ClientId;
+
       this.updateClientDataObj(this.currentProfile);
       this.isSiteIdChanged = false;
       this.isSiteIdChangedandSaved = false;
@@ -261,23 +329,45 @@ private subscribeToFormChanges(): void {
         clientId: this.currentProfile.ClientId,
         location: this.currentProfile.Loc
       });
+
+      // ✅ ALWAYS call getControlConfig when site changes (even returning to original)
+      if (previousSiteId !== siteId) {
+        const updatedClientData = { ...this.clientData };
+        console.log('🔄 Returned to original site - calling getControlConfig');
+        this.callGetControlConfig(updatedClientData);
+      }
     } else {
-      // Changing to different site - clear client and location
-      this.userProfile.Loc = '';
+      // Changing to different site
+      // ✅ PRESERVE location if it exists in clientData - NEVER clear it
+      const preservedLocation = this.clientData.Location || this.userProfile.Loc || '';
+
       this.userProfile.ClientId = '';
       this.userProfile.SiteId = siteId;
+
+      // ✅ Keep location from clientData
+      if (preservedLocation) {
+        this.userProfile.Loc = preservedLocation;
+      } else {
+        this.userProfile.Loc = '';
+      }
+
       this.updateClientDataObj(this.userProfile);
 
-      // Clear form values
+      // ✅ Preserve location in form - only clear client
       this.userForm.patchValue({
         siteId: siteId,
         clientId: '',
-        location: ''
+        location: preservedLocation  // ✅ Keep existing location
       });
 
       this.isSiteIdChanged = true;
       this.isSiteIdChangedandSaved = true;
       this.focusClient();
+
+      // ✅ ALWAYS call getControlConfig when site changes
+      const updatedClientData = { ...this.clientData };
+      console.log('🔄 Site changed - calling getControlConfig');
+      this.callGetControlConfig(updatedClientData);
     }
   }
 
@@ -300,34 +390,34 @@ private subscribeToFormChanges(): void {
 
     const requestObj = { ClientData: this.clientData };
 
-    this.commonService.post(`/LogIn/getStorer/${siteId}`, requestObj, {
-      showLoader: true
-    }).subscribe({
+    this.commonService.post(`/LogIn/getStorer/${siteId}`, requestObj, { showLoader: true }).subscribe({
       next: (response) => {
         this.loading = false;
-
         if (response.Status === 'PASS' && response.Response) {
           this.client = response.Response;
 
           if (this.client.length === 1) {
             // Single client - auto-select
             const clientId = this.client[0].ClientId;
-            const location = this.client[0].Loc || '';
+            const clientLocation = this.client[0].Loc || '';
 
-            // Update form
+            // ✅ PRESERVE existing location from clientData/userProfile
+            const existingLocation = this.userProfile.Loc || this.clientData.Location || '';
+            const finalLocation = existingLocation || clientLocation;
+
             this.userForm.patchValue({
               clientId: clientId,
-              location: location || this.userProfile.Loc || ''  // ✅ Keep existing location if available
+              location: finalLocation
             });
 
-            // Update userProfile
             this.userProfile.ClientId = clientId;
-            // ✅ Only update location if it's empty
-            if (!this.userProfile.Loc) {
-              this.userProfile.Loc = location.toUpperCase();
-            }
-            this.clientData.ClientId = clientId;
 
+            // ✅ Only update location if it was empty
+            if (!existingLocation && clientLocation) {
+              this.userProfile.Loc = clientLocation.toUpperCase();
+            }
+
+            this.clientData.ClientId = clientId;
             this.disableControls(false);
 
             // ✅ Keep location disabled if it has a value
@@ -335,10 +425,14 @@ private subscribeToFormChanges(): void {
               this.isLocationDisabled = true;
               this.locationDisabled = true;
               this.userForm.get('location')?.disable();
-            } else if (!location || location === '') {
-              // Only focus location if empty
+            } else if (!clientLocation || clientLocation === '') {
               this.focusLocation();
             }
+
+            // ✅ ALWAYS call getControlConfig after auto-selecting single client
+            const updatedClientData = { ...this.clientData };
+            console.log('🔄 Single client auto-selected - calling getControlConfig');
+            this.callGetControlConfig(updatedClientData);
           } else {
             // Multiple clients
             if (this.userProfile.SiteId && !this.userProfile.ClientId) {
@@ -377,21 +471,34 @@ private subscribeToFormChanges(): void {
     const selectedClient = this.client.find(c => c.ClientId === clientId);
 
     if (selectedClient) {
-      // Update userProfile
+      const previousClientId = this.userProfile.ClientId;
+
       this.userProfile.ClientId = selectedClient.ClientId;
       this.clientData.ClientId = selectedClient.ClientId;
 
-      // Auto-fill location if available
+      // ✅ Only auto-fill location if current location is empty
       if (selectedClient.Loc && selectedClient.Loc !== '') {
-        const location = selectedClient.Loc.toUpperCase(); // ✅ Uppercase
-        this.userForm.patchValue({
-          location: location
-        });
-        this.userProfile.Loc = location;
+        // ✅ Check if current location is empty before updating
+        if (!this.userProfile.Loc || this.userProfile.Loc.trim() === '') {
+          const location = selectedClient.Loc.toUpperCase();
+          this.userForm.patchValue({ location: location });
+          this.userProfile.Loc = location;
+          this.isLocationDisabled = true;
+          this.locationDisabled = true;
+          this.userForm.get('location')?.disable();
+        }
+        // ✅ If location already exists, keep it and don't update
       }
 
-      // Focus location
-      this.focusLocation();
+      // ✅ ALWAYS call getControlConfig when client changes
+      const updatedClientData = { ...this.clientData };
+      console.log('🔄 Client changed - calling getControlConfig');
+      this.callGetControlConfig(updatedClientData, (location) => {
+        // ✅ After getting default location, focus location if still empty
+        if (!location && !this.isLocationDisabled) {
+          this.focusLocation();
+        }
+      });
     }
   }
 
@@ -479,9 +586,7 @@ private subscribeToFormChanges(): void {
     this.clientData.SiteId = value.siteId;
 
     // ✅ Prepare location object - handle empty location
-    const locationObj = {
-      Loc: (value.location || '').toUpperCase()
-    };
+    const locationObj = { Loc: (value.location || '').toUpperCase() };
 
     const requestObj = {
       ClientData: this.clientData,
@@ -496,9 +601,7 @@ private subscribeToFormChanges(): void {
     }
 
     // Call validateLocation API
-    this.commonService.post('/common/validateLocation', requestObj, {
-      showLoader: true
-    }).subscribe({
+    this.commonService.post('/common/validateLocation', requestObj, { showLoader: true }).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
           // Location valid - proceed to save profile
@@ -506,7 +609,6 @@ private subscribeToFormChanges(): void {
         } else {
           this.loading = false;
           this.showSnackbar(response.StatusMessage || 'Invalid location', NotificationType.ERROR);
-
           if (locationInput) {
             this.focusLocation();
           }
@@ -557,9 +659,7 @@ private subscribeToFormChanges(): void {
 
     console.log('💾 Saving user profile:', requestObj);
 
-    this.commonService.post('/LogIn/saveUserProfile', requestObj, {
-      showLoader: true
-    }).subscribe({
+    this.commonService.post('/LogIn/saveUserProfile', requestObj, { showLoader: true }).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
           // Save workstation information if needed
@@ -582,6 +682,7 @@ private subscribeToFormChanges(): void {
           if (response.Response?.BookmarkOperations) {
             this.userProfile.BookmarkOperations = response.Response.BookmarkOperations;
           }
+
           if (response.Response?.DefaultOperations) {
             this.userProfile.DefaultOperations = response.Response.DefaultOperations;
           }
@@ -599,6 +700,7 @@ private subscribeToFormChanges(): void {
           if (this.userProfile.DeviceId) {
             this.clientData.DeviceId = this.userProfile.DeviceId;
           }
+
           localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(this.clientData));
           localStorage.setItem('module', 'COM');
 
@@ -628,6 +730,7 @@ private subscribeToFormChanges(): void {
    */
   private callPostSaveAPIs(): void {
     console.log('=== Calling Post-Save APIs ===');
+
     const controlConfig$ = this.loginService.getControlConfig(this.clientData, ConfigModule.LOGIN).pipe(
       catchError(error => {
         console.warn('⚠️ getControlConfig failed (continuing anyway):', error);
@@ -749,6 +852,7 @@ private subscribeToFormChanges(): void {
       this.locationDisabled = disable;
       this.isLocationDisabled = disable;
     }
+
     this.isClientDisable = disable;
 
     if (disable) {
@@ -763,6 +867,7 @@ private subscribeToFormChanges(): void {
       }
     }
   }
+
   /**
    * Focus site ID
    */
