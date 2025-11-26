@@ -1,21 +1,14 @@
-const { app, BrowserWindow, dialog, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { autoUpdater } = require('electron-updater');
 
 // ============================================
 // CRITICAL: DISABLE DEVELOPMENT MODE
 // ============================================
+// This MUST be false so the app loads from dist, not localhost:4200
 const isDevelopment = false;
 
-// ============================================
-// AUTO-UPDATER CONFIGURATION
-// ============================================
-autoUpdater.autoDownload = false; // Ask user before downloading
-autoUpdater.autoInstallOnAppQuit = true; // Install when app closes
 
-// Only check for updates in production (not during development)
-const isProduction = app.isPackaged;
 
 // ============================================
 // LOGGING SYSTEM
@@ -31,12 +24,10 @@ function log(level, ...args) {
   const timestamp = new Date().toISOString();
   const message = `[${timestamp}] [${level}] ${args.join(' ')}`;
 
-  console.log(message);
 
   try {
     fs.appendFileSync(logFile, message + '\n');
   } catch (err) {
-    console.error('Failed to write log:', err);
   }
 }
 
@@ -54,84 +45,6 @@ function showErrorDialog(title, message) {
 }
 
 // ============================================
-// AUTO-UPDATER EVENT HANDLERS
-// ============================================
-let updateCheckInterval;
-
-function sendStatusToWindow(event, data) {
-  if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send('update-status', { event, data });
-    logInfo('Sent update status to window:', event);
-  }
-}
-
-autoUpdater.on('checking-for-update', () => {
-  logInfo('Checking for updates...');
-  sendStatusToWindow('checking-for-update');
-});
-
-autoUpdater.on('update-available', (info) => {
-  logInfo('Update available:', info.version);
-  sendStatusToWindow('update-available', info);
-});
-
-autoUpdater.on('update-not-available', (info) => {
-  logInfo('Update not available. Current version is latest.');
-  sendStatusToWindow('update-not-available', info);
-});
-
-autoUpdater.on('error', (err) => {
-  logError('Error in auto-updater:', err);
-  sendStatusToWindow('update-error', err.message);
-});
-
-autoUpdater.on('download-progress', (progressObj) => {
-  let log_message = `Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}%`;
-  log_message += ` (${progressObj.transferred}/${progressObj.total})`;
-  logInfo(log_message);
-  sendStatusToWindow('download-progress', progressObj);
-});
-
-autoUpdater.on('update-downloaded', (info) => {
-  logInfo('Update downloaded:', info.version);
-  sendStatusToWindow('update-downloaded', info);
-});
-
-// Function to check for updates
-function checkForUpdates() {
-  if (!isProduction) {
-    logInfo('Skipping update check - running in development mode');
-    return;
-  }
-
-  if (!mainWindow) {
-    logInfo('Skipping update check - window not ready');
-    return;
-  }
-
-  logInfo('Initiating update check...');
-  autoUpdater.checkForUpdates().catch(err => {
-    logError('Failed to check for updates:', err.message);
-  });
-}
-
-// IPC handlers for renderer process to trigger update actions
-ipcMain.on('check-for-updates', () => {
-  logInfo('Manual update check requested');
-  checkForUpdates();
-});
-
-ipcMain.on('download-update', () => {
-  logInfo('Download update requested');
-  autoUpdater.downloadUpdate();
-});
-
-ipcMain.on('quit-and-install', () => {
-  logInfo('Quit and install requested');
-  autoUpdater.quitAndInstall();
-});
-
-// ============================================
 // APPLICATION MENU WITH ZOOM
 // ============================================
 function createAppMenu() {
@@ -139,13 +52,6 @@ function createAppMenu() {
     {
       label: 'File',
       submenu: [
-        {
-          label: 'Check for Updates',
-          click: () => {
-            checkForUpdates();
-          }
-        },
-        { type: 'separator' },
         {
           label: 'Reload',
           accelerator: 'CmdOrCtrl+R',
@@ -224,7 +130,7 @@ function createAppMenu() {
               type: 'info',
               title: 'About RMX Desktop',
               message: 'RMX Desktop Application',
-              detail: `Version: ${app.getVersion()}\nElectron: ${process.versions.electron}\nChrome: ${process.versions.chrome}\nNode: ${process.versions.node}`
+              detail: `Version: 1.0.0\nElectron: ${process.versions.electron}\nChrome: ${process.versions.chrome}\nNode: ${process.versions.node}`
             });
           }
         },
@@ -262,30 +168,19 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: false,
-      devTools: true,
+      devTools: true, // Keep enabled for F12, but don't open by default
       zoomFactor: 1.0
     },
     show: false,
     backgroundColor: '#ffffff'
   });
 
+  // Dev tools are available via F12 but not opened by default
+  // mainWindow.webContents.openDevTools(); // REMOVED - no auto-open
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     logInfo('Window shown');
-
-    // Check for updates 3 seconds after window is shown
-    if (isProduction) {
-      setTimeout(() => {
-        logInfo('Starting initial update check...');
-        checkForUpdates();
-      }, 3000);
-
-      // Check for updates every 6 hours
-      updateCheckInterval = setInterval(() => {
-        logInfo('Running periodic update check...');
-        checkForUpdates();
-      }, 6 * 60 * 60 * 1000);
-    }
   });
 
   // Log renderer console messages
@@ -293,7 +188,7 @@ function createWindow() {
     logInfo(`[RENDERER] ${message}`);
   });
 
-  // Load production app
+  // ALWAYS load production app (never localhost)
   loadProductionApp(mainWindow);
 
   // Error handlers
@@ -309,8 +204,13 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
-    if (updateCheckInterval) {
-      clearInterval(updateCheckInterval);
+  });
+
+  // Disable zoom with mouse wheel + Ctrl (optional - remove if you want mouse wheel zoom)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && (input.key === '=' || input.key === '-' || input.key === '0')) {
+      // Allow keyboard shortcuts for zoom
+      return;
     }
   });
 }
@@ -325,11 +225,19 @@ function loadProductionApp(window) {
   logInfo('__dirname:', __dirname);
   logInfo('resourcesPath:', process.resourcesPath);
 
+  // Possible paths where index.html might be
   const paths = [
+    // When running: electron .
     path.join(__dirname, 'dist', 'DesktopApp', 'browser', 'index.html'),
+
+    // When packaged (inside app.asar)
     path.join(__dirname, 'dist', 'DesktopApp', 'browser', 'index.html'),
+
+    // When packaged (alternative locations)
     path.join(process.resourcesPath, 'app.asar', 'dist', 'DesktopApp', 'browser', 'index.html'),
     path.join(process.resourcesPath, 'dist', 'DesktopApp', 'browser', 'index.html'),
+
+    // Fallback
     path.join(__dirname, '..', 'dist', 'DesktopApp', 'browser', 'index.html')
   ];
 
@@ -383,8 +291,6 @@ function loadProductionApp(window) {
 app.whenReady().then(() => {
   logInfo('========================================');
   logInfo('App Ready');
-  logInfo('Version:', app.getVersion());
-  logInfo('Is Packaged:', isProduction);
   logInfo('Electron:', process.versions.electron);
   logInfo('Chrome:', process.versions.chrome);
   logInfo('Node:', process.versions.node);
@@ -392,7 +298,9 @@ app.whenReady().then(() => {
   logInfo('Log file:', logFile);
   logInfo('========================================');
 
+  // Create application menu with zoom controls
   createAppMenu();
+
   createWindow();
 });
 

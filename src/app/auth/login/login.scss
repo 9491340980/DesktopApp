@@ -604,17 +604,3 @@ font-size: 36px;
     align-items: flex-start;
   }
 }
-
- .version-indicator {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #4CAF50;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      z-index: 10000;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }

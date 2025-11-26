@@ -12,7 +12,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CryptoService } from '../../services/crypto-service';
 import { NotificationType, StorageKey } from '../../enums/app-constants.enum';
-import { UpdateNotificationComponent } from "../../update-notification/update-notification.component/update-notification";
 
 @Component({
   selector: 'app-login',
@@ -25,9 +24,8 @@ import { UpdateNotificationComponent } from "../../update-notification/update-no
     MatFormFieldModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule,
-    UpdateNotificationComponent
-],
+    MatSnackBarModule
+  ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
