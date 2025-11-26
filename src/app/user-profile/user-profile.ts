@@ -255,7 +255,7 @@ export class UserProfile implements OnInit, OnDestroy {
             const controlConfig = JSON.parse(response.Response);
 
             // ⚠️ Temporarily add defaultLocation (until it's in DB)
-            controlConfig.defaultLocation = "RTN01";
+            // controlConfig.defaultLocation = "RTN01";
 
             console.log('📋 Control Config:', controlConfig);
 

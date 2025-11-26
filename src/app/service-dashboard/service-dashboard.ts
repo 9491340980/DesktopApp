@@ -354,7 +354,7 @@ export class ServiceDashboard {
           try {
             // Parse the JSON string response
             let config: any = JSON.parse(response.Response);
-            config.logs = ["DEVELOPER"]
+            // config.logs = ["DEVELOPER"]
 
             // config.taskScheduler = {
             //   "taskServerName": {
@@ -646,35 +646,35 @@ export class ServiceDashboard {
   private startAllPolling(): void {
     // Windows Services Polling - matches web's checkStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
-      timer(0, this.hideControls.controlProperties?.servicePollTimer || 200000000)
+      timer(0, this.hideControls.controlProperties?.servicePollTimer || 2000)
         .pipe(takeUntil(this.windowsPolling$))
         .subscribe(() => this.checkStatus());
     }
 
     // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
-      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 200000000)
+      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 60000)
         .pipe(takeUntil(this.taskPolling$))
         .subscribe(() => this.getTasksList());
     }
 
     // API Services Polling - matches web's checkApiServiceStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowApiTab)) {
-      timer(0, this.hideControls.controlProperties?.apiStatusAlertPollTimer || 6000000)
+      timer(0, this.hideControls.controlProperties?.apiStatusAlertPollTimer || 60000)
         .pipe(takeUntil(this.apiPolling$))
         .subscribe(() => this.checkApiServiceStatus());
     }
 
     // Queue Alerts Polling - matches web's checkQueAlertStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.allowQueueTab)) {
-      timer(0, this.hideControls.controlProperties?.queueAlertPollTimer || 60000000)
+      timer(0, this.hideControls.controlProperties?.queueAlertPollTimer || 2000)
         .pipe(takeUntil(this.queuePolling$))
         .subscribe(() => this.checkQueAlertStatus());
     }
 
     // DB Jobs Polling - matches web's checkDbJobsStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.dbJobs)) {
-      timer(0, this.hideControls.controlProperties?.dbJobsPollTimer || 60000000)
+      timer(0, this.hideControls.controlProperties?.dbJobsPollTimer || 60000)
         .pipe(takeUntil(this.dbJobsPolling$))
         .subscribe(() => this.checkDbJobsStatus());
     }
@@ -945,6 +945,11 @@ export class ServiceDashboard {
             Id: schema as string,
             Text: schema as string
           }));
+
+          if(this.schemaList?.length){
+           this.schemaList.push({Id:"ALL",Text:"ALL"})
+          }
+
 
           if (this.schemaList.length > 0 && !this.selectedSchema) {
             this.selectedSchema = this.schemaList[0].Id;

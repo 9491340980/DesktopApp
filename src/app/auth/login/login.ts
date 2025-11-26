@@ -214,7 +214,7 @@ export class Login implements OnInit, OnDestroy {
       const controlConfig = JSON.parse(response.config.Response);
 
       // Add defaultLocation temporarily (until it's in DB)
-      controlConfig.defaultLocation = "RTN01";
+      // controlConfig.defaultLocation = "RTN01";
 
       if (controlConfig.defaultLocation) {
         if (updatedClientData) {
