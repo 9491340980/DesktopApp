@@ -1659,7 +1659,7 @@ mat-button-toggle:focus {
 .compact-control-bar {
   position: absolute;
   top: 20px;
-  right: 24px;
+  right: 135px;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -1668,10 +1668,9 @@ mat-button-toggle:focus {
   .control-actions {
 display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px;
     border-radius: 28px;
     margin-top: -7px;
-    margin-right: 100px;
     padding: 4px 4px;
     transition: all 0.3s ease;
   }
