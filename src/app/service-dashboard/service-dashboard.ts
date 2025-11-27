@@ -692,7 +692,8 @@ export class ServiceDashboard {
       next: (response) => {
         if (serviceName) {
           this.loadingServices.delete(serviceName);
-          this.commonService.showSuccess(`Service ${serviceName} toggled successfully`);
+          // ❌ REMOVE this duplicate success message - it's now shown in startOrStop()
+          // this.commonService.showSuccess(`Service ${serviceName} toggled successfully`);
         }
         if (response.Status === 'PASS' && response.Response) {
           this.services = response.Response;
@@ -727,7 +728,6 @@ export class ServiceDashboard {
     });
   }
 
-
   /**
    * Check status with polling (matching web method)
    */
@@ -746,7 +746,8 @@ export class ServiceDashboard {
     ).subscribe({
       next: (response) => {
         if (taskName) {
-          this.commonService.showSuccess(`Task ${taskName} toggled successfully`);
+          // ❌ REMOVE this duplicate success message - it's now shown in startOrStopTask()
+          // this.commonService.showSuccess(`Task ${taskName} toggled successfully`);
           this.loadingTasks.delete(taskName);
         }
         if (response.Status === 'PASS' && response.Response) {
@@ -941,19 +942,20 @@ export class ServiceDashboard {
 
           // Extract unique schemas
           const schemas = [...new Set(response.Response.map(job => job.Schema))];
-          this.schemaList = schemas.map(schema => ({
-            Id: schema as string,
-            Text: schema as string
-          }));
 
-          if(this.schemaList?.length){
-           this.schemaList.push({Id:"ALL",Text:"ALL"})
-          }
+          // ✅ CHANGE 1: Build schema list with "All" first
+          this.schemaList = [{ Id: "All", Text: "All" }];
+          schemas.forEach(schema => {
+            this.schemaList.push({
+              Id: schema as string,
+              Text: schema as string
+            });
+          });
 
-
-          if (this.schemaList.length > 0 && !this.selectedSchema) {
-            this.selectedSchema = this.schemaList[0].Id;
-            this.onSchima(this.selectedSchema);
+          // ✅ CHANGE 2: Auto-select "All" on initial load
+          if (!this.selectedSchema || this.selectedSchema === '') {
+            this.selectedSchema = 'All';
+            // No need to call onSchima since we're already showing all jobs
           }
 
           // Clear error state on success
@@ -981,6 +983,7 @@ export class ServiceDashboard {
       }
     });
   }
+
   private handleApiError(tabName: keyof typeof this.apiErrors, message: string): void {
     this.apiErrors[tabName] = true;
     this.errorMessages[tabName] = message;
@@ -1046,9 +1049,9 @@ export class ServiceDashboard {
    */
   onSchima(schema: string): void {
     if (schema === 'All') {
-      // "All" selected - show all jobs
-      this.dbJobsData = this.originalDbJobsData;
-      this.dbJobsList = this.originalDbJobsData;
+      // ✅ CHANGE 3: "All" selected - show all jobs from original data
+      this.dbJobsData = [...this.originalDbJobsData];
+      this.dbJobsList = [...this.originalDbJobsData];
     } else {
       // Specific schema selected - filter by schema
       this.dbJobsData = this.originalDbJobsData.filter(job => job.Schema === schema);
@@ -1067,6 +1070,11 @@ export class ServiceDashboard {
       return;
     }
 
+    // Find the current service to determine its status
+    const service = this.services.find(s => s.ServiceName === serviceName);
+    const currentStatus = service?.Status;
+    const action = currentStatus === this.commonEnum.Running ? 'stop' : 'start';
+
     // Add service to loading set
     this.loadingServices.add(serviceName);
 
@@ -1077,13 +1085,17 @@ export class ServiceDashboard {
     ).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
+          // Show appropriate success message based on action
+          const actionPastTense = action === 'start' ? 'started' : 'stopped';
+          this.commonService.showSuccess(`Service '${serviceName}' ${actionPastTense} successfully`);
           this.getServicesList(serviceName);
         }
-        // Remove from loading set
-
       },
       error: (error) => {
         console.error('Error toggling service:', error);
+        // Show appropriate error message
+        const actionPresentTense = action === 'start' ? 'starting' : 'stopping';
+        this.commonService.showError(`Failed ${actionPresentTense} service '${serviceName}'`);
         // Remove from loading set on error too
         this.loadingServices.delete(serviceName);
       }
@@ -1106,6 +1118,11 @@ export class ServiceDashboard {
    * Start or Stop Task (matching web method name)
    */
   startOrStopTask(taskName: string): void {
+    // Find the current task to determine its status
+    const task = this.tasks.find(t => t.TaskName === taskName);
+    const currentStatus = task?.Status;
+    const action = currentStatus === this.commonEnum.Running ? 'stop' : 'start';
+
     // Add task to loading set
     this.loadingTasks.add(taskName);
 
@@ -1116,11 +1133,17 @@ export class ServiceDashboard {
     ).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
+          // Show appropriate success message based on action
+          const actionPastTense = action === 'start' ? 'started' : 'stopped';
+          this.commonService.showSuccess(`Task '${taskName}' ${actionPastTense} successfully`);
           this.getTasksList(taskName);
         }
       },
       error: (error) => {
         console.error('Error toggling task:', error);
+        // Show appropriate error message
+        const actionPresentTense = action === 'start' ? 'starting' : 'stopping';
+        this.commonService.showError(`Failed ${actionPresentTense} task '${taskName}'`);
         this.loadingTasks.delete(taskName);
       }
     });
