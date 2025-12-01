@@ -118,10 +118,10 @@ export class Dashboard implements OnInit {
         // Filter to show only items where isDesktopApp = true
         this.filteredMenuItems = this.menuItems.filter(item => item.isDesktopApp === true);
 
-        // AUTO-EXPAND if only 1 module
-        if (this.filteredMenuItems.length === 1 && this.filteredMenuItems[0].HasSubMenu) {
-          this.selectedModuleTitle = this.filteredMenuItems[0].Title;
-        }
+        // // AUTO-EXPAND if only 1 module
+        // if (this.filteredMenuItems.length === 1 && this.filteredMenuItems[0].HasSubMenu) {
+        //   this.selectedModuleTitle = this.filteredMenuItems[0].Title;
+        // }
 
       } catch (error) {
         console.error('Error parsing menu from localStorage:', error);
