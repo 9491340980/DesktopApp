@@ -154,6 +154,8 @@ export class ServiceDashboard {
   };
 
   isSearchExpanded: boolean = false;
+  private taskSchedulerPollingEnabled: boolean = false;
+  private taskSchedulerPollingInterval: number = 60000; // default 60 seconds
 
 
   // Column definitions for Material Table
@@ -365,6 +367,7 @@ export class ServiceDashboard {
             //   }
             // }
             this.applyControlConfiguration(config);
+            this.parseTaskSchedulerPollingConfig(config);
           } catch (error) {
             console.error('Error parsing control config:', error);
           }
@@ -384,6 +387,43 @@ export class ServiceDashboard {
         this.loadSavedPreferences();
       }
     });
+  }
+
+
+  private parseTaskSchedulerPollingConfig(config: any): void {
+    // Check if taskSchedulerPolling configuration exists
+    if (config.taskSchedulerPolling) {
+      const pollingConfig = config.taskSchedulerPolling;
+
+      // Check if polling is enabled
+      if (pollingConfig.enabled !== undefined) {
+        this.taskSchedulerPollingEnabled = pollingConfig.enabled === true;
+      }
+
+      // Check for custom polling interval
+      if (pollingConfig.timeLimit !== undefined && pollingConfig.timeLimit > 0) {
+        // timeLimit is in seconds, convert to milliseconds
+        this.taskSchedulerPollingInterval = pollingConfig.timeLimit * 1000;
+      } else if (config.serviceTaskTimer !== undefined && config.serviceTaskTimer > 0) {
+        // Fall back to serviceTaskTimer if timeLimit not set
+        this.taskSchedulerPollingInterval = config.serviceTaskTimer;
+      }
+
+      console.log('Task Scheduler Polling Config:', {
+        enabled: this.taskSchedulerPollingEnabled,
+        interval: this.taskSchedulerPollingInterval
+      });
+    } else {
+      // If no taskSchedulerPolling config, check if serviceTaskTimer exists
+      // If serviceTaskTimer exists, enable polling with that interval
+      if (config.serviceTaskTimer !== undefined && config.serviceTaskTimer > 0) {
+        this.taskSchedulerPollingEnabled = true;
+        this.taskSchedulerPollingInterval = config.serviceTaskTimer;
+      } else {
+        // No configuration found, disable polling
+        this.taskSchedulerPollingEnabled = false;
+      }
+    }
   }
 
   private handleDbJobsConfiguration(dbJobTab: any): void {
@@ -653,9 +693,16 @@ export class ServiceDashboard {
 
     // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
-      timer(0, this.hideControls.controlProperties?.serviceTaskTimer || 60000)
-        .pipe(takeUntil(this.taskPolling$))
-        .subscribe(() => this.getTasksList());
+      if (this.taskSchedulerPollingEnabled) {
+        console.log(`Starting Task Scheduler polling with interval: ${this.taskSchedulerPollingInterval}ms`);
+        timer(0, this.taskSchedulerPollingInterval)
+          .pipe(takeUntil(this.taskPolling$))
+          .subscribe(() => this.getTasksList());
+      } else {
+        console.log('Task Scheduler polling is disabled. Will only refresh on user actions.');
+        // Load initial data once
+        this.getTasksList();
+      }
     }
 
     // API Services Polling - matches web's checkApiServiceStatus()
@@ -1118,12 +1165,10 @@ export class ServiceDashboard {
    * Start or Stop Task (matching web method name)
    */
   startOrStopTask(taskName: string): void {
-    // Find the current task to determine its status
     const task = this.tasks.find(t => t.TaskName === taskName);
     const currentStatus = task?.Status;
     const action = currentStatus === this.commonEnum.Running ? 'stop' : 'start';
 
-    // Add task to loading set
     this.loadingTasks.add(taskName);
 
     this.commonService.post(
@@ -1133,15 +1178,15 @@ export class ServiceDashboard {
     ).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
-          // Show appropriate success message based on action
           const actionPastTense = action === 'start' ? 'started' : 'stopped';
           this.commonService.showSuccess(`Task '${taskName}' ${actionPastTense} successfully`);
+
+          // ✅ ALWAYS refresh after start/stop action (regardless of polling config)
           this.getTasksList(taskName);
         }
       },
       error: (error) => {
         console.error('Error toggling task:', error);
-        // Show appropriate error message
         const actionPresentTense = action === 'start' ? 'starting' : 'stopping';
         this.commonService.showError(`Failed ${actionPresentTense} task '${taskName}'`);
         this.loadingTasks.delete(taskName);
