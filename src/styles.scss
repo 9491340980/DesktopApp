@@ -751,6 +751,9 @@ cubic-bezier(0.4, 0, 0.6, 1);
   .mat-mdc-form-field-icon-prefix>.mat-icon{
     padding: 0 4px !important;
   }
+  .mat-mdc-tab .mdc-tab-indicator__content--underline {
+    border-top-width: var(--mat-tab-active-indicator-height, 4px) !important;
+}
 /* ============================================
    RESPONSIVE UTILITIES
    ============================================ */

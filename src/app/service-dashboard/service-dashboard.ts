@@ -873,41 +873,70 @@ export class ServiceDashboard {
    * Group API services by server name
    * Parse WebAPIName format: "APIName:ServerName"
    */
-  private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[] {
-    // Create a map to group services by server
-    const serverMap = new Map<string, GroupedApiService>();
+private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[] {
+  // Create a map to group services by server
+  const serverMap = new Map<string, GroupedApiService>();
 
-    apiServices.forEach(api => {
-      // Parse the WebAPIName to extract API name and server name
-      // Format: "CommonAPI:tsgvm04133" or "ReceivingAPI:tsgvm04155"
-      const parts = api.WebAPIName.split(':');
-      const apiName = parts[0] || api.WebAPIName;
-      const serverName = parts[1] || 'Unknown';
+  apiServices.forEach(api => {
+    // Parse the WebAPIName to extract API name and server name
+    // Format: "CommonAPI:tsgvm04133" or "ReceivingAPI:tsgvm04155"
+    const parts = api.WebAPIName.split(':');
+    const apiName = parts[0] || api.WebAPIName;
+    const serverName = parts[1] || 'Unknown';
 
-      if (!serverMap.has(serverName)) {
-        serverMap.set(serverName, {
-          serverName: serverName,
-          services: [],
-          hasError: false
-        });
-      }
-
-      const serverGroup = serverMap.get(serverName)!;
-
-      serverGroup.services.push({
-        name: apiName,
-        status: api.Status
+    if (!serverMap.has(serverName)) {
+      serverMap.set(serverName, {
+        serverName: serverName,
+        services: [],
+        hasError: false
       });
+    }
 
-      if (api.Status !== 'Running') {
-        serverGroup.hasError = true;
-      }
+    const serverGroup = serverMap.get(serverName)!;
+
+    serverGroup.services.push({
+      name: apiName,
+      status: api.Status
     });
 
-    return Array.from(serverMap.values()).sort((a, b) =>
-      a.serverName.localeCompare(b.serverName)
-    );
-  }
+    if (api.Status !== 'Running') {
+      serverGroup.hasError = true;
+    }
+  });
+
+  // Convert map to array and sort
+  const groupedServices = Array.from(serverMap.values());
+
+  // Sort each server's services: stopped services first, then by name
+  groupedServices.forEach(serverGroup => {
+    serverGroup.services.sort((a, b) => {
+      // First priority: Stopped services (non-Running) at top
+      const aIsRunning = a.status === 'Running' ? 1 : 0;
+      const bIsRunning = b.status === 'Running' ? 1 : 0;
+
+      if (aIsRunning !== bIsRunning) {
+        return aIsRunning - bIsRunning;
+      }
+
+      // Second priority: Sort by service name
+      return a.name.localeCompare(b.name);
+    });
+  });
+
+  // Sort server groups: servers with errors first, then by server name
+  return groupedServices.sort((a, b) => {
+    // First priority: Servers with stopped services at top
+    const aHasError = a.hasError ? 0 : 1;
+    const bHasError = b.hasError ? 0 : 1;
+
+    if (aHasError !== bHasError) {
+      return aHasError - bHasError;
+    }
+
+    // Second priority: Sort by server name
+    return a.serverName.localeCompare(b.serverName);
+  });
+}
 
   /**
    * Check API Service Status with polling (matching web method)
