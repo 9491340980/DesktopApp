@@ -1,6 +1,6 @@
 {
   "name": "RMX-App",
-  "version": "10.0.1",
+  "version": "1.6.0",
   "main": "main.js",
   "productName": "RMX Desktop",
   "description": "RMX Desktop Application",
@@ -13,47 +13,49 @@
     "electron-build": "ng build --configuration production && electron .",
     "package-win": "ng build --configuration production && electron-builder build --win --x64"
   },
-  "build": {
-    "appId": "com.company.rmxdesktop",
-    "productName": "RMX Desktop",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "main.js",
-      "package.json",
-      "build/icon.ico",
+"build": {
+  "appId": "com.company.rmxdesktop",
+  "productName": "RMX Desktop",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "main.js",
+    "package.json",
+    "build/**/*",
+    {
+      "from": "dist",
+      "to": "dist",
+      "filter": ["**/*"]
+    }
+  ],
+  "extraResources": [
+    {
+      "from": "build/icon.ico",
+      "to": "build/icon.ico"
+    }
+  ],
+  "win": {
+    "icon": "build/icon.ico",
+    "target": [
       {
-        "from": "dist",
-        "to": "dist",
-        "filter": [
-          "**/*"
-        ]
+        "target": "nsis",
+        "arch": ["x64"]
       }
     ],
-    "win": {
-      "icon": "build/icon.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "forceCodeSigning": false,
-      "signAndEditExecutable": false
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico"
-    }
+    "forceCodeSigning": false,
+    "signAndEditExecutable": false
   },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico",
+    "installerHeaderIcon": "build/icon.ico"
+  }
+},
   "private": true,
   "dependencies": {
     "@angular/cdk": "~20.2.12",

@@ -163,7 +163,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 600,
     title: 'RMX Desktop',
-    icon: path.join(__dirname, 'build', 'icon.ico'),
+    icon: path.join(process.resourcesPath, 'build', 'icon.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
