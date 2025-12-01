@@ -1337,24 +1337,27 @@ export class ServiceDashboard {
       );
     }
 
-    // Sort: Stopped/Ready tasks first, then by task name
-    return filtered.sort((a, b) => {
-      // First priority: Non-running tasks at top (Ready, Stopped, etc.)
-      const aIsRunning = a.Status === 'Running' ? 1 : 0;
-      const bIsRunning = b.Status === 'Running' ? 1 : 0;
+    // ✅ NEW: Preserve original API order by adding index before sorting
+    const tasksWithIndex = filtered.map((task, index) => ({
+      task,
+      originalIndex: index
+    }));
 
+    // Sort: Non-running tasks first (by original order), then running tasks (by original order)
+    const sorted = tasksWithIndex.sort((a, b) => {
+      const aIsRunning = a.task.Status === 'Running' ? 1 : 0;
+      const bIsRunning = b.task.Status === 'Running' ? 1 : 0;
+
+      // First priority: Non-running tasks at top
       if (aIsRunning !== bIsRunning) {
         return aIsRunning - bIsRunning;
       }
 
-      // Second priority: Sort by status name (Ready before Stopped)
-      if (a.Status !== b.Status) {
-        return a.Status.localeCompare(b.Status);
-      }
-
-      // Final: Sort by task name
-      return (a.TaskName || '').localeCompare(b.TaskName || '');
+      // Second priority: Within same status group, maintain original API order
+      return a.originalIndex - b.originalIndex;
     });
+
+    return sorted.map(item => item.task);
   }
 
   getFilteredApiServices(): ApiService[] {
