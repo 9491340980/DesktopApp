@@ -18,11 +18,7 @@
   "clients": [
     {
       "clientName": "VERIZON",
-      "siteIds": [
-        "DFW004",
-        "DFW005",
-        "DFW009"
-      ]
-    }
+      "siteIds": ["DFW004", "DFW005", "DFW009"]
+  }
   ]
 }
