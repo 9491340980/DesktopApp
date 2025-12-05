@@ -1,4 +1,4 @@
-import { Component, Inject, EventEmitter, Output } from '@angular/core';
+import { Component, Inject, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +15,7 @@ import { MatIconModule } from '@angular/material/icon'
   templateUrl: './update-dialog.html',
   styleUrl: './update-dialog.scss',
 })
-export class UpdateDialog {
+export class UpdateDialog implements OnInit {
   downloading = false;
   downloaded = false;
   progress = 0;
@@ -27,23 +27,33 @@ export class UpdateDialog {
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     console.log('🔧 UpdateDialog: Constructor called with data:', data);
+    // CRITICAL: Disable closing by clicking outside or pressing ESC
+    this.dialogRef.disableClose = true;
+  }
+
+  ngOnInit() {
+    console.log('🔧 UpdateDialog: Auto-starting download in 1 second...');
+    // CRITICAL: Auto-start download after 1 second
+    setTimeout(() => {
+      this.onDownload();
+    }, 1000);
   }
 
   onDownload() {
-    console.log('🔧 UpdateDialog: Download button clicked');
+    console.log('🔧 UpdateDialog: Download starting (mandatory)');
     this.downloading = true;
-    // CRITICAL FIX: Don't close dialog, just emit event and change state
+    // Emit event to parent to trigger actual download
     this.downloadClicked.emit();
   }
 
   onInstall() {
-    console.log('🔧 UpdateDialog: Install button clicked');
+    console.log('🔧 UpdateDialog: Install button clicked (auto-installs anyway)');
     this.dialogRef.close('install');
   }
 
   onDismiss() {
-    console.log('🔧 UpdateDialog: Dismiss button clicked');
-    this.dialogRef.close('dismiss');
+    // REMOVED: No longer allow dismissing - mandatory update
+    console.log('🔧 UpdateDialog: Dismiss attempted but blocked (mandatory update)');
   }
 
   updateProgress(percent: number) {
@@ -53,8 +63,11 @@ export class UpdateDialog {
   }
 
   setDownloaded() {
-    console.log('🔧 UpdateDialog: Download complete, showing install prompt');
+    console.log('🔧 UpdateDialog: Download complete! Auto-install will happen in 3 seconds');
     this.downloading = false;
     this.downloaded = true;
+
+    // Dialog will close automatically from main.js after 3 seconds
+    // No user action needed - automatic install
   }
 }

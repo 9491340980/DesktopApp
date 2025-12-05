@@ -1,33 +1,35 @@
 <h2 mat-dialog-title style="display: flex; align-items: center; gap: 10px;">
-  <mat-icon style="color: #1976d2;">system_update</mat-icon>
-  Update Available
+  <mat-icon style="color: #ff6b00;">system_update</mat-icon>
+  <span *ngIf="!downloading && !downloaded">Mandatory Update Required</span>
+  <span *ngIf="downloading">Downloading Update</span>
+  <span *ngIf="downloaded">Update Ready</span>
 </h2>
 
 <mat-dialog-content>
-  <p style="margin: 20px 0; font-size: 16px;">
-    Version <strong>{{ data.version }}</strong> is available for download.
+  <p style="margin: 20px 0; font-size: 16px;" *ngIf="!downloading && !downloaded">
+    Version <strong>{{ data.version }}</strong> is available and must be installed.
+    <br><br>
+    <span style="color: #ff6b00; font-weight: 500;">This update is mandatory. The application will update now.</span>
   </p>
 
   <div *ngIf="downloading" style="margin: 20px 0;">
-    <p style="margin-bottom: 10px; font-weight: 500;">Downloading: {{ progress }}%</p>
-    <mat-progress-bar mode="determinate" [value]="progress"></mat-progress-bar>
+    <p style="margin-bottom: 10px; font-weight: 500; font-size: 16px;">Downloading: {{ progress }}%</p>
+    <mat-progress-bar mode="determinate" [value]="progress" color="primary" style="height: 8px;"></mat-progress-bar>
+    <p style="margin-top: 10px; color: #666; font-size: 14px;">Please wait while the update downloads...</p>
   </div>
 
-  <div *ngIf="downloaded" style="margin: 20px 0; padding: 15px; background: #e8f5e9; border-radius: 4px;">
-    <p style="margin: 0; color: #2e7d32; font-weight: 500;">
-      ✓ Update downloaded! Restart to install.
+  <div *ngIf="downloaded" style="margin: 20px 0; padding: 20px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+    <p style="margin: 0 0 10px 0; color: #2e7d32; font-weight: 500; font-size: 16px;">
+      ✓ Update downloaded successfully!
+    </p>
+    <p style="margin: 0; color: #2e7d32; font-size: 14px;">
+      The application will restart in 3 seconds to install the update.
     </p>
   </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onDismiss()" *ngIf="!downloading && !downloaded">Later</button>
-  <button mat-button (click)="onDismiss()" *ngIf="downloading" [disabled]="true">Later</button>
-  <button mat-button (click)="onDismiss()" *ngIf="downloaded">Restart Later</button>
-  <button mat-raised-button color="primary" (click)="onDownload()" *ngIf="!downloading && !downloaded">
-    Download Update
-  </button>
-  <button mat-raised-button color="primary" (click)="onInstall()" *ngIf="downloaded">
-    Restart Now
-  </button>
+  <!-- No buttons shown during idle state - update starts automatically -->
+  <!-- No buttons shown during download - user must wait -->
+  <!-- No buttons shown after download - auto-installs in 3 seconds -->
 </mat-dialog-actions>
