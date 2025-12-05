@@ -1,6 +1,6 @@
 {
   "name": "RMX-App",
-  "version": "1.6.1",
+  "version": "15.0.32",
   "main": "main.js",
   "productName": "RMX Desktop",
   "description": "RMX Desktop Application",
@@ -11,15 +11,23 @@
     "build": "ng build --configuration production",
     "electron": "set ELECTRON_START_URL=http://localhost:4200 && electron .",
     "electron-build": "ng build --configuration production && electron .",
-    "package-win": "ng build --configuration production && electron-builder build --win --x64"
+    "package-win": "ng build --configuration production && electron-builder build --win --x64",
+    "publish-update": "ng build --configuration production && electron-builder build --win --x64 --publish always"
   },
-"build": {
-  "appId": "com.company.rmxdesktop",
-  "productName": "RMX Desktop",
-  "directories": {
-    "output": "release"
-  },
-  "files": [
+  "build": {
+    "appId": "com.company.rmxdesktop",
+    "productName": "RMX Desktop",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "9491340980",
+        "repo": "rmx-desktop-releases"
+      }
+    ],
+    "directories": {
+      "output": "release"
+       },
+   "files": [
     "main.js",
     "package.json",
     "build/**/*",
@@ -35,27 +43,29 @@
       "to": "build/icon.ico"
     }
   ],
-  "win": {
-    "icon": "build/icon.ico",
-    "target": [
-      {
-        "target": "nsis",
-        "arch": ["x64"]
-      }
-    ],
-    "forceCodeSigning": false,
-    "signAndEditExecutable": false
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    }
   },
-  "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
-    "createDesktopShortcut": true,
-    "createStartMenuShortcut": true,
-    "installerIcon": "build/icon.ico",
-    "uninstallerIcon": "build/icon.ico",
-    "installerHeaderIcon": "build/icon.ico"
-  }
-},
   "private": true,
   "dependencies": {
     "@angular/cdk": "~20.2.12",
@@ -67,6 +77,7 @@
     "@angular/platform-browser": "^20.0.0",
     "@angular/router": "^20.0.0",
     "crypto-js": "^4.2.0",
+    "electron-updater": "^6.3.9",
     "material-design-icons-iconfont": "^6.7.0",
     "material-icons": "^1.13.14",
     "rxjs": "~7.8.0",

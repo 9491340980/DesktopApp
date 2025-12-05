@@ -1,0 +1,47 @@
+<div class="update-notification" *ngIf="showUpdateNotification">
+      <mat-card class="update-card">
+        <mat-card-content>
+          <div class="update-content">
+            <mat-icon class="update-icon">system_update</mat-icon>
+
+            <div class="update-info" *ngIf="!downloading && !updateReady">
+              <h3>Update Available</h3>
+              <p>Version {{ updateInfo?.version }} is available for download.</p>
+              <div class="update-actions">
+                <button mat-raised-button color="primary" (click)="downloadUpdate()">
+                  Download Update
+                </button>
+                <button mat-button (click)="dismissUpdate()">
+                  Later
+                </button>
+              </div>
+            </div>
+
+            <div class="update-info" *ngIf="downloading">
+              <h3>Downloading Update...</h3>
+              <p>{{ progress?.percent | number:'1.0-0' }}% complete</p>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="progress?.percent || 0">
+              </mat-progress-bar>
+              <p class="download-speed" *ngIf="progress?.bytesPerSecond">
+                Speed: {{ formatBytes(progress?.bytesPerSecond) }}/s
+              </p>
+            </div>
+
+            <div class="update-info" *ngIf="updateReady">
+              <h3>Update Ready!</h3>
+              <p>The update has been downloaded. Restart to install.</p>
+              <div class="update-actions">
+                <button mat-raised-button color="primary" (click)="installUpdate()">
+                  Restart Now
+                </button>
+                <button mat-button (click)="dismissUpdate()">
+                  Restart Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>

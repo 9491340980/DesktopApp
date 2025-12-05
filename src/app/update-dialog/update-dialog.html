@@ -1,0 +1,33 @@
+<h2 mat-dialog-title style="display: flex; align-items: center; gap: 10px;">
+  <mat-icon style="color: #1976d2;">system_update</mat-icon>
+  Update Available
+</h2>
+
+<mat-dialog-content>
+  <p style="margin: 20px 0; font-size: 16px;">
+    Version <strong>{{ data.version }}</strong> is available for download.
+  </p>
+
+  <div *ngIf="downloading" style="margin: 20px 0;">
+    <p style="margin-bottom: 10px; font-weight: 500;">Downloading: {{ progress }}%</p>
+    <mat-progress-bar mode="determinate" [value]="progress"></mat-progress-bar>
+  </div>
+
+  <div *ngIf="downloaded" style="margin: 20px 0; padding: 15px; background: #e8f5e9; border-radius: 4px;">
+    <p style="margin: 0; color: #2e7d32; font-weight: 500;">
+      ✓ Update downloaded! Restart to install.
+    </p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onDismiss()" *ngIf="!downloading && !downloaded">Later</button>
+  <button mat-button (click)="onDismiss()" *ngIf="downloading" [disabled]="true">Later</button>
+  <button mat-button (click)="onDismiss()" *ngIf="downloaded">Restart Later</button>
+  <button mat-raised-button color="primary" (click)="onDownload()" *ngIf="!downloading && !downloaded">
+    Download Update
+  </button>
+  <button mat-raised-button color="primary" (click)="onInstall()" *ngIf="downloaded">
+    Restart Now
+  </button>
+</mat-dialog-actions>
