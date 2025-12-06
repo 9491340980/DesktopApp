@@ -1,16 +1,14 @@
+// src/app/app.config.ts (SIMPLIFIED VERSION)
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
-  provideZoneChangeDetection,
-  APP_INITIALIZER
+  provideZoneChangeDetection
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './Interceptor/auth-interceptor';
-import { initializeApp } from './initializers/app-initializer';
-import { ConfigService } from './services/config-service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,12 +17,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withInterceptors([authInterceptor])
-    ),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeApp,
-      deps: [ConfigService],
-      multi: true
-    }
+    )
+    // Removed APP_INITIALIZER - config now loads synchronously from environment files
   ]
 };

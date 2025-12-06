@@ -1,13 +1,13 @@
-// electron-configs/main.qa.js
+// electron-configs/main.prod.js
 const { app, BrowserWindow, dialog, Menu, ipcMain, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 
 // ============================================
-// QA ENVIRONMENT CONFIGURATION
+// PRODUCTION ENVIRONMENT CONFIGURATION
 // ============================================
-const ENV = 'QA';
+const ENV = 'PROD';
 const isDevelopment = false;
 
 // ============================================
@@ -23,9 +23,9 @@ if (isProduction) {
   autoUpdater.setFeedURL({
     provider: 'github',
     owner: '9491340980',
-    repo: 'rmx-desktop-releases-qa' // QA repository
+    repo: 'rmx-desktop-releases-prod' // PROD repository
   });
-  console.log('[QA] Auto-updater configured: rmx-desktop-releases-qa');
+  console.log('[PROD] Auto-updater configured: rmx-desktop-releases-prod');
 }
 
 // ============================================
@@ -85,42 +85,42 @@ function sendStatusToWindow(event, data) {
 }
 
 autoUpdater.on('checking-for-update', () => {
-  logInfo('[QA] Checking for updates...');
+  logInfo('[PROD] Checking for updates...');
   sendStatusToWindow('checking-for-update');
 });
 
 autoUpdater.on('update-available', (info) => {
-  logInfo('[QA] Update available:', info.version);
+  logInfo('[PROD] Update available:', info.version);
   sendStatusToWindow('update-available', info);
   showNotification('Update Available', `Version ${info.version} is available. Download will start automatically.`);
 
   // Auto-start download after 1 second
   setTimeout(() => {
-    logInfo('[QA] Auto-starting download...');
+    logInfo('[PROD] Auto-starting download...');
     isDownloadingUpdate = true;
     autoUpdater.downloadUpdate();
   }, 1000);
 });
 
 autoUpdater.on('update-not-available', (info) => {
-  logInfo('[QA] No updates available');
+  logInfo('[PROD] No updates available');
   sendStatusToWindow('update-not-available', info);
 });
 
 autoUpdater.on('error', (err) => {
-  logError('[QA] Update error:', err.message);
+  logError('[PROD] Update error:', err.message);
   sendStatusToWindow('update-error', err.message);
   isDownloadingUpdate = false;
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
   isDownloadingUpdate = true;
-  logInfo(`[QA] Download progress: ${progressObj.percent.toFixed(2)}%`);
+  logInfo(`[PROD] Download progress: ${progressObj.percent.toFixed(2)}%`);
   sendStatusToWindow('download-progress', progressObj);
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  logInfo('[QA] Update downloaded, auto-installing in 3 seconds');
+  logInfo('[PROD] Update downloaded, auto-installing in 3 seconds');
   updateDownloadedInfo = info;
   isDownloadingUpdate = false;
   sendStatusToWindow('update-downloaded', info);
@@ -129,7 +129,7 @@ autoUpdater.on('update-downloaded', (info) => {
 
   // MANDATORY UPDATE: Auto-install after 3 seconds
   setTimeout(() => {
-    logInfo('[QA] Auto-installing update...');
+    logInfo('[PROD] Auto-installing update...');
     if (mainWindow) mainWindow.close();
     setTimeout(() => {
       autoUpdater.quitAndInstall(false, true);
@@ -139,15 +139,15 @@ autoUpdater.on('update-downloaded', (info) => {
 
 function checkForUpdates() {
   if (!isProduction) {
-    logInfo('[QA] Update check skipped (not packaged)');
+    logInfo('[PROD] Update check skipped (not packaged)');
     return;
   }
   if (!mainWindow || isDownloadingUpdate) return;
 
-  logInfo('[QA] Checking for updates from rmx-desktop-releases-qa...');
+  logInfo('[PROD] Checking for updates from rmx-desktop-releases-prod...');
   autoUpdater.checkForUpdates()
-    .then(() => logInfo('[QA] Update check initiated'))
-    .catch(err => logError('[QA] Update check failed:', err.message));
+    .then(() => logInfo('[PROD] Update check initiated'))
+    .catch(err => logError('[PROD] Update check failed:', err.message));
 }
 
 ipcMain.on('check-for-updates', () => checkForUpdates());
@@ -155,7 +155,7 @@ ipcMain.on('download-update', () => {
   if (!isDownloadingUpdate) {
     isDownloadingUpdate = true;
     autoUpdater.downloadUpdate().catch(err => {
-      logError('[QA] Download failed:', err.message);
+      logError('[PROD] Download failed:', err.message);
       isDownloadingUpdate = false;
     });
   }
@@ -174,7 +174,7 @@ function createAppMenu() {
       label: 'File',
       submenu: [
         {
-          label: 'Check for Updates (QA)',
+          label: 'Check for Updates',
           click: () => checkForUpdates()
         },
         { type: 'separator' },
@@ -218,25 +218,6 @@ function createAppMenu() {
           label: 'Reset Zoom',
           accelerator: 'CmdOrCtrl+0',
           click: () => { if (mainWindow) mainWindow.webContents.setZoomFactor(1.0); }
-        },
-        { type: 'separator' },
-        {
-          label: 'Toggle Developer Tools',
-          accelerator: 'F12',
-          click: () => { if (mainWindow) mainWindow.webContents.toggleDevTools(); }
-        }
-      ]
-    },
-    {
-      label: 'Environment',
-      submenu: [
-        {
-          label: 'QA Environment',
-          enabled: false
-        },
-        {
-          label: 'Repository: rmx-desktop-releases-qa',
-          enabled: false
         }
       ]
     },
@@ -248,8 +229,8 @@ function createAppMenu() {
           click: () => {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
-              title: 'About RMX Desktop (QA)',
-              message: 'RMX Desktop QA Environment',
+              title: 'About RMX Desktop',
+              message: 'RMX Desktop Application',
               detail: `Version: ${app.getVersion()}\nElectron: ${process.versions.electron}`
             });
           }
@@ -272,41 +253,41 @@ function createAppMenu() {
 let mainWindow = null;
 
 function createWindow() {
-  logInfo('Creating QA window...');
+  logInfo('Creating PROD window...');
 
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
     minWidth: 1024,
     minHeight: 600,
-    title: 'RMX Desktop (QA)',
+    title: 'RMX Desktop',
     icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: false,
-      devTools: true,
+      devTools: false, // Disabled in PROD
       zoomFactor: 1.0
     },
     show: false,
-    backgroundColor: '#2196f3' // Blue for QA
+    backgroundColor: '#ffffff'
   });
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    logInfo('QA window shown');
+    logInfo('PROD window shown');
 
     if (isProduction) {
       setTimeout(() => {
-        logInfo('[QA] Starting initial update check...');
+        logInfo('[PROD] Starting initial update check...');
         checkForUpdates();
       }, 3000);
 
-      // Check every 12 hours
+      // Check every 6 hours
       updateCheckInterval = setInterval(() => {
-        logInfo('[QA] Periodic update check...');
+        logInfo('[PROD] Periodic update check...');
         checkForUpdates();
-      }, 12 * 60 * 60 * 1000);
+      }, 6 * 60 * 60 * 1000);
     }
   });
 
@@ -327,7 +308,7 @@ function createWindow() {
 // ============================================
 function loadProductionApp(window) {
   logInfo('========================================');
-  logInfo('[QA] Loading Production Build');
+  logInfo('[PROD] Loading Production Build');
   logInfo('========================================');
 
   const paths = [
@@ -341,7 +322,7 @@ function loadProductionApp(window) {
   if (foundPath) {
     logInfo('✓ Using:', foundPath);
     window.loadFile(foundPath)
-      .then(() => logInfo('✓✓✓ SUCCESS! QA app loaded'))
+      .then(() => logInfo('✓✓✓ SUCCESS! PROD app loaded'))
       .catch(err => {
         logError('✗✗✗ FAILED to load:', err.message);
         showErrorDialog('Load Error', err.message);
@@ -357,11 +338,11 @@ function loadProductionApp(window) {
 // ============================================
 app.whenReady().then(() => {
   logInfo('========================================');
-  logInfo('RMX Desktop QA');
-  logInfo('Environment: QA');
+  logInfo('RMX Desktop');
+  logInfo('Environment: PRODUCTION');
   logInfo('Auto-update: ENABLED');
-  logInfo('Repository: rmx-desktop-releases-qa');
-  logInfo('Update check: Every 12 hours');
+  logInfo('Repository: rmx-desktop-releases-prod');
+  logInfo('Update check: Every 6 hours');
   logInfo('Version:', app.getVersion());
   logInfo('========================================');
 
@@ -385,4 +366,4 @@ process.on('unhandledRejection', (reason) => {
   logError('Unhandled Rejection:', reason);
 });
 
-logInfo('main.qa.js loaded');
+logInfo('main.prod.js loaded');

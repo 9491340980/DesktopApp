@@ -1,0 +1,52 @@
+{
+  "appId": "com.gxo.rmxdesktop.qa",
+  "productName": "RMX Desktop (QA)",
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "9491340980",
+      "repo": "rmx-desktop-releases-qa"
+    }
+  ],
+  "directories": {
+    "output": "release-qa"
+  },
+  "files": [
+    "main.js",
+    "package.json",
+    "build/**/*",
+    {
+      "from": "dist",
+      "to": "dist",
+      "filter": ["**/*"]
+    }
+  ],
+  "extraResources": [
+    {
+      "from": "build/icon.ico",
+      "to": "build/icon.ico"
+    }
+  ],
+  "win": {
+    "icon": "build/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "forceCodeSigning": false,
+    "signAndEditExecutable": false,
+    "artifactName": "${productName}-${version}-Setup.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico",
+    "installerHeaderIcon": "build/icon.ico",
+    "shortcutName": "RMX Desktop (QA)"
+  }
+}

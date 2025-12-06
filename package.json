@@ -1,18 +1,29 @@
 {
   "name": "RMX-App",
-  "version": "15.0.32",
+  "version": "1.0.0",
   "main": "main.js",
   "productName": "RMX Desktop",
   "description": "RMX Desktop Application",
   "author": "Your Name",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build --configuration production",
-    "electron": "set ELECTRON_START_URL=http://localhost:4200 && electron .",
-    "electron-build": "ng build --configuration production && electron .",
-    "package-win": "ng build --configuration production && electron-builder build --win --x64",
-    "publish-update": "ng build --configuration production && electron-builder build --win --x64 --publish always"
+    "dev": "ng serve",
+    "electron:dev": "set ELECTRON_START_URL=http://localhost:4200 && electron electron-configs/main.dev.js",
+
+    "build:dev": "ng build --configuration dev",
+    "copy-main-dev-pkg": "node -e \"require('fs').copyFileSync('electron-configs/main.dev.packaged.js', 'main.js')\"",
+    "package:dev": "npm run build:dev && npm run copy-main-dev-pkg && electron-builder build --win --x64 --config electron-builder.dev.json",
+
+    "build:qa": "ng build --configuration qa",
+    "copy-main-qa": "node -e \"require('fs').copyFileSync('electron-configs/main.qa.js', 'main.js')\"",
+    "package:qa": "npm run build:qa && npm run copy-main-qa && electron-builder build --win --x64 --config electron-builder.qa.json",
+
+    "build:prod": "ng build --configuration production",
+    "copy-main-prod": "node -e \"require('fs').copyFileSync('electron-configs/main.prod.js', 'main.js')\"",
+    "package:prod": "npm run build:prod && npm run copy-main-prod && electron-builder build --win --x64 --config electron-builder.prod.json",
+
+    "publish:dev": "npm run build:dev && npm run copy-main-dev-pkg && electron-builder build --win --x64 --config electron-builder.dev.json --publish always",
+    "publish:qa": "npm run build:qa && npm run copy-main-qa && electron-builder build --win --x64 --config electron-builder.qa.json --publish always",
+    "publish:prod": "npm run build:prod && npm run copy-main-prod && electron-builder build --win --x64 --config electron-builder.prod.json --publish always"
   },
   "build": {
     "appId": "com.company.rmxdesktop",
@@ -26,23 +37,25 @@
     ],
     "directories": {
       "output": "release"
-       },
-   "files": [
-    "main.js",
-    "package.json",
-    "build/**/*",
-    {
-      "from": "dist",
-      "to": "dist",
-      "filter": ["**/*"]
-    }
-  ],
-  "extraResources": [
-    {
-      "from": "build/icon.ico",
-      "to": "build/icon.ico"
-    }
-  ],
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "build/**/*",
+      {
+        "from": "dist",
+        "to": "dist",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "build/icon.ico"
+      }
+    ],
     "win": {
       "icon": "build/icon.ico",
       "target": [
@@ -99,6 +112,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "wait-on": "^9.0.3"
   }
 }
