@@ -26,7 +26,6 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ViewLogsDialog } from './view-logs-dialog/view-logs-dialog';
 import { EngineResult } from '../models/app-config.models';
 import { StorageKey } from '../enums/app-constants.enum';
-// import { ViewLogsDialogComponent } from './view-logs-dialog.component';
 
 @Component({
   selector: 'app-service-dashboard',
@@ -77,11 +76,11 @@ export class ServiceDashboard {
 
   // Schema Selection for DB Jobs
   schemaList: { Id: string; Text: string }[] = [];
-  selectedSchema: string = 'All'; // Default to "All"
+  selectedSchema: string = 'All';
 
   // UI State
   selectedTab: number = 0;
-  viewMode: string = 'table';  // 'table' or 'cards'
+  viewMode: string = 'table';
   loading: boolean = false;
   searchKey: string = '';
   statusFilter: string = 'all';
@@ -113,20 +112,18 @@ export class ServiceDashboard {
   private queuePolling$ = new Subject<void>();
   private dbJobsPolling$ = new Subject<void>();
 
-  // Add property to track if config is loaded
   configLoaded: boolean = false;
-  // DB Jobs column configuration (excludes ClientId and SiteId)
   dbJobsDisplayColumns: string[] = ['Id', 'Name', 'Schema', 'Broken', 'Active', 'LastRun', 'NextRun', 'Schedule', 'Failures'];
   private taskServerMapping: Map<string, string> = new Map();
 
-  // Common Enum (matching web)
+  // Common Enum
   commonEnum = {
     Running: 'Running',
     Stopped: 'Stopped',
     GREEN: 'GREEN'
   };
 
-  // API Error States for each tab
+  // API Error States
   apiErrors = {
     windowsServices: false,
     taskScheduler: false,
@@ -135,7 +132,6 @@ export class ServiceDashboard {
     dbJobs: false
   };
 
-  // Error messages for each tab
   errorMessages = {
     windowsServices: '',
     taskScheduler: '',
@@ -144,7 +140,6 @@ export class ServiceDashboard {
     dbJobs: ''
   };
 
-  // Track if data has been loaded at least once
   dataLoadedOnce = {
     windowsServices: false,
     taskScheduler: false,
@@ -155,10 +150,8 @@ export class ServiceDashboard {
 
   isSearchExpanded: boolean = false;
   private taskSchedulerPollingEnabled: boolean = false;
-  private taskSchedulerPollingInterval: number = 60000; // default 60 seconds
+  private taskSchedulerPollingInterval: number = 60000;
 
-
-  // Column definitions for Material Table
   get displayedColumns(): string[] {
     const columns = ['serviceName'];
     columns.push('status');
@@ -203,16 +196,11 @@ export class ServiceDashboard {
 
   ngOnInit(): void {
     this.loadControlConfiguration();
-    // let clientData = this.authService.getUpdatedClientData();
-    // clientData.Roles = ['SERVICEADMIN'];
-    // localStorage.setItem(StorageKey.CLIENT_DATA, JSON.stringify(clientData))
   }
-
 
   toggleSearchPanel(): void {
     this.isSearchExpanded = !this.isSearchExpanded;
 
-    // Focus search input when expanded
     if (this.isSearchExpanded) {
       setTimeout(() => {
         const searchInput = document.querySelector('.expandable-search-input') as HTMLInputElement;
@@ -221,7 +209,6 @@ export class ServiceDashboard {
         }
       }, 300);
     } else {
-      // Clear search when collapsed
       this.searchKey = '';
     }
   }
@@ -232,77 +219,75 @@ export class ServiceDashboard {
   }
 
   checkLastRunTimeShow(show?: boolean | string[]): boolean {
-    // If not configured, default to false (hide by default)
     if (show === undefined || show === null) {
       return false;
     }
 
-    // If it's a boolean, return it directly
     if (typeof show === 'boolean') {
       return show;
     }
 
-    // If it's an array of roles, check user roles
     if (Array.isArray(show) && show.length > 0) {
       const clientData = this.authService.getUpdatedClientData();
       return show.some(role => clientData.Roles?.includes(role));
     }
 
-    // Default to false if configuration is invalid
     return false;
   }
 
   get taskSchedulerDisplayColumns(): string[] {
     const columns = ['taskName'];
 
-    // Conditionally add serverName column (after taskName, before description)
     if (this.checkTaskServerNameShow(this.hideControls.controlProperties?.taskScheduler?.taskServerName)) {
       columns.push('serverName');
     }
 
-    // Add description column
     columns.push('description');
 
-    // Conditionally add lastRunTime column
     if (this.checkLastRunTimeShow(this.hideControls.controlProperties?.taskScheduler?.lastRunTimeShow)) {
       columns.push('lastRunTime');
     }
 
-    // Always show status column
     columns.push('status');
 
     return columns;
   }
 
   checkTaskServerNameShow(config?: any): boolean {
-    // If not configured, default to false (hide by default)
     if (!config) {
       return false;
     }
 
-    // If it's an array of roles, check user roles
     if (Array.isArray(config)) {
       const clientData = this.authService.getUpdatedClientData();
       return config.some(role => clientData.Roles?.includes(role));
     }
 
-    // If it's an object with roles property
     if (config.roles && Array.isArray(config.roles)) {
       const clientData = this.authService.getUpdatedClientData();
       return config.roles.some((role: string) => clientData.Roles?.includes(role));
     }
 
-    // Default to false
     return false;
   }
 
-  getTaskServerName(taskName: string): string {
-    if (!taskName) {
+  /**
+   * ✅ UPDATED: Get task server name - prioritize API response over UI config mapping
+   * Priority 1: If API response includes ServerName, use it directly
+   * Priority 2: Fall back to UI config mapping (existing behavior)
+   */
+  getTaskServerName(task: TaskScheduler): string {
+    if (!task) {
       return '';
     }
 
-    // Return mapped server name or empty string
-    return this.taskServerMapping.get(taskName) || '';
+    // Priority 1: If API response includes ServerName, use it directly
+    if (task?.ServerName) {
+      return task.ServerName;
+    }
+
+    // Priority 2: Fall back to UI config mapping
+    return this.taskServerMapping.get(task.TaskName) || '';
   }
 
   private buildTaskServerMapping(mappingConfig: any): void {
@@ -312,8 +297,6 @@ export class ServiceDashboard {
       return;
     }
 
-    // Format 1: Object with taskName as key
-    // Example: { "JRSocketClient": "tsgvm03520", "JR-WMx CRTC1 Web Socket": "tsgvm04373" }
     if (typeof mappingConfig === 'object' && !Array.isArray(mappingConfig)) {
       Object.keys(mappingConfig).forEach(taskName => {
         if (taskName !== 'roles' && typeof mappingConfig[taskName] === 'string') {
@@ -323,14 +306,11 @@ export class ServiceDashboard {
       return;
     }
 
-    // Format 2: Array of objects
-    // Example: [{ taskName: "JRSocketClient", serverName: "tsgvm03520" }]
     if (Array.isArray(mappingConfig)) {
       mappingConfig.forEach((item: any) => {
         if (item.taskName && item.serverName) {
           this.taskServerMapping.set(item.taskName, item.serverName);
         } else if (typeof item === 'string') {
-          // Format 3: String format "TaskName=>ServerName"
           const parts = item.split('=>');
           if (parts.length === 2) {
             this.taskServerMapping.set(parts[0].trim(), parts[1].trim());
@@ -354,18 +334,7 @@ export class ServiceDashboard {
       next: (response) => {
         if (response.Status === 'PASS' && response.Response) {
           try {
-            // Parse the JSON string response
             let config: any = JSON.parse(response.Response);
-            // config.logs = ["DEVELOPER"]
-
-            // config.taskScheduler = {
-            //   "taskServerName": {
-            //     "roles": ["DEVELOPER", "SERVICEADMIN"],
-            //     "JRSocketClient": "tsgvm04373",
-            //     "JR-WMx CRTC1 Web Socket": "tsgvm03520",
-            //     "JR-WMx CRTC1 Update Order Info Web Socket":"tsgvm03520"
-            //   }
-            // }
             this.applyControlConfiguration(config);
             this.parseTaskSchedulerPollingConfig(config);
           } catch (error) {
@@ -373,14 +342,12 @@ export class ServiceDashboard {
           }
         }
         this.configLoaded = true;
-        // Load services after config is loaded
         this.loadAllServices();
         this.startAllPolling();
         this.loadSavedPreferences();
       },
       error: (error) => {
         console.error('Error loading control config:', error);
-        // Use default config if API fails
         this.configLoaded = true;
         this.loadAllServices();
         this.startAllPolling();
@@ -389,38 +356,24 @@ export class ServiceDashboard {
     });
   }
 
-
   private parseTaskSchedulerPollingConfig(config: any): void {
-    // Check if taskSchedulerPolling configuration exists
     if (config.taskSchedulerPolling) {
       const pollingConfig = config.taskSchedulerPolling;
 
-      // Check if polling is enabled
       if (pollingConfig.enabled !== undefined) {
         this.taskSchedulerPollingEnabled = pollingConfig.enabled === true;
       }
 
-      // Check for custom polling interval
       if (pollingConfig.timeLimit !== undefined && pollingConfig.timeLimit > 0) {
-        // timeLimit is in seconds, convert to milliseconds
         this.taskSchedulerPollingInterval = pollingConfig.timeLimit * 1000;
       } else if (config.serviceTaskTimer !== undefined && config.serviceTaskTimer > 0) {
-        // Fall back to serviceTaskTimer if timeLimit not set
         this.taskSchedulerPollingInterval = config.serviceTaskTimer;
       }
-
-      console.log('Task Scheduler Polling Config:', {
-        enabled: this.taskSchedulerPollingEnabled,
-        interval: this.taskSchedulerPollingInterval
-      });
     } else {
-      // If no taskSchedulerPolling config, check if serviceTaskTimer exists
-      // If serviceTaskTimer exists, enable polling with that interval
       if (config.serviceTaskTimer !== undefined && config.serviceTaskTimer > 0) {
         this.taskSchedulerPollingEnabled = true;
         this.taskSchedulerPollingInterval = config.serviceTaskTimer;
       } else {
-        // No configuration found, disable polling
         this.taskSchedulerPollingEnabled = false;
       }
     }
@@ -428,14 +381,11 @@ export class ServiceDashboard {
 
   private handleDbJobsConfiguration(dbJobTab: any): void {
     if (dbJobTab.column && Array.isArray(dbJobTab.column)) {
-      // Store which columns are allowed based on roles
       this.hideControls.controlProperties.dbJobTabColumns = dbJobTab.column;
     }
   }
 
   private applyControlConfiguration(config: any): void {
-    console.log('Applying control configuration:', config);
-
     if (config.allowWindowsTab !== undefined) {
       this.hideControls.controlProperties.allowWindowsTab = config.allowWindowsTab;
     }
@@ -486,18 +436,15 @@ export class ServiceDashboard {
       this.hideControls.controlProperties.statusAccess = config.statusAccess;
     }
 
-    // Handle Task Scheduler visibility
     if (config.canTaskSchedulerShow !== undefined) {
       this.hideControls.controlProperties.canTaskSchedulerShow = config.canTaskSchedulerShow.Show;
     }
 
-    // ===== UPDATED SECTION: Handle Task Scheduler configuration =====
     if (config.taskScheduler) {
       if (!this.hideControls.controlProperties.taskScheduler) {
         this.hideControls.controlProperties.taskScheduler = {};
       }
 
-      // Handle labels
       if (config.taskScheduler.taskNameLbl) {
         this.hideControls.controlProperties.taskScheduler.taskNameLbl = config.taskScheduler.taskNameLbl;
       }
@@ -514,58 +461,45 @@ export class ServiceDashboard {
         this.hideControls.controlProperties.taskScheduler.statusLbl = config.taskScheduler.statusLbl;
       }
 
-      // Handle lastRunTimeShow configuration
       if (config.taskScheduler.lastRunTimeShow !== undefined) {
         this.hideControls.controlProperties.taskScheduler.lastRunTimeShow = config.taskScheduler.lastRunTimeShow;
       }
 
-      // ===== NEW: Handle taskServerName configuration =====
       if (config.taskScheduler.taskServerName !== undefined) {
         this.hideControls.controlProperties.taskScheduler.taskServerName = config.taskScheduler.taskServerName;
-        // Build the mapping when configuration is loaded
         this.buildTaskServerMapping(config.taskScheduler.taskServerName);
       }
     }
 
-    // Handle DB Jobs configuration
     if (config.dbJobTab) {
       this.handleDbJobsConfiguration(config.dbJobTab);
     }
 
-    // Handle grid data order for DB Jobs
     if (config.gridDataOrder && config.gridDataOrder.length > 0) {
       this.dbJobsDisplayColumns = this.getDbJobsColumns(config.gridDataOrder, config.gridReqCols || config.gridDataOrder);
     } else {
-      // Default columns if not specified - use API field names (without ClientId and SiteId)
       this.dbJobsDisplayColumns = ['Id', 'Name', 'Schema', 'Broken', 'LastRun', 'NextRun', 'Schedule', 'Failures'];
     }
 
-    // Save updated config to localStorage
     localStorage.setItem('controlConfig', JSON.stringify(this.hideControls));
   }
 
-
   private getDbJobsColumns(gridDataOrder: string[], gridReqCols: string[]): string[] {
     const columns: string[] = [];
-    // Excluded columns that should not be displayed
     const excludedColumns = ['ClientId', 'SiteId'];
 
-    // Add columns based on gridDataOrder - use API field names directly
     gridDataOrder.forEach(col => {
-      // Skip excluded columns
       if (excludedColumns.includes(col)) {
         return;
       }
 
       if (gridReqCols.includes(col)) {
-        // Check role-based permission for this column
         if (this.checkDbJobColumnPermission(col)) {
-          columns.push(col);  // Use API field name directly
+          columns.push(col);
         }
       }
     });
 
-    // If no columns determined, use defaults (without ClientId and SiteId)
     if (columns.length === 0) {
       return ['Id', 'Name', 'Schema', 'Broken', 'Active', 'LastRun', 'NextRun', 'Schedule', 'Failures'];
     }
@@ -576,17 +510,14 @@ export class ServiceDashboard {
   private checkDbJobColumnPermission(column: string): boolean {
     const dbJobTabColumns = this.hideControls.controlProperties.dbJobTabColumns;
 
-    // If no specific column restrictions, allow all required columns
     if (!dbJobTabColumns || dbJobTabColumns.length === 0) {
       return true;
     }
 
-    // For 'Broken' and 'Active' columns, check if they're in the allowed list
     if (column === 'Broken' || column === 'Active') {
       return dbJobTabColumns.includes(column);
     }
 
-    // Allow all other columns by default
     return true;
   }
 
@@ -595,7 +526,6 @@ export class ServiceDashboard {
   }
 
   ngOnDestroy(): void {
-    // Matching web's cleanup method
     this.deviceStopPolling.next();
     this.deviceStopPolling.complete();
     this.windowsPolling$.next();
@@ -610,11 +540,7 @@ export class ServiceDashboard {
     this.dbJobsPolling$.complete();
   }
 
-  /**
-   * Initialize component with stored data
-   */
   private initializeComponent(): void {
-    // Load control configuration from storage
     const storedConfig = localStorage.getItem('controlConfig');
     if (storedConfig) {
       try {
@@ -626,9 +552,6 @@ export class ServiceDashboard {
     }
   }
 
-  /**
-   * Load saved preferences
-   */
   private loadSavedPreferences(): void {
     const savedViewMode = localStorage.getItem('viewMode');
     if (savedViewMode) {
@@ -641,17 +564,11 @@ export class ServiceDashboard {
     }
   }
 
-  /**
-   * Set view mode
-   */
   setViewMode(mode: string): void {
     this.viewMode = mode;
     localStorage.setItem('viewMode', mode);
   }
 
-  /**
-   * Tab change handler
-   */
   onTabChange(index: number): void {
     this.selectedTab = index;
     localStorage.setItem('selectedTab', index.toString());
@@ -659,9 +576,6 @@ export class ServiceDashboard {
     this.statusFilter = 'all';
   }
 
-  /**
-   * Load all services (matching web method names)
-   */
   loadAllServices(): void {
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
       this.getServicesList();
@@ -680,46 +594,35 @@ export class ServiceDashboard {
     }
   }
 
-  /**
-   * Start all polling services (matching web polling methods)
-   */
   private startAllPolling(): void {
-    // Windows Services Polling - matches web's checkStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowWindowsTab)) {
       timer(0, this.hideControls.controlProperties?.servicePollTimer || 2000)
         .pipe(takeUntil(this.windowsPolling$))
         .subscribe(() => this.checkStatus());
     }
 
-    // Task Schedulers Polling
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowTaskScheTab)) {
       if (this.taskSchedulerPollingEnabled) {
-        console.log(`Starting Task Scheduler polling with interval: ${this.taskSchedulerPollingInterval}ms`);
         timer(0, this.taskSchedulerPollingInterval)
           .pipe(takeUntil(this.taskPolling$))
           .subscribe(() => this.getTasksList());
       } else {
-        console.log('Task Scheduler polling is disabled. Will only refresh on user actions.');
-        // Load initial data once
         this.getTasksList();
       }
     }
 
-    // API Services Polling - matches web's checkApiServiceStatus()
     if (!this.checkTabMatch(this.hideControls.controlProperties?.allowApiTab)) {
       timer(0, this.hideControls.controlProperties?.apiStatusAlertPollTimer || 60000)
         .pipe(takeUntil(this.apiPolling$))
         .subscribe(() => this.checkApiServiceStatus());
     }
 
-    // Queue Alerts Polling - matches web's checkQueAlertStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.allowQueueTab)) {
       timer(0, this.hideControls.controlProperties?.queueAlertPollTimer || 2000)
         .pipe(takeUntil(this.queuePolling$))
         .subscribe(() => this.checkQueAlertStatus());
     }
 
-    // DB Jobs Polling - matches web's checkDbJobsStatus()
     if (this.checkTabMatch(this.hideControls.controlProperties?.dbJobs)) {
       timer(0, this.hideControls.controlProperties?.dbJobsPollTimer || 60000)
         .pipe(takeUntil(this.dbJobsPolling$))
@@ -727,9 +630,6 @@ export class ServiceDashboard {
     }
   }
 
-  /**
-   * Get Windows Services (matching web method name)
-   */
   getServicesList(serviceName?: any): void {
     this.commonService.post<WindowsService[]>(
       '/utilities/getServicesList',
@@ -739,20 +639,16 @@ export class ServiceDashboard {
       next: (response) => {
         if (serviceName) {
           this.loadingServices.delete(serviceName);
-          // ❌ REMOVE this duplicate success message - it's now shown in startOrStop()
-          // this.commonService.showSuccess(`Service ${serviceName} toggled successfully`);
         }
         if (response.Status === 'PASS' && response.Response) {
           this.services = response.Response;
           this.serviceError = response.Response.some(s => s.Status !== 'Running');
           this.updateStatistics();
 
-          // Clear error state on success
           this.apiErrors.windowsServices = false;
           this.errorMessages.windowsServices = '';
           this.dataLoadedOnce.windowsServices = true;
         } else {
-          // API returned but with error status
           this.handleApiError('windowsServices', 'Failed to load Windows Services data');
         }
       },
@@ -760,7 +656,6 @@ export class ServiceDashboard {
         console.error('Error loading Windows services:', error);
         this.serviceError = true;
 
-        // Determine error message based on error type
         let errorMsg = 'Unable to connect to server. Please check your network connection.';
         if (error.status === 0) {
           errorMsg = 'Network connection lost. Please check your VPN or internet connection.';
@@ -775,16 +670,10 @@ export class ServiceDashboard {
     });
   }
 
-  /**
-   * Check status with polling (matching web method)
-   */
   checkStatus(): void {
     this.getServicesList();
   }
 
-  /**
-   * Get Task Schedulers (matching web method name)
-   */
   getTasksList(taskName?: any): void {
     this.commonService.post<TaskScheduler[]>(
       '/utilities/getTasksList',
@@ -793,15 +682,12 @@ export class ServiceDashboard {
     ).subscribe({
       next: (response) => {
         if (taskName) {
-          // ❌ REMOVE this duplicate success message - it's now shown in startOrStopTask()
-          // this.commonService.showSuccess(`Task ${taskName} toggled successfully`);
           this.loadingTasks.delete(taskName);
         }
         if (response.Status === 'PASS' && response.Response) {
           this.tasks = response.Response;
           this.serviceErrorTaskList = response.Response.some(t => t.Status !== 'Running');
 
-          // Clear error state on success
           this.apiErrors.taskScheduler = false;
           this.errorMessages.taskScheduler = '';
           this.dataLoadedOnce.taskScheduler = true;
@@ -827,10 +713,6 @@ export class ServiceDashboard {
     });
   }
 
-
-  /**
-   * Get API Services (matching web method name)
-   */
   getApiList(): void {
     this.commonService.post<ApiService[]>(
       '/utilities/getWebAPIsStatus',
@@ -843,7 +725,6 @@ export class ServiceDashboard {
           this.groupedApiServices = this.groupApiServicesByServer(response.Response);
           this.serviceErrorApilist = response.Response.some(a => a.Status !== 'Running');
 
-          // Clear error state on success
           this.apiErrors.apiServices = false;
           this.errorMessages.apiServices = '';
           this.dataLoadedOnce.apiServices = true;
@@ -870,84 +751,80 @@ export class ServiceDashboard {
   }
 
   /**
-   * Group API services by server name
-   * Parse WebAPIName format: "APIName:ServerName"
+   * ✅ UPDATED: Group API services by server name
+   * Priority 1: If API response includes ServerName, use it directly (no splitting)
+   * Priority 2: Fall back to splitting WebAPIName format "APIName:ServerName" (existing behavior)
    */
-private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[] {
-  // Create a map to group services by server
-  const serverMap = new Map<string, GroupedApiService>();
+  private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[] {
+    const serverMap = new Map<string, GroupedApiService>();
 
-  apiServices.forEach(api => {
-    // Parse the WebAPIName to extract API name and server name
-    // Format: "CommonAPI:tsgvm04133" or "ReceivingAPI:tsgvm04155"
-    const parts = api.WebAPIName.split(':');
-    const apiName = parts[0] || api.WebAPIName;
-    const serverName = parts[1] || 'Unknown';
+    apiServices.forEach(api => {
+      let apiName: string;
+      let serverName: string;
 
-    if (!serverMap.has(serverName)) {
-      serverMap.set(serverName, {
-        serverName: serverName,
-        services: [],
-        hasError: false
-      });
-    }
-
-    const serverGroup = serverMap.get(serverName)!;
-
-    serverGroup.services.push({
-      name: apiName,
-      status: api.Status
-    });
-
-    if (api.Status !== 'Running') {
-      serverGroup.hasError = true;
-    }
-  });
-
-  // Convert map to array and sort
-  const groupedServices = Array.from(serverMap.values());
-
-  // Sort each server's services: stopped services first, then by name
-  groupedServices.forEach(serverGroup => {
-    serverGroup.services.sort((a, b) => {
-      // First priority: Stopped services (non-Running) at top
-      const aIsRunning = a.status === 'Running' ? 1 : 0;
-      const bIsRunning = b.status === 'Running' ? 1 : 0;
-
-      if (aIsRunning !== bIsRunning) {
-        return aIsRunning - bIsRunning;
+      // Priority 1: If API response includes ServerName, use it directly
+      if (api.ServerName) {
+        apiName = api.WebAPIName;  // Use full WebAPIName as-is
+        serverName = api.ServerName;
+      } else {
+        // Priority 2: Fall back to splitting WebAPIName (existing behavior)
+        // Format: "CommonAPI:tsgvm04133" or "ReceivingAPI:tsgvm04155"
+        const parts = api.WebAPIName.split(':');
+        apiName = parts[0] || api.WebAPIName;
+        serverName = parts[1] || 'Unknown';
       }
 
-      // Second priority: Sort by service name
-      return a.name.localeCompare(b.name);
+      if (!serverMap.has(serverName)) {
+        serverMap.set(serverName, {
+          serverName: serverName,
+          services: [],
+          hasError: false
+        });
+      }
+
+      const serverGroup = serverMap.get(serverName)!;
+
+      serverGroup.services.push({
+        name: apiName,
+        status: api.Status
+      });
+
+      if (api.Status !== 'Running') {
+        serverGroup.hasError = true;
+      }
     });
-  });
 
-  // Sort server groups: servers with errors first, then by server name
-  return groupedServices.sort((a, b) => {
-    // First priority: Servers with stopped services at top
-    const aHasError = a.hasError ? 0 : 1;
-    const bHasError = b.hasError ? 0 : 1;
+    const groupedServices = Array.from(serverMap.values());
 
-    if (aHasError !== bHasError) {
-      return aHasError - bHasError;
-    }
+    groupedServices.forEach(serverGroup => {
+      serverGroup.services.sort((a, b) => {
+        const aIsRunning = a.status === 'Running' ? 1 : 0;
+        const bIsRunning = b.status === 'Running' ? 1 : 0;
 
-    // Second priority: Sort by server name
-    return a.serverName.localeCompare(b.serverName);
-  });
-}
+        if (aIsRunning !== bIsRunning) {
+          return aIsRunning - bIsRunning;
+        }
 
-  /**
-   * Check API Service Status with polling (matching web method)
-   */
+        return a.name.localeCompare(b.name);
+      });
+    });
+
+    return groupedServices.sort((a, b) => {
+      const aHasError = a.hasError ? 0 : 1;
+      const bHasError = b.hasError ? 0 : 1;
+
+      if (aHasError !== bHasError) {
+        return aHasError - bHasError;
+      }
+
+      return a.serverName.localeCompare(b.serverName);
+    });
+  }
+
   checkApiServiceStatus(): void {
     this.getApiList();
   }
 
-  /**
-   * Get Queue Alerts (matching web method name)
-   */
   getQueueAlerts(): void {
     this.commonService.post<QueueAlert[]>(
       '/utilities/getQueueAlerts',
@@ -967,7 +844,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
           this.serviceErrorDbAlertslist = this.PropService.some(q => q.Color !== 'GREEN');
           this.serviceErrorQueuelist = this.serviceErrorDbAlertslist1 || this.serviceErrorDbAlertslist;
 
-          // Clear error state on success
           this.apiErrors.queueAlerts = false;
           this.errorMessages.queueAlerts = '';
           this.dataLoadedOnce.queueAlerts = true;
@@ -993,16 +869,10 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     });
   }
 
-  /**
-   * Check Queue Alert Status with polling (matching web method)
-   */
   checkQueAlertStatus(): void {
     this.getQueueAlerts();
   }
 
-  /**
-   * Get DB Jobs (matching web method name)
-   */
   getdbJobs(): void {
     this.commonService.post<DbJob[]>(
       '/utilities/getDbJobs',
@@ -1016,10 +886,8 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
           this.dbJobsList = response.Response;
           this.dbJoblist = response.Response.some(job => job.Broken === 'Y');
 
-          // Extract unique schemas
           const schemas = [...new Set(response.Response.map(job => job.Schema))];
 
-          // ✅ CHANGE 1: Build schema list with "All" first
           this.schemaList = [{ Id: "All", Text: "All" }];
           schemas.forEach(schema => {
             this.schemaList.push({
@@ -1028,13 +896,10 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
             });
           });
 
-          // ✅ CHANGE 2: Auto-select "All" on initial load
           if (!this.selectedSchema || this.selectedSchema === '') {
             this.selectedSchema = 'All';
-            // No need to call onSchima since we're already showing all jobs
           }
 
-          // Clear error state on success
           this.apiErrors.dbJobs = false;
           this.errorMessages.dbJobs = '';
           this.dataLoadedOnce.dbJobs = true;
@@ -1064,7 +929,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     this.apiErrors[tabName] = true;
     this.errorMessages[tabName] = message;
 
-    // Clear data when error occurs - no data should be shown
     switch (tabName) {
       case 'windowsServices':
         this.services = [];
@@ -1091,7 +955,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     }
   }
 
-
   retryLoadData(tabName: string): void {
     switch (tabName) {
       case 'windowsServices':
@@ -1112,46 +975,31 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     }
   }
 
-  /**
-   * Check DB Jobs Status with polling (matching web method)
-   */
   checkDbJobsStatus(): void {
     this.getdbJobs();
   }
 
-  /**
-   * Schema change handler (matching web method name)
-   * Empty value "" means "All" schemas
-   */
   onSchima(schema: string): void {
     if (schema === 'All') {
-      // ✅ CHANGE 3: "All" selected - show all jobs from original data
       this.dbJobsData = [...this.originalDbJobsData];
       this.dbJobsList = [...this.originalDbJobsData];
     } else {
-      // Specific schema selected - filter by schema
       this.dbJobsData = this.originalDbJobsData.filter(job => job.Schema === schema);
       this.dbJobsList = this.dbJobsData;
     }
-    // Update error badge
     this.dbJoblist = this.dbJobsList.some(job => job.Broken === 'Y');
   }
 
-  /**
-   * Start or Stop Service (matching web method name)
-   */
   startOrStop(serviceName: string): void {
     if (!this.checkStatusAccessMatch(this.hideControls.controlProperties?.statusAccess, serviceName)) {
       this.commonService.showWarning('You do not have permission to modify this service');
       return;
     }
 
-    // Find the current service to determine its status
     const service = this.services.find(s => s.ServiceName === serviceName);
     const currentStatus = service?.Status;
     const action = currentStatus === this.commonEnum.Running ? 'stop' : 'start';
 
-    // Add service to loading set
     this.loadingServices.add(serviceName);
 
     this.commonService.post(
@@ -1161,7 +1009,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     ).subscribe({
       next: (response) => {
         if (response.Status === 'PASS') {
-          // Show appropriate success message based on action
           const actionPastTense = action === 'start' ? 'started' : 'stopped';
           this.commonService.showSuccess(`Service '${serviceName}' ${actionPastTense} successfully`);
           this.getServicesList(serviceName);
@@ -1169,10 +1016,8 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       },
       error: (error) => {
         console.error('Error toggling service:', error);
-        // Show appropriate error message
         const actionPresentTense = action === 'start' ? 'starting' : 'stopping';
         this.commonService.showError(`Failed ${actionPresentTense} service '${serviceName}'`);
-        // Remove from loading set on error too
         this.loadingServices.delete(serviceName);
       }
     });
@@ -1189,10 +1034,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     return service.Status;
   }
 
-
-  /**
-   * Start or Stop Task (matching web method name)
-   */
   startOrStopTask(taskName: string): void {
     const task = this.tasks.find(t => t.TaskName === taskName);
     const currentStatus = task?.Status;
@@ -1209,8 +1050,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
         if (response.Status === 'PASS') {
           const actionPastTense = action === 'start' ? 'started' : 'stopped';
           this.commonService.showSuccess(`Task '${taskName}' ${actionPastTense} successfully`);
-
-          // ✅ ALWAYS refresh after start/stop action (regardless of polling config)
           this.getTasksList(taskName);
         }
       },
@@ -1234,9 +1073,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     return task.Status;
   }
 
-  /**
-   * Process Confirm for View Logs (matching web method name)
-   */
   processConfirm(serviceName: string, serverName: string): void {
     if (!this.checkLogsMatch(this.hideControls.controlProperties?.logs)) {
       this.commonService.showWarning('You do not have permission to view logs');
@@ -1260,16 +1096,10 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     this.getServicesList();
   }
 
-  /**
-   * Change Input (matching web method name)
-   */
   changeInput(): void {
     this.isClearBtnDisabled = false;
   }
 
-  /**
-   * Update statistics
-   */
   private updateStatistics(): void {
     this.statistics.totalServices = this.services.length;
     this.statistics.runningServices = this.services.filter(s => s.Status === 'Running').length;
@@ -1279,38 +1109,25 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     ).length;
   }
 
-  /**
-   * Get status class
-   */
   getStatusClass(status: string): string {
     if (status === 'Running') return 'status-running';
     if (status === 'Stopped') return 'status-stopped';
     return 'status-warning';
   }
 
-  /**
-   * Get CPU class
-   */
   getCpuClass(cpu: number): string {
     if (cpu > 70) return 'cpu-high';
     if (cpu > 35) return 'cpu-medium';
     return 'cpu-low';
   }
 
-  /**
-   * Get queue color class
-   */
   getQueueColorClass(color: string): string {
     return color === 'GREEN' ? 'queue-success' : 'queue-error';
   }
 
-  /**
-   * NEW: Get filtered grouped services with search applied
-   */
   getFilteredServices(): WindowsService[] {
     let filtered = this.services;
 
-    // Apply search filter
     if (this.searchKey) {
       const search = this.searchKey.toLowerCase();
       filtered = filtered.filter(s =>
@@ -1320,7 +1137,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       );
     }
 
-    // Apply status filter
     if (this.statusFilter !== 'all') {
       if (this.statusFilter === 'running') {
         filtered = filtered.filter(s => s.Status === 'Running');
@@ -1329,9 +1145,7 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       }
     }
 
-    // Sort: Stopped services first (regardless of server), then by server name, then by status
     return filtered.sort((a, b) => {
-      // First priority: Stopped services at top
       const aIsStopped = a.Status !== 'Running' ? 0 : 1;
       const bIsStopped = b.Status !== 'Running' ? 0 : 1;
 
@@ -1339,18 +1153,15 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
         return aIsStopped - bIsStopped;
       }
 
-      // Second priority: Group by server name
       const serverCompare = (a.ServerName || '').localeCompare(b.ServerName || '');
       if (serverCompare !== 0) {
         return serverCompare;
       }
 
-      // Third priority: Within same server, stopped first
       if (a.Status !== b.Status) {
         return a.Status === 'Running' ? 1 : -1;
       }
 
-      // Final: Sort by service name
       return (a.ServiceName || '').localeCompare(b.ServiceName || '');
     });
   }
@@ -1366,23 +1177,19 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       );
     }
 
-    // ✅ NEW: Preserve original API order by adding index before sorting
     const tasksWithIndex = filtered.map((task, index) => ({
       task,
       originalIndex: index
     }));
 
-    // Sort: Non-running tasks first (by original order), then running tasks (by original order)
     const sorted = tasksWithIndex.sort((a, b) => {
       const aIsRunning = a.task.Status === 'Running' ? 1 : 0;
       const bIsRunning = b.task.Status === 'Running' ? 1 : 0;
 
-      // First priority: Non-running tasks at top
       if (aIsRunning !== bIsRunning) {
         return aIsRunning - bIsRunning;
       }
 
-      // Second priority: Within same status group, maintain original API order
       return a.originalIndex - b.originalIndex;
     });
 
@@ -1402,11 +1209,8 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     return filtered;
   }
 
-  /**
-   * Get filtered queue alerts (combines all queues regardless of type)
-   */
   getFilteredQueueAlerts(): QueueAlert[] {
-    let filtered = this.queService; // All queues combined
+    let filtered = this.queService;
 
     if (this.searchKey) {
       const search = this.searchKey.toLowerCase();
@@ -1416,9 +1220,7 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       );
     }
 
-    // Sort: Error queues (non-GREEN) first, then by queue name
     return filtered.sort((a, b) => {
-      // First priority: Non-GREEN (error) queues at top
       const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
       const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
 
@@ -1426,10 +1228,10 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
         return aIsError - bIsError;
       }
 
-      // Second priority: Sort by queue name
       return (a.QueueName || '').localeCompare(b.QueueName || '');
     });
   }
+
   getFilteredQueueServices(): QueueAlert[] {
     let filtered = this.queService1;
 
@@ -1441,7 +1243,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       );
     }
 
-    // Sort: Error queues first
     return filtered.sort((a, b) => {
       const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
       const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
@@ -1454,9 +1255,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     });
   }
 
-  /**
-   * Get filtered queue propagators
-   */
   getFilteredQueuePropagators(): QueueAlert[] {
     let filtered = this.PropService;
 
@@ -1468,7 +1266,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       );
     }
 
-    // Sort: Error queues first
     return filtered.sort((a, b) => {
       const aIsError = a.Color !== this.commonEnum.GREEN ? 0 : 1;
       const bIsError = b.Color !== this.commonEnum.GREEN ? 0 : 1;
@@ -1480,9 +1277,7 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
       return (a.QueueName || '').localeCompare(b.QueueName || '');
     });
   }
-  /**
-   * Get percentage
-   */
+
   getPercentage(value: number): number {
     if (this.statistics.totalServices === 0) return 0;
     return Math.round((value / this.statistics.totalServices) * 100);
@@ -1516,17 +1311,10 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
   }
 
   checkTabMatch(roles: string[]): boolean {
-    console.log('checkTabMatch called with:', roles);
-    console.log('hideControls.controlProperties?.allowQueueTab:', this.hideControls.controlProperties?.allowQueueTab);
-
     if (roles && roles.length) {
       const clientData = this.authService.getUpdatedClientData();
-      console.log('User roles:', clientData.Roles);
-      const result = roles.some(role => clientData.Roles?.includes(role));
-      console.log('Match result:', result);
-      return result;
+      return roles.some(role => clientData.Roles?.includes(role));
     }
-    console.log('Returning false - roles empty or undefined');
     return false;
   }
 
@@ -1538,9 +1326,6 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
     return true;
   }
 
-  /**
-   * Refresh all data
-   */
   refreshAll(): void {
     this.searchKey = '';
     this.statusFilter = 'all';
@@ -1549,7 +1334,7 @@ private groupApiServicesByServer(apiServices: ApiService[]): GroupedApiService[]
   }
 }
 
-// Interfaces (matching web models)
+// Interfaces
 interface UIData {
   OperationId?: string;
   OperCategory?: string;
@@ -1571,12 +1356,14 @@ interface TaskScheduler {
   Description: string;
   LastRunTime: string;
   Status: string;
+  ServerName?: string;  // ✅ Optional: comes from API response
 }
 
 interface ApiService {
   WebAPIName: string;
   Status: string;
   Url?: string;
+  ServerName?: string;  // ✅ Optional: comes from API response
 }
 
 interface GroupedApiService {

@@ -435,10 +435,11 @@
               <ng-container
                 *ngIf="checkTaskServerNameShow(hideControls.controlProperties?.taskScheduler?.taskServerName)">
                 <td mat-cell *matCellDef="let task">
-                  <mat-chip class="server-chip" *ngIf="getTaskServerName(task.TaskName)">
-                    {{ getTaskServerName(task.TaskName) }}
+                  <!-- ✅ CRITICAL FIX: Pass full task object, not just task.TaskName -->
+                  <mat-chip class="server-chip" *ngIf="getTaskServerName(task)">
+                    {{ getTaskServerName(task) }}
                   </mat-chip>
-                  <span *ngIf="!getTaskServerName(task.TaskName)" class="no-server">-</span>
+                  <span *ngIf="!getTaskServerName(task)" class="no-server">-</span>
                 </td>
               </ng-container>
             </ng-container>
