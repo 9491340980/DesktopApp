@@ -77,7 +77,7 @@
         <img src="images/RMx-logo.png" alt="Logo" class="toolbar-logo-img"> <span class="toolbar-logo-text">Desktop</span>
       </div>
 
-      <!-- ✅ NEW: Dynamic Screen Title in Center -->
+      <!-- Dynamic Screen Title in Center -->
       <div class="screen-title-container">
         <h1 class="screen-title">{{ currentScreenTitle }}</h1>
       </div>
@@ -124,8 +124,24 @@
       </mat-menu>
     </mat-toolbar>
 
-    <!-- Router Outlet -->
-    <div class="content-wrapper">
+    <!-- ✅ NEW: Patch Status Banner (Compact) -->
+    <div class="patch-status-banner" *ngIf="patchStatus.isPatching">
+      <div class="patch-banner-content">
+        <div class="patch-info">
+          <mat-icon class="patch-icon">system_update_alt</mat-icon>
+          <div class="patch-text">
+            <span class="patch-message">{{ patchStatus.patchMessage || 'System maintenance in progress. Please wait...' }}</span>
+            <span class="patch-details" *ngIf="patchStatus.estimatedCompletionTime">
+              Expected to complete by: {{ patchStatus.estimatedCompletionTime }}
+            </span>
+          </div>
+        </div>
+        <mat-progress-bar mode="indeterminate" class="patch-progress"></mat-progress-bar>
+      </div>
+    </div>
+
+    <!-- Router Outlet - Content Visible but Disabled -->
+    <div class="content-wrapper" [class.patching-mode]="patchStatus.isPatching">
       <router-outlet></router-outlet>
     </div>
   </mat-sidenav-content>

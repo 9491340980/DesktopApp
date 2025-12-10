@@ -26,6 +26,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ViewLogsDialog } from './view-logs-dialog/view-logs-dialog';
 import { EngineResult } from '../models/app-config.models';
 import { StorageKey } from '../enums/app-constants.enum';
+import { PatchStatus, PatchStatusService } from '../services/patch-status.service';
 
 @Component({
   selector: 'app-service-dashboard',
@@ -151,6 +152,8 @@ export class ServiceDashboard {
   isSearchExpanded: boolean = false;
   private taskSchedulerPollingEnabled: boolean = false;
   private taskSchedulerPollingInterval: number = 60000;
+  patchStatus: PatchStatus = { isPatching: false };
+  private destroy$ = new Subject<void>();
 
   get displayedColumns(): string[] {
     const columns = ['serviceName'];
@@ -189,13 +192,47 @@ export class ServiceDashboard {
   constructor(
     private commonService: CommonService,
     private authService: Auth,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private patchStatusService: PatchStatusService
+
   ) {
     this.initializeComponent();
   }
 
   ngOnInit(): void {
     this.loadControlConfiguration();
+    this.patchStatusService.patchStatus$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(status => {
+        this.patchStatus = status;
+
+        // If patching starts, you can take additional actions:
+        if (status.isPatching) {
+          console.log('Patching started - disabling interactions');
+          this.stopAllServicePolling(); // Example: stop your data polling
+        } else {
+          console.log('Patching completed - re-enabling interactions');
+          this.startAllPolling(); // Example: restart your data polling
+        }
+      });
+  }
+  private stopAllServicePolling(): void {
+    // Stop Windows Services polling
+    this.windowsPolling$.next();
+
+    // Stop Task Scheduler polling
+    this.taskPolling$.next();
+
+    // Stop API Services polling
+    this.apiPolling$.next();
+
+    // Stop Queue Alerts polling
+    this.queuePolling$.next();
+
+    // Stop DB Jobs polling
+    this.dbJobsPolling$.next();
+
+    console.log('All service polling stopped due to patching');
   }
 
   toggleSearchPanel(): void {
@@ -538,6 +575,8 @@ export class ServiceDashboard {
     this.queuePolling$.complete();
     this.dbJobsPolling$.next();
     this.dbJobsPolling$.complete();
+    this.destroy$.next();
+    this.destroy$.complete()
   }
 
   private initializeComponent(): void {
@@ -991,6 +1030,10 @@ export class ServiceDashboard {
   }
 
   startOrStop(serviceName: string): void {
+    if (this.patchStatus.isPatching) {
+      this.commonService.showWarning('System maintenance in progress. Please wait.');
+      return;
+    }
     if (!this.checkStatusAccessMatch(this.hideControls.controlProperties?.statusAccess, serviceName)) {
       this.commonService.showWarning('You do not have permission to modify this service');
       return;
