@@ -1,6 +1,6 @@
 {
   "name": "RMX-App",
-  "version": "1.0.0",
+  "version": "1.6.10",
   "main": "main.js",
   "productName": "RMX Desktop",
   "description": "RMX Desktop Application",
@@ -95,6 +95,7 @@
     "material-icons": "^1.13.14",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "usb": "^2.16.0",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
@@ -112,7 +113,6 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.8.2",
-    "wait-on": "^9.0.3"
+    "typescript": "~5.8.2"
   }
 }

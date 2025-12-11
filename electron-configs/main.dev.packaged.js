@@ -2,6 +2,9 @@
 const { app, BrowserWindow, dialog, Menu, ipcMain, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 const { autoUpdater } = require('electron-updater');
 
 // ============================================
@@ -9,6 +12,18 @@ const { autoUpdater } = require('electron-updater');
 // ============================================
 const ENV = 'DEV';
 const isDevelopment = false;
+// ============================================
+// VENDOR DATABASE (USB DETECTION)
+// ============================================
+const VENDOR_DATABASE = {
+  0x04E8: 'Samsung Electronics',
+  0x18D1: 'Google Inc.',
+  0x05AC: 'Apple Inc.'
+};
+
+let usbDevices = [];
+let adbAvailable = false;
+
 
 // ============================================
 // AUTO-UPDATER CONFIGURATION
@@ -165,6 +180,125 @@ ipcMain.on('quit-and-install', () => {
   setTimeout(() => autoUpdater.quitAndInstall(false, true), 500);
 });
 
+
+// ============================================
+// USB DETECTION FUNCTIONS
+// ============================================
+
+async function getIPhoneInfoFromRegistry(vendorId, productId) {
+  if (process.platform !== 'win32') return null;
+  try {
+    const vid = vendorId.toString(16).toUpperCase().padStart(4, '0');
+    const pid = productId.toString(16).toUpperCase().padStart(4, '0');
+    const psCommand = `Get-PnpDevice | Where-Object { $_.InstanceId -like "*VID_${vid}&PID_${pid}*" } | ConvertTo-Json`;
+    const { stdout } = await execPromise(`powershell -Command "${psCommand}"`, { timeout: 5000 });
+    if (stdout && stdout.trim()) {
+      const data = JSON.parse(stdout);
+      return { serialNumber: 'DETECTED', friendlyName: data.FriendlyName || 'iPhone' };
+    }
+  } catch (error) {
+    logError('iPhone detection error:', error.message);
+  }
+  return null;
+}
+
+async function isADBAvailable() {
+  try {
+    await execPromise('adb version', { timeout: 3000 });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function getADBDevices() {
+  try {
+    const { stdout } = await execPromise('adb devices', { timeout: 5000 });
+    return stdout.split('\n').slice(1).filter(line => line.trim() && line.includes('\t'))
+      .map(line => { const [serial, status] = line.trim().split('\t'); return { serial, status }; })
+      .filter(device => device.status === 'device');
+  } catch (error) {
+    return [];
+  }
+}
+
+async function getAllUSBDevices() {
+  try {
+    adbAvailable = await isADBAvailable();
+    const { usb } = require('usb');
+    const devices = usb.getDeviceList();
+    const deviceInfo = devices.map(device => ({
+      vendorId: device.deviceDescriptor.idVendor,
+      productId: device.deviceDescriptor.idProduct,
+      isIPhone: device.deviceDescriptor.idVendor === 0x05AC,
+      isAndroid: [0x04E8, 0x18D1].includes(device.deviceDescriptor.idVendor)
+    }));
+    logInfo('📊 USB devices detected:', deviceInfo.length);
+    return deviceInfo;
+  } catch (error) {
+    logError('USB detection error:', error.message);
+    return [];
+  }
+}
+
+function setupUSBListeners() {
+  try {
+    const { usb } = require('usb');
+    usb.on('attach', async () => {
+      logInfo('🔌 USB attached');
+      usbDevices = await getAllUSBDevices();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('usb-devices-updated', usbDevices);
+      }
+    });
+    usb.on('detach', async () => {
+      logInfo('🔌 USB detached');
+      usbDevices = await getAllUSBDevices();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('usb-devices-updated', usbDevices);
+      }
+    });
+    logInfo('✅ USB listeners activated');
+  } catch (error) {
+    logError('USB listeners error:', error.message);
+  }
+}
+
+function setupIPCHandlers() {
+  logInfo('🔧 Setting up USB IPC handlers...');
+
+  ipcMain.handle('get-usb-devices', async () => {
+    try {
+      return await getAllUSBDevices();
+    } catch (error) {
+      logError('IPC get-usb-devices error:', error.message);
+      return [];
+    }
+  });
+
+  ipcMain.handle('refresh-usb-devices', async () => {
+    try {
+      usbDevices = await getAllUSBDevices();
+      return usbDevices;
+    } catch (error) {
+      logError('IPC refresh-usb-devices error:', error.message);
+      return [];
+    }
+  });
+
+  ipcMain.handle('check-adb-status', async () => {
+    const available = await isADBAvailable();
+    return { available, message: available ? 'ADB available' : 'ADB not found' };
+  });
+
+  ipcMain.handle('get-iphone-serial', async (event, vendorId, productId) => {
+    return await getIPhoneInfoFromRegistry(vendorId, productId);
+  });
+
+  logInfo('✅ USB IPC handlers registered');
+}
+
+
 // ============================================
 // APPLICATION MENU
 // ============================================
@@ -292,9 +426,18 @@ function createWindow() {
     backgroundColor: '#ff9800' // Orange for DEV
   });
 
-  mainWindow.once('ready-to-show', () => {
+  mainWindow.once('ready-to-show', async () => {
     mainWindow.show();
     logInfo('DEV window shown');
+
+    // Initial USB scan
+    logInfo('🔍 USB scan starting...');
+    try {
+      usbDevices = await getAllUSBDevices();
+      logInfo(`✅ USB scan complete: ${usbDevices.length} devices`);
+    } catch (error) {
+      logError('❌ USB scan failed:', error.message);
+    }
 
     if (isProduction) {
       setTimeout(() => {
@@ -364,6 +507,9 @@ app.whenReady().then(() => {
   logInfo('Update check: Every 24 hours');
   logInfo('Version:', app.getVersion());
   logInfo('========================================');
+
+  setupIPCHandlers();
+  setupUSBListeners();
 
   createAppMenu();
   createWindow();

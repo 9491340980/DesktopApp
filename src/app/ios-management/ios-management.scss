@@ -1,0 +1,548 @@
+ .testing-container {
+      padding: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .header-card {
+      margin-bottom: 20px;
+    }
+
+    mat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 24px;
+      margin: 0;
+    }
+
+    .title-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #1976d2;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .status-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #ffebee !important;
+      color: #c62828 !important;
+    }
+
+    .status-chip.connected {
+      background: #e8f5e9 !important;
+      color: #2e7d32 !important;
+    }
+
+    .content-layout {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .content-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Panel - Device List */
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .device-card {
+      min-height: 400px;
+    }
+
+    .device-count-chip {
+      font-size: 12px;
+      height: 24px;
+      min-height: 24px;
+      background: #e3f2fd !important;
+      color: #1976d2 !important;
+      font-weight: 600;
+    }
+
+    .no-device {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .large-icon {
+      font-size: 80px;
+      width: 80px;
+      height: 80px;
+      color: #bdbdbd;
+      margin-bottom: 20px;
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .instructions {
+      text-align: left;
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+
+    .instructions ul, .instructions ol {
+      margin: 10px 0 0 0;
+      padding-left: 20px;
+    }
+
+    .instructions li {
+      margin: 8px 0;
+      color: #424242;
+    }
+
+    /* Device List Styles */
+    .device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .device-item {
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .device-item:hover {
+      border-color: #1976d2;
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .device-item.selected {
+      border-color: #1976d2;
+      background: #e3f2fd;
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+    }
+
+    .device-item.iphone.selected {
+      background: #f5f5f5;
+      border-color: #757575;
+    }
+
+    .device-item.android.selected {
+      background: #e3f2fd;
+      border-color: #1976d2;
+    }
+
+    .device-item-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .device-item-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #1976d2;
+      flex-shrink: 0;
+    }
+
+    .device-item.iphone .device-item-icon {
+      color: #757575;
+    }
+
+    .device-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .device-item-info h4 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #212121;
+    }
+
+    .device-item-manufacturer {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #757575;
+    }
+
+    .device-type-chip {
+      font-size: 11px;
+      height: 20px;
+      min-height: 20px;
+      font-weight: 600;
+    }
+
+    .iphone-chip {
+      background: #757575 !important;
+      color: white !important;
+    }
+
+    .android-chip {
+      background: #1976d2 !important;
+      color: white !important;
+    }
+
+    .select-indicator {
+      color: #4caf50;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .device-item-details {
+      margin-top: 15px;
+      padding-top: 15px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: white;
+      border-radius: 8px;
+    }
+
+    .detail-row mat-icon {
+      color: #1976d2;
+      flex-shrink: 0;
+    }
+
+    .detail-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .detail-label {
+      font-size: 11px;
+      color: #757575;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      color: #212121;
+      font-size: 13px;
+      margin-top: 2px;
+      word-break: break-all;
+    }
+
+    .populate-btn {
+      width: 100%;
+      margin-top: 15px;
+      height: 44px;
+      font-size: 15px;
+    }
+
+    .device-hint {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      background: #fff3e0;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #e65100;
+    }
+
+    .device-hint mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Recent Tests */
+    .recent-tests-card mat-card-header {
+      margin-bottom: 15px;
+    }
+
+    .count-chip {
+      font-size: 12px;
+      height: 24px;
+      min-height: 24px;
+      background: #e3f2fd !important;
+      color: #1976d2 !important;
+    }
+
+    .test-history {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .test-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 4px solid #bdbdbd;
+      background: #f5f5f5;
+    }
+
+    .test-item.pass {
+      border-left-color: #4caf50;
+      background: #e8f5e9;
+    }
+
+    .test-item.fail {
+      border-left-color: #f44336;
+      background: #ffebee;
+    }
+
+    .test-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .test-main mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .test-item.pass mat-icon {
+      color: #4caf50;
+    }
+
+    .test-item.fail mat-icon {
+      color: #f44336;
+    }
+
+    .test-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .test-serial {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      font-size: 13px;
+      color: #212121;
+    }
+
+    .test-device-type {
+      font-size: 11px;
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .test-time {
+      font-size: 11px;
+      color: #757575;
+    }
+
+    .grade-chip {
+      font-weight: 600;
+      background: #e3f2fd !important;
+      color: #1976d2 !important;
+    }
+
+    .no-history {
+      text-align: center;
+      padding: 30px;
+      color: #999;
+    }
+
+    .no-history mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 10px;
+    }
+
+    /* Right Panel */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-card {
+      flex: 1;
+    }
+
+    .selected-device-chip {
+      font-size: 12px;
+      height: 24px;
+      min-height: 24px;
+      background: #e8f5e9 !important;
+      color: #2e7d32 !important;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .auto-filled {
+      border-color: #4caf50 !important;
+    }
+
+    .auto-icon {
+      color: #4caf50;
+      animation: sparkle 1s ease-in-out;
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; transform: scale(1.1); }
+    }
+
+    mat-divider {
+      margin: 20px 0;
+    }
+
+    .service-options {
+      margin: 20px 0;
+    }
+
+    .service-options h4 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #424242;
+      margin-bottom: 15px;
+    }
+
+    .service-options mat-checkbox {
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    .checkbox-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .checkbox-hint {
+      font-size: 12px;
+      color: #757575;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .form-actions button {
+      min-width: 140px;
+      height: 48px;
+    }
+
+    /* Stats Card */
+    .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      opacity: 0.9;
+    }
+
+    .stat-icon.pass {
+      color: #4caf50;
+    }
+
+    .stat-icon.fail {
+      color: #f44336;
+    }
+
+    .stat-icon.total {
+      color: #2196f3;
+    }
+
+    .stat-icon.rate {
+      color: #ffc107;
+    }
+
+    .stat-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Material overrides */
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      height: auto;
+      min-height: 16px;
+    }
+
+    ::ng-deep .mat-mdc-form-field {
+      margin-bottom: 15px;
+    }

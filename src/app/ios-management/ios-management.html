@@ -1,1 +1,426 @@
-<p>ios-management works!</p>
+<div class="testing-container">
+      <!-- Header Section -->
+      <mat-card class="header-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="title-icon">smartphone</mat-icon>
+            Mobile Device Testing Station
+          </mat-card-title>
+          <div class="header-actions">
+            <mat-chip class="status-chip" [class.connected]="connectedDevices.length > 0">
+              <mat-icon>{{ connectedDevices.length > 0 ? 'check_circle' : 'error' }}</mat-icon>
+              {{ connectedDevices.length }} Device(s) Connected
+            </mat-chip>
+            <button mat-raised-button color="accent" (click)="refreshDevices()">
+              <mat-icon>refresh</mat-icon>
+              Scan Devices
+            </button>
+          </div>
+        </mat-card-header>
+      </mat-card>
+
+      <div class="content-layout">
+        <!-- Left Panel: Device List -->
+        <div class="left-panel">
+          <mat-card class="device-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>devices</mat-icon>
+                Detected Devices
+                <mat-chip *ngIf="connectedDevices.length > 0" class="device-count-chip">
+                  {{ connectedDevices.length }}
+                </mat-chip>
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <!-- No Devices State -->
+              <div *ngIf="connectedDevices.length === 0" class="no-device">
+                <mat-icon class="large-icon pulse">smartphone</mat-icon>
+                <h3>No Device Connected</h3>
+                <p>Please connect a mobile device to begin testing</p>
+                <div class="instructions">
+                  <p><strong>Supported Devices:</strong></p>
+                  <ul>
+                    <li>iPhone (iOS) - Must be trusted</li>
+                    <li>Samsung (Android) - USB debugging enabled</li>
+                    <li>Other Android devices</li>
+                  </ul>
+                  <p><strong>Steps:</strong></p>
+                  <ol>
+                    <li>Connect device via USB cable</li>
+                    <li>Unlock device</li>
+                    <li>Accept trust/debugging prompt</li>
+                    <li>Wait for automatic detection</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Device List -->
+              <div *ngIf="connectedDevices.length > 0" class="device-list">
+                <div *ngFor="let device of connectedDevices"
+                     class="device-item"
+                     [class.selected]="selectedDevice === device"
+                     [class.iphone]="device.isIPhone"
+                     [class.android]="device.isAndroid"
+                     (click)="selectDevice(device)">
+                  <div class="device-item-header">
+                    <mat-icon class="device-item-icon">
+                      {{ getDeviceIcon(device) }}
+                    </mat-icon>
+                    <div class="device-item-info">
+                      <h4>{{ getDeviceName(device) }}</h4>
+                      <p class="device-item-manufacturer">{{ device.manufacturer }}</p>
+                      <mat-chip class="device-type-chip"
+                                [class.iphone-chip]="device.isIPhone"
+                                [class.android-chip]="device.isAndroid">
+                        {{ getDeviceTypeBadge(device) }}
+                      </mat-chip>
+                    </div>
+                    <mat-icon class="select-indicator" *ngIf="selectedDevice === device">
+                      check_circle
+                    </mat-icon>
+                  </div>
+
+                  <!-- Device Details (Expandable when selected) -->
+                  <div class="device-item-details" *ngIf="selectedDevice === device">
+                    <mat-divider></mat-divider>
+
+                    <div class="detail-row">
+                      <mat-icon>fingerprint</mat-icon>
+                      <div class="detail-content">
+                        <span class="detail-label">Serial Number</span>
+                        <span class="detail-value">{{ getSerialNumber(device) }}</span>
+                      </div>
+                      <button mat-icon-button
+                              *ngIf="device.serialNumber"
+                              (click)="copyToClipboard(device.serialNumber); $event.stopPropagation()"
+                              matTooltip="Copy Serial">
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                    </div>
+
+                    <div class="detail-row" *ngIf="device.isAndroid && device.androidInfo?.imei">
+                      <mat-icon>phone_android</mat-icon>
+                      <div class="detail-content">
+                        <span class="detail-label">IMEI</span>
+                        <span class="detail-value">{{ device.androidInfo.imei }}</span>
+                      </div>
+                      <button mat-icon-button
+                              (click)="copyToClipboard(device.androidInfo.imei); $event.stopPropagation()"
+                              matTooltip="Copy IMEI">
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                    </div>
+
+                    <div class="detail-row">
+                      <mat-icon>developer_board</mat-icon>
+                      <div class="detail-content">
+                        <span class="detail-label">Vendor ID</span>
+                        <span class="detail-value">{{ formatVendorId(device.vendorId) }}</span>
+                      </div>
+                    </div>
+
+                    <div class="detail-row">
+                      <mat-icon>memory</mat-icon>
+                      <div class="detail-content">
+                        <span class="detail-label">Product ID</span>
+                        <span class="detail-value">{{ formatProductId(device.productId) }}</span>
+                      </div>
+                    </div>
+
+                    <div class="detail-row">
+                      <mat-icon>usb</mat-icon>
+                      <div class="detail-content">
+                        <span class="detail-label">Connection</span>
+                        <span class="detail-value">USB Bus {{ device.busNumber || 'N/A' }}</span>
+                      </div>
+                    </div>
+
+                    <button mat-raised-button color="primary"
+                            class="populate-btn"
+                            [disabled]="!hasValidSerial(device)"
+                            (click)="populateFormFromDevice(device); $event.stopPropagation()">
+                      <mat-icon>input</mat-icon>
+                      Populate Form
+                    </button>
+
+                    <div class="device-hint" *ngIf="!hasValidSerial(device)">
+                      <mat-icon>info</mat-icon>
+                      <span>{{ getDeviceWarning(device) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Recent Tests -->
+          <mat-card class="recent-tests-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>history</mat-icon>
+                Recent Tests
+                <mat-chip class="count-chip">{{ testHistory.length }}</mat-chip>
+              </mat-card-title>
+              <button mat-icon-button (click)="clearHistory()" matTooltip="Clear History">
+                <mat-icon>delete_sweep</mat-icon>
+              </button>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="test-history" *ngIf="testHistory.length > 0">
+                <div *ngFor="let test of testHistory.slice(0, 5)"
+                     class="test-item"
+                     [class.pass]="test.testResult === 'PASS'"
+                     [class.fail]="test.testResult === 'FAIL'">
+                  <div class="test-main">
+                    <mat-icon>{{ test.testResult === 'PASS' ? 'check_circle' : 'cancel' }}</mat-icon>
+                    <div class="test-info">
+                      <span class="test-serial">{{ test.deviceSerial }}</span>
+                      <span class="test-device-type">{{ test.deviceType }}</span>
+                      <span class="test-time">{{ formatTime(test.timestamp) }}</span>
+                    </div>
+                  </div>
+                  <mat-chip class="grade-chip">{{ test.grade }}</mat-chip>
+                </div>
+              </div>
+              <div *ngIf="testHistory.length === 0" class="no-history">
+                <mat-icon>inbox</mat-icon>
+                <p>No tests performed yet</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Right Panel: Testing Form -->
+        <div class="right-panel">
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>assignment</mat-icon>
+                Device Testing Form
+                <mat-chip *ngIf="selectedDevice" class="selected-device-chip">
+                  <mat-icon>check_circle</mat-icon>
+                  {{ getDeviceTypeBadge(selectedDevice) }} Selected
+                </mat-chip>
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="testForm" (ngSubmit)="submitTest()">
+                <!-- Device Serial Number -->
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Device Serial Number</mat-label>
+                  <input matInput
+                         formControlName="deviceSerial"
+                         placeholder="Enter or scan serial number"
+                         [class.auto-filled]="autoFilled.deviceSerial">
+                  <mat-icon matPrefix>fingerprint</mat-icon>
+                  <mat-icon matSuffix
+                            *ngIf="autoFilled.deviceSerial"
+                            class="auto-icon"
+                            matTooltip="Auto-filled from device">
+                    auto_awesome
+                  </mat-icon>
+                  <mat-error *ngIf="testForm.get('deviceSerial')?.hasError('required')">
+                    Serial number is required
+                  </mat-error>
+                  <mat-error *ngIf="testForm.get('deviceSerial')?.hasError('minlength')">
+                    Serial must be at least 8 characters
+                  </mat-error>
+                </mat-form-field>
+
+                <!-- Device Type -->
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Device Type</mat-label>
+                  <mat-select formControlName="deviceType"
+                              [class.auto-filled]="autoFilled.deviceType">
+                    <mat-option value="">Select Device Type</mat-option>
+                    <mat-option value="iPhone">iPhone (iOS)</mat-option>
+                    <mat-option value="Android">Android</mat-option>
+                    <mat-option value="Other">Other</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>smartphone</mat-icon>
+                  <mat-icon matSuffix
+                            *ngIf="autoFilled.deviceType"
+                            class="auto-icon"
+                            matTooltip="Auto-filled from device">
+                    auto_awesome
+                  </mat-icon>
+                  <mat-error *ngIf="testForm.get('deviceType')?.hasError('required')">
+                    Device type is required
+                  </mat-error>
+                </mat-form-field>
+
+                <!-- MEID (Optional for Android/Others) -->
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>MEID (Mobile Equipment Identifier)</mat-label>
+                  <input matInput
+                         formControlName="meid"
+                         placeholder="Enter MEID (optional for Android)"
+                         maxlength="18">
+                  <mat-icon matPrefix>sim_card</mat-icon>
+                  <mat-hint>14 or 18 digit hexadecimal (required for iPhone)</mat-hint>
+                  <mat-error *ngIf="testForm.get('meid')?.hasError('pattern')">
+                    Invalid MEID format
+                  </mat-error>
+                </mat-form-field>
+
+                <!-- IMEI (Optional/Auto-filled for Android) -->
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>IMEI</mat-label>
+                  <input matInput
+                         formControlName="imei"
+                         placeholder="Enter IMEI"
+                         maxlength="15"
+                         [class.auto-filled]="autoFilled.imei">
+                  <mat-icon matPrefix>phone_android</mat-icon>
+                  <mat-icon matSuffix
+                            *ngIf="autoFilled.imei"
+                            class="auto-icon"
+                            matTooltip="Auto-filled from device">
+                    auto_awesome
+                  </mat-icon>
+                  <mat-hint>15 digit number (common for all devices)</mat-hint>
+                  <mat-error *ngIf="testForm.get('imei')?.hasError('pattern')">
+                    IMEI must be 15 digits
+                  </mat-error>
+                </mat-form-field>
+
+                <!-- Device Model -->
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Device Model</mat-label>
+                  <input matInput
+                         formControlName="deviceModel"
+                         placeholder="e.g., iPhone 15 Pro, Galaxy S23"
+                         [class.auto-filled]="autoFilled.deviceModel">
+                  <mat-icon matPrefix>phone_iphone</mat-icon>
+                  <mat-icon matSuffix
+                            *ngIf="autoFilled.deviceModel"
+                            class="auto-icon"
+                            matTooltip="Auto-filled from device">
+                    auto_awesome
+                  </mat-icon>
+                  <mat-error *ngIf="testForm.get('deviceModel')?.hasError('required')">
+                    Device model is required
+                  </mat-error>
+                </mat-form-field>
+
+                <!-- Grade -->
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Grade</mat-label>
+                  <mat-select formControlName="grade">
+                    <mat-option value="">Select Grade</mat-option>
+                    <mat-option value="A+">A+ (Excellent - Like New)</mat-option>
+                    <mat-option value="A">A (Very Good)</mat-option>
+                    <mat-option value="B+">B+ (Good)</mat-option>
+                    <mat-option value="B">B (Fair)</mat-option>
+                    <mat-option value="C">C (Acceptable)</mat-option>
+                    <mat-option value="D">D (Poor - For Parts)</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>star</mat-icon>
+                  <mat-error *ngIf="testForm.get('grade')?.hasError('required')">
+                    Grade is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-divider></mat-divider>
+
+                <!-- Service Options -->
+                <div class="service-options">
+                  <h4>
+                    <mat-icon>settings</mat-icon>
+                    Service Options
+                  </h4>
+
+                  <mat-checkbox formControlName="gsxCall">
+                    <div class="checkbox-content">
+                      <strong>GSX Call (iPhone Only)</strong>
+                      <span class="checkbox-hint">Query Apple GSX service for warranty status</span>
+                    </div>
+                  </mat-checkbox>
+
+                  <mat-checkbox formControlName="fmiCall">
+                    <div class="checkbox-content">
+                      <strong>FMI Call (iPhone Only)</strong>
+                      <span class="checkbox-hint">Check Find My iPhone activation status</span>
+                    </div>
+                  </mat-checkbox>
+
+                  <mat-checkbox formControlName="autoPrintLabel">
+                    <div class="checkbox-content">
+                      <strong>Auto-Print Label</strong>
+                      <span class="checkbox-hint">Automatically print label after successful test</span>
+                    </div>
+                  </mat-checkbox>
+                </div>
+
+                <mat-divider></mat-divider>
+
+                <!-- Operator (Optional) -->
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Operator (Optional)</mat-label>
+                  <input matInput
+                         formControlName="operator"
+                         placeholder="Enter operator name/ID">
+                  <mat-icon matPrefix>person</mat-icon>
+                </mat-form-field>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                  <button mat-raised-button
+                          type="button"
+                          (click)="resetForm()">
+                    <mat-icon>refresh</mat-icon>
+                    Reset
+                  </button>
+
+                  <button mat-raised-button
+                          color="primary"
+                          type="submit"
+                          [disabled]="!testForm.valid || isSubmitting">
+                    <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+                    <mat-icon *ngIf="!isSubmitting">check_circle</mat-icon>
+                    {{ isSubmitting ? 'Processing...' : 'Submit Test' }}
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Quick Stats -->
+          <mat-card class="stats-card">
+            <mat-card-content>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <mat-icon class="stat-icon pass">check_circle</mat-icon>
+                  <div class="stat-content">
+                    <span class="stat-value">{{ statistics.passed }}</span>
+                    <span class="stat-label">Passed</span>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <mat-icon class="stat-icon fail">cancel</mat-icon>
+                  <div class="stat-content">
+                    <span class="stat-value">{{ statistics.failed }}</span>
+                    <span class="stat-label">Failed</span>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <mat-icon class="stat-icon total">assessment</mat-icon>
+                  <div class="stat-content">
+                    <span class="stat-value">{{ statistics.total }}</span>
+                    <span class="stat-label">Total</span>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <mat-icon class="stat-icon rate">trending_up</mat-icon>
+                  <div class="stat-content">
+                    <span class="stat-value">{{ statistics.passRate }}%</span>
+                    <span class="stat-label">Pass Rate</span>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </div>

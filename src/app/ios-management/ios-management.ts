@@ -1,318 +1,436 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Subject, timer } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { Auth } from '../services/auth';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatTableModule } from '@angular/material/table';
+import { MatDialogModule } from '@angular/material/dialog';
+import { Subject, takeUntil, interval } from 'rxjs';
+import { ElectronUsbService, USBDeviceDetailed } from '../services/electron-usb.service';
 
 @Component({
   selector: 'app-ios-management',
-   imports: [CommonModule, FormsModule],
+  imports: [CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatChipsModule,
+    MatCheckboxModule,
+    MatSelectModule,
+    MatDividerModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatTooltipModule,
+    MatBadgeModule,
+    MatTableModule,
+    MatDialogModule],
   templateUrl: './ios-management.html',
   styleUrl: './ios-management.scss',
 })
-export class IosManagement {
-// Configuration
-  private apiBaseUrl = 'https://qaapi-rmxt026.am.gxo.com:8333/api/';
-
-  // Data
-  devices: IOSDevice[] = [];
-  apps: IOSApp[] = [];
-
-  // UI State
-  selectedTab: string = 'devices'; // 'devices' or 'apps'
-  loading: boolean = false;
-  searchKey: string = '';
-
-  // Statistics
-  statistics = {
-    totalDevices: 0,
-    onlineDevices: 0,
-    offlineDevices: 0,
-    totalApps: 0
+export class IosManagement implements OnInit, OnDestroy {
+  testForm: FormGroup;
+  connectedDevices: USBDeviceDetailed[] = [];
+  selectedDevice: USBDeviceDetailed | null = null;
+  testHistory: TestRecord[] = [];
+  isSubmitting = false;
+  autoFilled = {
+    deviceSerial: false,
+    deviceType: false,
+    deviceModel: false,
+    imei: false
   };
 
-  // Polling
-  private stopPolling$ = new Subject();
-  private pollingInterval = 60000; // 60 seconds
+  statistics = {
+    passed: 0,
+    failed: 0,
+    total: 0,
+    passRate: 0
+  };
+
+  private destroy$ = new Subject<void>();
 
   constructor(
-    private http: HttpClient,
-    private authService: Auth
-  ) {}
+    private fb: FormBuilder,
+    private electronUsbService: ElectronUsbService,
+    private snackBar: MatSnackBar
+  ) {
+    this.testForm = this.createForm();
+  }
 
   ngOnInit(): void {
-    this.loadAllData();
-    this.startPolling();
+    console.log('🎯 Device Testing Component initialized');
+
+    // Subscribe to phone devices (iPhone and Android)
+    this.electronUsbService.usbDevices$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(devices => {
+        this.connectedDevices = devices.filter(d => d.isIPhone || d.isAndroid);
+
+        console.log('📱 Phones detected:', this.connectedDevices.length);
+
+        // Auto-select first device if none selected
+        if (this.connectedDevices.length > 0 && !this.selectedDevice) {
+          this.selectDevice(this.connectedDevices[0]);
+        }
+
+        // FIXED: Check if selected device is still connected using unique identifiers
+        // instead of object reference comparison
+        if (this.selectedDevice) {
+          const stillConnected = this.connectedDevices.find(d =>
+            this.isSameDevice(d, this.selectedDevice!)
+          );
+
+          if (stillConnected) {
+            // Update the reference to the new object with same device
+            this.selectedDevice = stillConnected;
+            console.log('✅ Selected device still connected:', this.getDeviceName(stillConnected));
+          } else {
+            // Device actually disconnected
+            const deviceName = this.getDeviceName(this.selectedDevice);
+            this.selectedDevice = null;
+            this.showNotification(`Device disconnected: ${deviceName}`, 'warning');
+            console.log('❌ Device disconnected');
+          }
+        }
+      });
+
+    // Initial device scan
+    this.refreshDevices();
+
+    // Load test history from localStorage
+    this.loadTestHistory();
+    this.updateStatistics();
   }
 
   ngOnDestroy(): void {
-    this.stopPolling$.next(null);
-    this.stopPolling$.complete();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
-   * Load all data
+   * Compare two devices by their unique identifiers
+   * This prevents false "disconnected" notifications when device objects are recreated
    */
-  loadAllData(): void {
-    this.getDevices();
-    this.getApps();
+  private isSameDevice(device1: USBDeviceDetailed, device2: USBDeviceDetailed): boolean {
+    // Compare by vendorId and productId
+    if (device1.vendorId !== device2.vendorId || device1.productId !== device2.productId) {
+      return false;
+    }
+
+    // Compare by serial number if available
+    const serial1 = device1.serialNumber || device1.androidInfo?.serialNumber;
+    const serial2 = device2.serialNumber || device2.androidInfo?.serialNumber;
+
+    if (serial1 && serial2) {
+      return serial1 === serial2;
+    }
+
+    // If no serial, compare by bus number and device address (for same USB port)
+    if (device1.busNumber && device2.busNumber &&
+        device1.deviceAddress && device2.deviceAddress) {
+      return device1.busNumber === device2.busNumber &&
+             device1.deviceAddress === device2.deviceAddress;
+    }
+
+    // Fallback: same vendor and product is probably same device
+    return true;
   }
 
-  /**
-   * Start polling
-   */
-  private startPolling(): void {
-    timer(this.pollingInterval, this.pollingInterval).pipe(
-      takeUntil(this.stopPolling$)
-    ).subscribe(() => {
-      this.loadAllData();
+  createForm(): FormGroup {
+    return this.fb.group({
+      deviceSerial: ['', [Validators.required, Validators.minLength(8)]],
+      deviceType: ['', Validators.required],
+      meid: ['', [Validators.pattern(/^[0-9A-Fa-f]{14,18}$/)]],
+      imei: ['', [Validators.pattern(/^[0-9]{15}$/)]],
+      deviceModel: ['', Validators.required],
+      grade: ['', Validators.required],
+      gsxCall: [false],
+      fmiCall: [false],
+      autoPrintLabel: [true],
+      operator: ['']
     });
   }
 
-  /**
-   * Get iOS devices
-   */
-  getDevices(): void {
-    // For demo: Generate mock data
-    this.devices = this.generateMockDevices();
-    this.updateStatistics();
+  refreshDevices(): void {
+    console.log('🔄 Refreshing devices...');
+    this.electronUsbService.refreshUSBDevices();
+  }
 
-    // For real API:
-    /*
-    const url = `${this.apiBaseUrl}ios/getDevices`;
-    const token = this.authService.getToken();
+  selectDevice(device: USBDeviceDetailed): void {
+    this.selectedDevice = device;
+    const deviceName = this.getDeviceName(device);
+    console.log('✅ Device selected:', deviceName);
+    this.showNotification(`Selected: ${deviceName}`, 'info');
+  }
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+  populateFormFromDevice(device: USBDeviceDetailed): void {
+    const serialNumber = this.getSerialNumber(device);
+
+    if (serialNumber === 'Not Available') {
+      this.showNotification('Cannot populate: Serial number not available', 'warning');
+      return;
+    }
+
+    const deviceType = device.isIPhone ? 'iPhone' : device.isAndroid ? 'Android' : 'Other';
+    const deviceModel = this.getDeviceName(device);
+    const imei = device.androidInfo?.imei;
+
+    this.testForm.patchValue({
+      deviceSerial: serialNumber,
+      deviceType: deviceType,
+      deviceModel: deviceModel,
+      imei: imei || '',
+      gsxCall: device.isIPhone,
+      fmiCall: device.isIPhone
     });
 
-    this.http.get<any>(url, { headers }).subscribe({
-      next: (response) => {
-        if (response && response.Devices) {
-          this.devices = response.Devices;
-          this.updateStatistics();
-        }
-      },
-      error: (error) => {
-        console.error('Error loading devices:', error);
-      }
-    });
-    */
-  }
+    this.autoFilled.deviceSerial = true;
+    this.autoFilled.deviceType = true;
+    this.autoFilled.deviceModel = true;
+    if (imei) {
+      this.autoFilled.imei = true;
+    }
 
-  /**
-   * Get iOS apps
-   */
-  getApps(): void {
-    // For demo: Generate mock data
-    this.apps = this.generateMockApps();
+    this.showNotification('Form populated from device!', 'success');
 
-    // For real API - uncomment when ready
-  }
-
-  /**
-   * Generate mock devices for demo
-   */
-  private generateMockDevices(): IOSDevice[] {
-    return [
-      {
-        DeviceId: 'IPH-001',
-        DeviceName: 'iPhone 15 Pro',
-        Model: 'iPhone15,2',
-        OSVersion: 'iOS 17.2',
-        Status: 'Online',
-        BatteryLevel: 85,
-        LastSync: '2 minutes ago',
-        Apps: 45,
-        SerialNumber: 'DMPTL2ABCD'
-      },
-      {
-        DeviceId: 'IPD-001',
-        DeviceName: 'iPad Pro 12.9',
-        Model: 'iPad8,1',
-        OSVersion: 'iPadOS 17.1',
-        Status: 'Online',
-        BatteryLevel: 62,
-        LastSync: '5 minutes ago',
-        Apps: 38,
-        SerialNumber: 'DLXTL3EFGH'
-      },
-      {
-        DeviceId: 'IPH-002',
-        DeviceName: 'iPhone 14',
-        Model: 'iPhone14,1',
-        OSVersion: 'iOS 16.7',
-        Status: 'Offline',
-        BatteryLevel: 0,
-        LastSync: '2 hours ago',
-        Apps: 32,
-        SerialNumber: 'FMPTL4IJKL'
-      },
-      {
-        DeviceId: 'IPH-003',
-        DeviceName: 'iPhone 13',
-        Model: 'iPhone13,2',
-        OSVersion: 'iOS 17.0',
-        Status: 'Online',
-        BatteryLevel: 95,
-        LastSync: '1 minute ago',
-        Apps: 28,
-        SerialNumber: 'GMPTL5MNOP'
-      }
-    ];
-  }
-
-  /**
-   * Generate mock apps for demo
-   */
-  private generateMockApps(): IOSApp[] {
-    return [
-      {
-        AppId: 'APP-001',
-        AppName: 'Service Monitor',
-        Version: '2.5.1',
-        Status: 'Active',
-        InstallDate: '2024-01-15',
-        Size: '45.2 MB'
-      },
-      {
-        AppId: 'APP-002',
-        AppName: 'Remote Access',
-        Version: '1.8.3',
-        Status: 'Active',
-        InstallDate: '2024-02-20',
-        Size: '32.8 MB'
-      },
-      {
-        AppId: 'APP-003',
-        AppName: 'Data Sync',
-        Version: '3.1.0',
-        Status: 'Inactive',
-        InstallDate: '2024-03-10',
-        Size: '28.5 MB'
-      },
-      {
-        AppId: 'APP-004',
-        AppName: 'Configuration',
-        Version: '2.0.5',
-        Status: 'Active',
-        InstallDate: '2024-01-05',
-        Size: '15.3 MB'
-      }
-    ];
-  }
-
-  /**
-   * Update statistics
-   */
-  private updateStatistics(): void {
-    this.statistics.totalDevices = this.devices.length;
-    this.statistics.onlineDevices = this.devices.filter(d => d.Status === 'Online').length;
-    this.statistics.offlineDevices = this.devices.filter(d => d.Status === 'Offline').length;
-    this.statistics.totalApps = this.apps.length;
-  }
-
-  /**
-   * Filter devices
-   */
-  get filteredDevices(): IOSDevice[] {
-    if (!this.searchKey) return this.devices;
-
-    const search = this.searchKey.toLowerCase();
-    return this.devices.filter(d =>
-      d.DeviceName.toLowerCase().includes(search) ||
-      d.Model.toLowerCase().includes(search) ||
-      d.SerialNumber.toLowerCase().includes(search)
-    );
-  }
-
-  /**
-   * Filter apps
-   */
-  get filteredApps(): IOSApp[] {
-    if (!this.searchKey) return this.apps;
-
-    const search = this.searchKey.toLowerCase();
-    return this.apps.filter(a =>
-      a.AppName.toLowerCase().includes(search) ||
-      a.Version.toLowerCase().includes(search)
-    );
-  }
-
-  /**
-   * Select tab
-   */
-  selectTab(tab: string): void {
-    this.selectedTab = tab;
-    this.searchKey = '';
-  }
-
-  /**
-   * Get status class
-   */
-  getStatusClass(status: string): string {
-    if (status === 'Online' || status === 'Active') return 'status-online';
-    if (status === 'Offline' || status === 'Inactive') return 'status-offline';
-    return 'status-warning';
-  }
-
-  /**
-   * Get battery class
-   */
-  getBatteryClass(level: number): string {
-    if (level > 60) return 'battery-good';
-    if (level > 20) return 'battery-medium';
-    return 'battery-low';
-  }
-
-  /**
-   * Refresh all data
-   */
-  refreshAll(): void {
-    this.searchKey = '';
-    this.loadAllData();
-  }
-
-  /**
-   * Sync device
-   */
-  syncDevice(deviceId: string): void {
-    this.loading = true;
-    // Simulate sync
+    // Reset auto-fill indicators after animation
     setTimeout(() => {
-      this.loading = false;
-      alert(`Device ${deviceId} synced successfully!`);
-      this.getDevices();
-    }, 1000);
+      this.autoFilled.deviceSerial = false;
+      this.autoFilled.deviceType = false;
+      this.autoFilled.deviceModel = false;
+      this.autoFilled.imei = false;
+    }, 2000);
   }
 
-  /**
-   * View device details
-   */
-  viewDeviceDetails(device: IOSDevice): void {
-    alert(`Device Details:\n\nName: ${device.DeviceName}\nModel: ${device.Model}\nOS: ${device.OSVersion}\nSerial: ${device.SerialNumber}`);
+  async submitTest(): Promise<void> {
+    if (!this.testForm.valid) {
+      this.showNotification('Please fill in all required fields', 'error');
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    try {
+      // Simulate API call for GSX/FMI checks
+      await this.performDeviceChecks();
+
+      const testRecord: TestRecord = {
+        id: this.generateId(),
+        timestamp: new Date(),
+        deviceSerial: this.testForm.value.deviceSerial,
+        deviceType: this.testForm.value.deviceType,
+        meid: this.testForm.value.meid,
+        imei: this.testForm.value.imei,
+        grade: this.testForm.value.grade,
+        deviceModel: this.testForm.value.deviceModel,
+        gsxCall: this.testForm.value.gsxCall,
+        fmiCall: this.testForm.value.fmiCall,
+        autoPrintLabel: this.testForm.value.autoPrintLabel,
+        testResult: 'PASS',
+        operator: this.testForm.value.operator
+      };
+
+      // Add to history
+      this.testHistory.unshift(testRecord);
+      this.saveTestHistory();
+      this.updateStatistics();
+
+      // Handle auto-print
+      if (testRecord.autoPrintLabel) {
+        await this.printLabel(testRecord);
+      }
+
+      this.showNotification(`Test completed successfully! Grade: ${testRecord.grade}`, 'success');
+      this.resetForm();
+
+    } catch (error) {
+      console.error('Test submission error:', error);
+      this.showNotification('Test failed. Please try again.', 'error');
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  private async performDeviceChecks(): Promise<void> {
+    if (this.testForm.value.gsxCall) {
+      await this.delay(1000);
+      console.log('✅ GSX check completed');
+    }
+
+    if (this.testForm.value.fmiCall) {
+      await this.delay(800);
+      console.log('✅ FMI check completed');
+    }
+  }
+
+  private async printLabel(testRecord: TestRecord): Promise<void> {
+    await this.delay(500);
+    console.log('🖨️ Label printed for:', testRecord.deviceSerial);
+    this.showNotification('Label printed successfully', 'info');
+  }
+
+  resetForm(): void {
+    this.testForm.reset({
+      gsxCall: false,
+      fmiCall: false,
+      autoPrintLabel: true
+    });
+    this.autoFilled.deviceSerial = false;
+    this.autoFilled.deviceType = false;
+    this.autoFilled.deviceModel = false;
+    this.autoFilled.imei = false;
+  }
+
+  clearHistory(): void {
+    if (confirm('Are you sure you want to clear all test history?')) {
+      this.testHistory = [];
+      localStorage.removeItem('device_test_history');
+      this.updateStatistics();
+      this.showNotification('Test history cleared', 'info');
+    }
+  }
+
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.showNotification('Copied to clipboard!', 'success');
+    });
+  }
+
+  getDeviceName(device: USBDeviceDetailed): string {
+    return this.electronUsbService.getDeviceName(device);
+  }
+
+  getSerialNumber(device: USBDeviceDetailed): string {
+    return this.electronUsbService.getSerialNumber(device);
+  }
+
+  getDeviceIcon(device: USBDeviceDetailed): string {
+    if (device.isIPhone) return 'phone_iphone';
+    if (device.isAndroid) return 'smartphone';
+    return 'phone_android';
+  }
+
+  getDeviceTypeBadge(device: USBDeviceDetailed): string {
+    if (device.isIPhone) return 'iPhone';
+    if (device.isAndroid) {
+      const badge = this.electronUsbService.getPhoneTypeBadge(device);
+      return badge || 'Android';
+    }
+    return 'Mobile Device';
+  }
+
+  hasValidSerial(device: USBDeviceDetailed): boolean {
+    const serial = this.getSerialNumber(device);
+    return serial !== 'Not Available' && serial.length >= 8;
+  }
+
+  getDeviceWarning(device: USBDeviceDetailed): string {
+    if (device.isIPhone) {
+      return 'Serial not available - Device needs to be trusted on iPhone';
+    }
+    if (device.isAndroid) {
+      return 'Serial not available - Enable USB debugging on Android device';
+    }
+    return 'Serial number not available for this device';
+  }
+
+  formatVendorId(vendorId: number): string {
+    return '0x' + vendorId.toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  formatProductId(productId: number): string {
+    return '0x' + productId.toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  formatTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - new Date(date).getTime();
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    return new Date(date).toLocaleDateString();
+  }
+
+  private loadTestHistory(): void {
+    const stored = localStorage.getItem('device_test_history');
+    if (stored) {
+      try {
+        this.testHistory = JSON.parse(stored);
+      } catch (e) {
+        console.error('Error loading test history:', e);
+        this.testHistory = [];
+      }
+    }
+  }
+
+  private saveTestHistory(): void {
+    try {
+      const historyToSave = this.testHistory.slice(0, 50);
+      localStorage.setItem('device_test_history', JSON.stringify(historyToSave));
+    } catch (e) {
+      console.error('Error saving test history:', e);
+    }
+  }
+
+  private updateStatistics(): void {
+    this.statistics.total = this.testHistory.length;
+    this.statistics.passed = this.testHistory.filter(t => t.testResult === 'PASS').length;
+    this.statistics.failed = this.testHistory.filter(t => t.testResult === 'FAIL').length;
+    this.statistics.passRate = this.statistics.total > 0
+      ? Math.round((this.statistics.passed / this.statistics.total) * 100)
+      : 0;
+  }
+
+  private showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: [`snackbar-${type}`]
+    });
+  }
+
+  private generateId(): string {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
-export interface IOSDevice {
-  DeviceId: string;
-  DeviceName: string;
-  Model: string;
-  OSVersion: string;
-  Status: string;
-  BatteryLevel: number;
-  LastSync: string;
-  Apps: number;
-  SerialNumber: string;
-}
 
-export interface IOSApp {
-  AppId: string;
-  AppName: string;
-  Version: string;
-  Status: string;
-  InstallDate: string;
-  Size: string;
+interface TestRecord {
+  id: string;
+  timestamp: Date;
+  deviceSerial: string;
+  meid?: string;
+  imei?: string;
+  grade: string;
+  deviceModel: string;
+  deviceType: 'iPhone' | 'Android' | 'Other';
+  gsxCall: boolean;
+  fmiCall: boolean;
+  autoPrintLabel: boolean;
+  testResult: 'PASS' | 'FAIL' | 'PENDING';
+  operator?: string;
 }
