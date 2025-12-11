@@ -20,7 +20,7 @@
               <mat-list-item class="nav-item" [class.has-submenu]="item.HasSubMenu"
                 [class.expanded]="isMenuExpanded(item.Title)"
                 (click)="item.HasSubMenu ? toggleMenu(item.Title) : navigateToItem(item)" [matTooltip]="item.Title"
-                matTooltipPosition="right">
+                matTooltipPosition="right" [disabled]="patchStatus.isPatching">
 
                 <mat-icon matListItemIcon>{{ item.Icon }}</mat-icon>
                 <span matListItemTitle><b>
@@ -35,7 +35,8 @@
               <!-- Sub Menu Items - Using getFilteredSubMenu -->
               <div *ngIf="item.HasSubMenu && isMenuExpanded(item.Title)" class="submenu-container">
                 <mat-list-item *ngFor="let subItem of getFilteredSubMenu(item)" class="submenu-item"
-                  (click)="navigateToSubItem(item, subItem)" [matTooltip]="subItem.Title" matTooltipPosition="right">
+                  (click)="navigateToSubItem(item, subItem)" [matTooltip]="subItem.Title" matTooltipPosition="right"
+                  [disabled]="patchStatus.isPatching">
 
                   <mat-icon matListItemIcon class="submenu-icon">
                     {{ subItem.Icon }}
@@ -68,7 +69,8 @@
     <!-- Top Toolbar -->
     <mat-toolbar class="toolbar">
       <!-- Menu Toggle Button -->
-      <button mat-icon-button (click)="toggleSidenav()" matTooltip="Toggle menu" class="menu-toggle-btn">
+      <button mat-icon-button (click)="toggleSidenav()" matTooltip="Toggle menu" class="menu-toggle-btn"
+        [disabled]="patchStatus.isPatching">
         <mat-icon>menu</mat-icon>
       </button>
 
@@ -85,12 +87,14 @@
       <span class="toolbar-spacer"></span>
 
       <!-- Dashboard Button -->
-      <button mat-icon-button (click)="navigateToDashboard()" matTooltip="Go to Dashboard" class="toolbar-btn">
+      <button mat-icon-button (click)="navigateToDashboard()" matTooltip="Go to Dashboard" class="toolbar-btn"
+        [disabled]="patchStatus.isPatching">
         <mat-icon>dashboard</mat-icon>
       </button>
 
       <!-- User Menu -->
-      <button mat-icon-button [matMenuTriggerFor]="userMenu" matTooltip="User menu" class="toolbar-btn">
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" matTooltip="User menu" class="toolbar-btn"
+        [disabled]="patchStatus.isPatching">
         <mat-icon>account_circle</mat-icon>
       </button>
 
@@ -105,14 +109,19 @@
 
         <mat-divider></mat-divider>
 
-        <button mat-menu-item (click)="navigateToDashboard()">
+        <button mat-menu-item (click)="navigateToDashboard()" [disabled]="patchStatus.isPatching">
           <mat-icon>dashboard</mat-icon>
           <span>Dashboard</span>
         </button>
 
-        <button mat-menu-item (click)="navigateToUserProfile()">
+        <button mat-menu-item (click)="navigateToUserProfile()" [disabled]="patchStatus.isPatching">
           <mat-icon>person</mat-icon>
           <span>User Profile</span>
+        </button>
+
+         <button mat-menu-item (click)="navigateToDeviceDetect()" [disabled]="patchStatus.isPatching">
+          <mat-icon>mobile</mat-icon>
+          <span>Ios</span>
         </button>
 
         <mat-divider></mat-divider>

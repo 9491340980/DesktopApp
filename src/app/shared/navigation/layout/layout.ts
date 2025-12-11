@@ -13,7 +13,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Auth } from '../../../services/auth';
 import { StorageKey } from '../../../enums/app-constants.enum';
 import { CryptoService } from '../../../services/crypto-service';
-import { filter } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
+import { PatchStatus, PatchStatusService } from '../../../services/patch-status.service';
+import { Subject } from 'rxjs';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-layout',
@@ -28,7 +31,8 @@ import { filter } from 'rxjs/operators';
     MatMenuModule,
     MatBadgeModule,
     MatDividerModule,
-    MatIconModule
+    MatIconModule,
+    MatProgressBarModule
   ],
   templateUrl: './layout.html',
   styleUrl: './layout.scss',
@@ -42,21 +46,45 @@ export class Layout {
   siteId: string = '';
   expandedMenuTitle: string | null = null;
   isSidenavOpen: boolean = false;
-
-  // ✅ NEW: Dynamic screen title
   currentScreenTitle: string = 'Dashboard';
+
+  // ✅ NEW: Patch Status Properties
+  patchStatus: PatchStatus = { isPatching: false };
+  private destroy$ = new Subject<void>();
 
   constructor(
     private authService: Auth,
     private router: Router,
-    private crypto: CryptoService
+    private crypto: CryptoService,
+    private patchStatusService: PatchStatusService
   ) { }
 
   ngOnInit(): void {
     this.loadUserInfo();
     this.loadMenuItems();
     this.setupRouteListener();
-    this.loadCurrentScreenTitle(); // Load title on init
+    this.loadCurrentScreenTitle();
+    this.setupPatchMonitoring(); // ✅ NEW: Start patch monitoring
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.patchStatusService.stopMonitoring();
+  }
+
+  // ✅ NEW: Setup patch status monitoring
+  private setupPatchMonitoring(): void {
+    // Subscribe to patch status changes
+    this.patchStatusService.patchStatus$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(status => {
+        this.patchStatus = status;
+        console.log('Layout received patch status:', status);
+      });
+
+    // Start monitoring with 30-second interval
+    this.patchStatusService.startMonitoring(30000);
   }
 
   private loadUserInfo(): void {
@@ -64,6 +92,10 @@ export class Layout {
     let SITEID = localStorage.getItem(StorageKey.SITE_ID);
     this.username = this.crypto.decrypt(USERNAME) || '';
     this.siteId = SITEID || '';
+  }
+
+  navigateToDeviceDetect(){
+      this.router.navigate(['/ios-management']);
   }
 
   private loadMenuItems(): void {
@@ -124,7 +156,6 @@ export class Layout {
     }
   }
 
-  // ✅ NEW: Setup route change listener
   private setupRouteListener(): void {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -133,7 +164,6 @@ export class Layout {
     });
   }
 
-  // ✅ NEW: Update screen title based on current route
   private updateScreenTitle(url: string): void {
     // Check if there's operation info in localStorage
     const operationStr = localStorage.getItem('currentOperation');
@@ -158,13 +188,11 @@ export class Layout {
     }
   }
 
-  // ✅ NEW: Load current screen title on component init
   private loadCurrentScreenTitle(): void {
     const currentUrl = this.router.url;
     this.updateScreenTitle(currentUrl);
   }
 
-  // ✅ NEW: Find menu item by URL
   private findMenuItemByUrl(url: string): MenuItem | SubMenuItem | null {
     // Remove leading slash and query params
     const cleanUrl = url.split('?')[0].replace(/^\//, '');
@@ -190,7 +218,6 @@ export class Layout {
     return null;
   }
 
-  // ✅ NEW: Get default title from URL path
   private getDefaultTitleFromUrl(url: string): string {
     const path = url.split('?')[0].replace(/^\//, '').split('/')[0];
 
@@ -206,7 +233,6 @@ export class Layout {
     return titleMap[path] || this.formatPathAsTitle(path);
   }
 
-  // ✅ NEW: Format URL path as readable title
   private formatPathAsTitle(path: string): string {
     return path
       .split('-')
@@ -277,7 +303,7 @@ export class Layout {
   navigateToItem(item: MenuItem): void {
     if (!item.HasSubMenu && item.RouterLink) {
       this.storeOperationInfo(item);
-      this.currentScreenTitle = item.Title; // ✅ Update title immediately
+      this.currentScreenTitle = item.Title;
       this.router.navigate([item.RouterLink]);
     }
   }
@@ -285,7 +311,7 @@ export class Layout {
   navigateToSubItem(mainItem: MenuItem, subItem: SubMenuItem): void {
     if (subItem.RouterLink) {
       this.storeOperationInfo(subItem);
-      this.currentScreenTitle = subItem.Title; // ✅ Update title immediately
+      this.currentScreenTitle = subItem.Title;
       this.router.navigate([subItem.RouterLink]);
     }
   }
@@ -300,13 +326,13 @@ export class Layout {
   }
 
   navigateToDashboard(): void {
-    this.currentScreenTitle = 'Dashboard'; // ✅ Update title immediately
-    localStorage.removeItem('currentOperation'); // Clear operation info
+    this.currentScreenTitle = 'Dashboard';
+    localStorage.removeItem('currentOperation');
     this.router.navigate(['/dashboard']);
   }
 
   navigateToUserProfile(): void {
-    this.currentScreenTitle = 'User Profile'; // ✅ Update title immediately
+    this.currentScreenTitle = 'User Profile';
     localStorage.setItem('currentOperation', JSON.stringify({
       operationId: 'USER_PROFILE',
       module: 'SETTINGS',
