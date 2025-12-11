@@ -94,8 +94,9 @@ export class Layout {
     this.siteId = SITEID || '';
   }
 
-  navigateToDeviceDetect(){
-      this.router.navigate(['/ios-management']);
+  navigateToDeviceDetect() {
+    this.currentScreenTitle = 'Ios Management';
+    this.router.navigate(['/ios-management']);
   }
 
   private loadMenuItems(): void {

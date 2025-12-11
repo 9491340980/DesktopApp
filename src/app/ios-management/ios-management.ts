@@ -6,22 +6,18 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatTableModule } from '@angular/material/table';
-import { MatDialogModule } from '@angular/material/dialog';
-import { Subject, takeUntil, interval } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { ElectronUsbService, USBDeviceDetailed } from '../services/electron-usb.service';
 
 @Component({
   selector: 'app-ios-management',
-  imports: [CommonModule,
+  imports: [
+    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -29,16 +25,12 @@ import { ElectronUsbService, USBDeviceDetailed } from '../services/electron-usb.
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
     MatCheckboxModule,
     MatSelectModule,
-    MatDividerModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatTooltipModule,
-    MatBadgeModule,
-    MatTableModule,
-    MatDialogModule],
+    MatTooltipModule
+  ],
   templateUrl: './ios-management.html',
   styleUrl: './ios-management.scss',
 })
@@ -46,23 +38,13 @@ export class IosManagement implements OnInit, OnDestroy {
   testForm: FormGroup;
   connectedDevices: USBDeviceDetailed[] = [];
   selectedDevice: USBDeviceDetailed | null = null;
-  testHistory: TestRecord[] = [];
   isSubmitting = false;
-  autoFilled = {
-    deviceSerial: false,
-    deviceType: false,
-    deviceModel: false,
-    imei: false
-  };
-
-  statistics = {
-    passed: 0,
-    failed: 0,
-    total: 0,
-    passRate: 0
-  };
+  isLookingUp = false;
+  lookupError: string | null = null;
 
   private destroy$ = new Subject<void>();
+  private lookupAttempts = 0;
+  private maxLookupAttempts = 4;
 
   constructor(
     private fb: FormBuilder,
@@ -73,48 +55,39 @@ export class IosManagement implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    console.log('🎯 Device Testing Component initialized');
+    console.log('🎯 Apple Device Receiving / Label Printing initialized');
 
-    // Subscribe to phone devices (iPhone and Android)
+    // Subscribe to phone devices
     this.electronUsbService.usbDevices$
       .pipe(takeUntil(this.destroy$))
       .subscribe(devices => {
         this.connectedDevices = devices.filter(d => d.isIPhone || d.isAndroid);
 
-        console.log('📱 Phones detected:', this.connectedDevices.length);
+        console.log('📱 Devices detected:', this.connectedDevices.length);
 
         // Auto-select first device if none selected
         if (this.connectedDevices.length > 0 && !this.selectedDevice) {
           this.selectDevice(this.connectedDevices[0]);
         }
 
-        // FIXED: Check if selected device is still connected using unique identifiers
-        // instead of object reference comparison
+        // Check if selected device is still connected
         if (this.selectedDevice) {
           const stillConnected = this.connectedDevices.find(d =>
             this.isSameDevice(d, this.selectedDevice!)
           );
 
           if (stillConnected) {
-            // Update the reference to the new object with same device
             this.selectedDevice = stillConnected;
-            console.log('✅ Selected device still connected:', this.getDeviceName(stillConnected));
           } else {
-            // Device actually disconnected
             const deviceName = this.getDeviceName(this.selectedDevice);
             this.selectedDevice = null;
             this.showNotification(`Device disconnected: ${deviceName}`, 'warning');
-            console.log('❌ Device disconnected');
           }
         }
       });
 
     // Initial device scan
     this.refreshDevices();
-
-    // Load test history from localStorage
-    this.loadTestHistory();
-    this.updateStatistics();
   }
 
   ngOnDestroy(): void {
@@ -124,15 +97,12 @@ export class IosManagement implements OnInit, OnDestroy {
 
   /**
    * Compare two devices by their unique identifiers
-   * This prevents false "disconnected" notifications when device objects are recreated
    */
   private isSameDevice(device1: USBDeviceDetailed, device2: USBDeviceDetailed): boolean {
-    // Compare by vendorId and productId
     if (device1.vendorId !== device2.vendorId || device1.productId !== device2.productId) {
       return false;
     }
 
-    // Compare by serial number if available
     const serial1 = device1.serialNumber || device1.androidInfo?.serialNumber;
     const serial2 = device2.serialNumber || device2.androidInfo?.serialNumber;
 
@@ -140,81 +110,127 @@ export class IosManagement implements OnInit, OnDestroy {
       return serial1 === serial2;
     }
 
-    // If no serial, compare by bus number and device address (for same USB port)
     if (device1.busNumber && device2.busNumber &&
         device1.deviceAddress && device2.deviceAddress) {
       return device1.busNumber === device2.busNumber &&
              device1.deviceAddress === device2.deviceAddress;
     }
 
-    // Fallback: same vendor and product is probably same device
     return true;
   }
 
   createForm(): FormGroup {
     return this.fb.group({
-      deviceSerial: ['', [Validators.required, Validators.minLength(8)]],
-      deviceType: ['', Validators.required],
-      meid: ['', [Validators.pattern(/^[0-9A-Fa-f]{14,18}$/)]],
-      imei: ['', [Validators.pattern(/^[0-9]{15}$/)]],
-      deviceModel: ['', Validators.required],
+      manufacturerSerial: ['', [Validators.required, Validators.minLength(6)]],
+      meid: [{ value: '', disabled: true }],
       grade: ['', Validators.required],
-      gsxCall: [false],
-      fmiCall: [false],
-      autoPrintLabel: [true],
-      operator: ['']
+      gsxCall: [true],
+      fmiCall: [true],
+      autoPrintLabel: [true]
     });
   }
 
   refreshDevices(): void {
     console.log('🔄 Refreshing devices...');
     this.electronUsbService.refreshUSBDevices();
+    this.showNotification('Refreshing device list...', 'info');
   }
 
   selectDevice(device: USBDeviceDetailed): void {
     this.selectedDevice = device;
     const deviceName = this.getDeviceName(device);
     console.log('✅ Device selected:', deviceName);
-    this.showNotification(`Selected: ${deviceName}`, 'info');
+
+    // Auto-populate serial if available
+    const serial = this.getSerialNumber(device);
+    if (serial !== 'Not Available') {
+      this.testForm.patchValue({
+        manufacturerSerial: serial
+      });
+      // Trigger lookup automatically
+      this.onSerialEntered();
+    }
   }
 
-  populateFormFromDevice(device: USBDeviceDetailed): void {
-    const serialNumber = this.getSerialNumber(device);
+  /**
+   * Called when serial number is entered/scanned
+   * Triggers automatic lookup
+   */
+  async onSerialEntered(): Promise<void> {
+    const serial = this.testForm.get('manufacturerSerial')?.value?.trim();
 
-    if (serialNumber === 'Not Available') {
-      this.showNotification('Cannot populate: Serial number not available', 'warning');
+    if (!serial || serial.length < 6) {
       return;
     }
 
-    const deviceType = device.isIPhone ? 'iPhone' : device.isAndroid ? 'Android' : 'Other';
-    const deviceModel = this.getDeviceName(device);
-    const imei = device.androidInfo?.imei;
+    // Reset error state
+    this.lookupError = null;
+    this.lookupAttempts = 0;
 
-    this.testForm.patchValue({
-      deviceSerial: serialNumber,
-      deviceType: deviceType,
-      deviceModel: deviceModel,
-      imei: imei || '',
-      gsxCall: device.isIPhone,
-      fmiCall: device.isIPhone
-    });
+    // Start lookup
+    await this.performLookup(serial);
+  }
 
-    this.autoFilled.deviceSerial = true;
-    this.autoFilled.deviceType = true;
-    this.autoFilled.deviceModel = true;
-    if (imei) {
-      this.autoFilled.imei = true;
+  /**
+   * Perform API lookup for device information
+   */
+  private async performLookup(serial: string): Promise<void> {
+    this.isLookingUp = true;
+    this.lookupAttempts++;
+
+    console.log(`🔍 Lookup attempt ${this.lookupAttempts}/${this.maxLookupAttempts} for serial: ${serial}`);
+
+    try {
+      // Simulate API call for GSX lookup
+      await this.delay(1500);
+
+      // Simulate random success/failure for demo
+      const success = Math.random() > 0.3; // 70% success rate
+
+      if (success) {
+        // Success - populate MEID
+        const mockMEID = this.generateMockMEID();
+        this.testForm.patchValue({
+          meid: mockMEID
+        });
+
+        this.showNotification('Device information retrieved successfully', 'success');
+        console.log('✅ Lookup successful, MEID:', mockMEID);
+
+      } else {
+        // Failure - retry logic
+        if (this.lookupAttempts < this.maxLookupAttempts) {
+          console.log(`⚠️ Lookup failed, retrying...`);
+          await this.delay(500);
+          await this.performLookup(serial);
+          return;
+        } else {
+          // Max attempts reached
+          this.lookupError = `GSX Lookup Error: GSX lookup failed over ${this.maxLookupAttempts} times. GSX lookup aborted.`;
+          this.showNotification('GSX lookup failed', 'error');
+          console.error('❌ GSX lookup aborted after max attempts');
+        }
+      }
+
+    } catch (error) {
+      console.error('Lookup error:', error);
+      this.lookupError = 'An error occurred during lookup. Please try again.';
+      this.showNotification('Lookup error', 'error');
+    } finally {
+      this.isLookingUp = false;
     }
+  }
 
-    this.showNotification('Form populated from device!', 'success');
-
-    // Reset auto-fill indicators after animation
-    setTimeout(() => {
-      this.autoFilled.deviceSerial = false;
-      this.autoFilled.deviceType = false;
-      this.autoFilled.deviceModel = false;
-      this.autoFilled.imei = false;
-    }, 2000);
+  /**
+   * Generate mock MEID for demonstration
+   */
+  private generateMockMEID(): string {
+    const chars = '0123456789ABCDEF';
+    let meid = '';
+    for (let i = 0; i < 14; i++) {
+      meid += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return meid;
   }
 
   async submitTest(): Promise<void> {
@@ -223,92 +239,55 @@ export class IosManagement implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.lookupError) {
+      this.showNotification('Cannot print label. Lookup failed.', 'error');
+      return;
+    }
+
     this.isSubmitting = true;
 
     try {
-      // Simulate API call for GSX/FMI checks
-      await this.performDeviceChecks();
+      console.log('🖨️ Printing label...');
 
-      const testRecord: TestRecord = {
-        id: this.generateId(),
-        timestamp: new Date(),
-        deviceSerial: this.testForm.value.deviceSerial,
-        deviceType: this.testForm.value.deviceType,
+      // Simulate print operation
+      await this.delay(2000);
+
+      this.showNotification(
+        `Label printed successfully! Grade: ${this.testForm.value.grade}`,
+        'success'
+      );
+
+      console.log('✅ Print completed:', {
+        serial: this.testForm.value.manufacturerSerial,
         meid: this.testForm.value.meid,
-        imei: this.testForm.value.imei,
-        grade: this.testForm.value.grade,
-        deviceModel: this.testForm.value.deviceModel,
-        gsxCall: this.testForm.value.gsxCall,
-        fmiCall: this.testForm.value.fmiCall,
-        autoPrintLabel: this.testForm.value.autoPrintLabel,
-        testResult: 'PASS',
-        operator: this.testForm.value.operator
-      };
+        grade: this.testForm.value.grade
+      });
 
-      // Add to history
-      this.testHistory.unshift(testRecord);
-      this.saveTestHistory();
-      this.updateStatistics();
-
-      // Handle auto-print
-      if (testRecord.autoPrintLabel) {
-        await this.printLabel(testRecord);
-      }
-
-      this.showNotification(`Test completed successfully! Grade: ${testRecord.grade}`, 'success');
-      this.resetForm();
+      // Option to print again or reset
+      // For now, we'll keep the form populated for "Print Again"
 
     } catch (error) {
-      console.error('Test submission error:', error);
-      this.showNotification('Test failed. Please try again.', 'error');
+      console.error('Print error:', error);
+      this.showNotification('Print failed. Please try again.', 'error');
     } finally {
       this.isSubmitting = false;
     }
   }
 
-  private async performDeviceChecks(): Promise<void> {
-    if (this.testForm.value.gsxCall) {
-      await this.delay(1000);
-      console.log('✅ GSX check completed');
-    }
-
-    if (this.testForm.value.fmiCall) {
-      await this.delay(800);
-      console.log('✅ FMI check completed');
-    }
-  }
-
-  private async printLabel(testRecord: TestRecord): Promise<void> {
-    await this.delay(500);
-    console.log('🖨️ Label printed for:', testRecord.deviceSerial);
-    this.showNotification('Label printed successfully', 'info');
-  }
-
   resetForm(): void {
     this.testForm.reset({
-      gsxCall: false,
-      fmiCall: false,
+      gsxCall: true,
+      fmiCall: true,
       autoPrintLabel: true
     });
-    this.autoFilled.deviceSerial = false;
-    this.autoFilled.deviceType = false;
-    this.autoFilled.deviceModel = false;
-    this.autoFilled.imei = false;
-  }
+    this.lookupError = null;
+    this.lookupAttempts = 0;
+    this.isLookingUp = false;
 
-  clearHistory(): void {
-    if (confirm('Are you sure you want to clear all test history?')) {
-      this.testHistory = [];
-      localStorage.removeItem('device_test_history');
-      this.updateStatistics();
-      this.showNotification('Test history cleared', 'info');
+    // Clear device selection in manual mode
+    if (!this.selectedDevice) {
+      console.log('🔄 Form reset');
     }
-  }
-
-  copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text).then(() => {
-      this.showNotification('Copied to clipboard!', 'success');
-    });
   }
 
   getDeviceName(device: USBDeviceDetailed): string {
@@ -317,12 +296,6 @@ export class IosManagement implements OnInit, OnDestroy {
 
   getSerialNumber(device: USBDeviceDetailed): string {
     return this.electronUsbService.getSerialNumber(device);
-  }
-
-  getDeviceIcon(device: USBDeviceDetailed): string {
-    if (device.isIPhone) return 'phone_iphone';
-    if (device.isAndroid) return 'smartphone';
-    return 'phone_android';
   }
 
   getDeviceTypeBadge(device: USBDeviceDetailed): string {
@@ -334,73 +307,6 @@ export class IosManagement implements OnInit, OnDestroy {
     return 'Mobile Device';
   }
 
-  hasValidSerial(device: USBDeviceDetailed): boolean {
-    const serial = this.getSerialNumber(device);
-    return serial !== 'Not Available' && serial.length >= 8;
-  }
-
-  getDeviceWarning(device: USBDeviceDetailed): string {
-    if (device.isIPhone) {
-      return 'Serial not available - Device needs to be trusted on iPhone';
-    }
-    if (device.isAndroid) {
-      return 'Serial not available - Enable USB debugging on Android device';
-    }
-    return 'Serial number not available for this device';
-  }
-
-  formatVendorId(vendorId: number): string {
-    return '0x' + vendorId.toString(16).toUpperCase().padStart(4, '0');
-  }
-
-  formatProductId(productId: number): string {
-    return '0x' + productId.toString(16).toUpperCase().padStart(4, '0');
-  }
-
-  formatTime(date: Date): string {
-    const now = new Date();
-    const diff = now.getTime() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-
-    return new Date(date).toLocaleDateString();
-  }
-
-  private loadTestHistory(): void {
-    const stored = localStorage.getItem('device_test_history');
-    if (stored) {
-      try {
-        this.testHistory = JSON.parse(stored);
-      } catch (e) {
-        console.error('Error loading test history:', e);
-        this.testHistory = [];
-      }
-    }
-  }
-
-  private saveTestHistory(): void {
-    try {
-      const historyToSave = this.testHistory.slice(0, 50);
-      localStorage.setItem('device_test_history', JSON.stringify(historyToSave));
-    } catch (e) {
-      console.error('Error saving test history:', e);
-    }
-  }
-
-  private updateStatistics(): void {
-    this.statistics.total = this.testHistory.length;
-    this.statistics.passed = this.testHistory.filter(t => t.testResult === 'PASS').length;
-    this.statistics.failed = this.testHistory.filter(t => t.testResult === 'FAIL').length;
-    this.statistics.passRate = this.statistics.total > 0
-      ? Math.round((this.statistics.passed / this.statistics.total) * 100)
-      : 0;
-  }
-
   private showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     this.snackBar.open(message, 'Close', {
       duration: 3000,
@@ -410,27 +316,7 @@ export class IosManagement implements OnInit, OnDestroy {
     });
   }
 
-  private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-  }
-
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-}
-
-interface TestRecord {
-  id: string;
-  timestamp: Date;
-  deviceSerial: string;
-  meid?: string;
-  imei?: string;
-  grade: string;
-  deviceModel: string;
-  deviceType: 'iPhone' | 'Android' | 'Other';
-  gsxCall: boolean;
-  fmiCall: boolean;
-  autoPrintLabel: boolean;
-  testResult: 'PASS' | 'FAIL' | 'PENDING';
-  operator?: string;
 }

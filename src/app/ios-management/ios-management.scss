@@ -1,548 +1,740 @@
- .testing-container {
-      padding: 20px;
-      max-width: 1600px;
-      margin: 0 auto;
-    }
+// ============================================
+// DESIGN SYSTEM - Professional & Clean
+// ============================================
+$primary-blue: #2196F3;
+$primary-blue-dark: #1976D2;
+$primary-blue-light: #E3F2FD;
+$accent-orange: #FF9800;
+$accent-orange-hover: #F57C00;
+$grey-dark: #424242;
+$grey-medium: #757575;
+$grey-light: #E0E0E0;
+$grey-lighter: #F5F5F5;
+$white: #FFFFFF;
+$success-green: #4CAF50;
+$error-red: #F44336;
+$warning-orange: #FF9800;
 
-    .header-card {
-      margin-bottom: 20px;
-    }
+// Shadows
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
 
-    mat-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+// Border Radius
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 16px;
 
-    mat-card-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 24px;
-      margin: 0;
-    }
+// ============================================
+// MAIN CONTAINER
+// ============================================
+.device-receiving-container {
+  height: 100vh;
+  display: flex;
+  background: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+  overflow: hidden;
+  padding: 12px;
+  gap: 12px;
+}
 
-    .title-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-      color: #1976d2;
-    }
+// ============================================
+// LEFT SIDEBAR - DEVICE DETECTION
+// ============================================
+.sidebar-panel {
+  width: 360px;
+  background: $white;
+  box-shadow: $shadow-md;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  border-radius: $radius-lg;
+  height: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
 
-    .header-actions {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-    }
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: linear-gradient(135deg, $primary-blue-dark 0%, $primary-blue 100%);
+  color: $white;
+  border-radius: $radius-lg $radius-lg 0 0;
+  flex-shrink: 0;
 
-    .status-chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: #ffebee !important;
-      color: #c62828 !important;
-    }
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
 
-    .status-chip.connected {
-      background: #e8f5e9 !important;
-      color: #2e7d32 !important;
-    }
-
-    .content-layout {
-      display: grid;
-      grid-template-columns: 400px 1fr;
-      gap: 20px;
-    }
-
-    @media (max-width: 1200px) {
-      .content-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Left Panel - Device List */
-    .left-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .device-card {
-      min-height: 400px;
-    }
-
-    .device-count-chip {
-      font-size: 12px;
-      height: 24px;
-      min-height: 24px;
-      background: #e3f2fd !important;
-      color: #1976d2 !important;
-      font-weight: 600;
-    }
-
-    .no-device {
-      text-align: center;
-      padding: 40px 20px;
-      color: #666;
-    }
-
-    .large-icon {
-      font-size: 80px;
-      width: 80px;
-      height: 80px;
-      color: #bdbdbd;
-      margin-bottom: 20px;
-    }
-
-    .pulse {
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .instructions {
-      text-align: left;
-      margin-top: 20px;
-      padding: 15px;
-      background: #f5f5f5;
-      border-radius: 8px;
-    }
-
-    .instructions ul, .instructions ol {
-      margin: 10px 0 0 0;
-      padding-left: 20px;
-    }
-
-    .instructions li {
-      margin: 8px 0;
-      color: #424242;
-    }
-
-    /* Device List Styles */
-    .device-list {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .device-item {
-      padding: 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: white;
-    }
-
-    .device-item:hover {
-      border-color: #1976d2;
-      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .device-item.selected {
-      border-color: #1976d2;
-      background: #e3f2fd;
-      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
-    }
-
-    .device-item.iphone.selected {
-      background: #f5f5f5;
-      border-color: #757575;
-    }
-
-    .device-item.android.selected {
-      background: #e3f2fd;
-      border-color: #1976d2;
-    }
-
-    .device-item-header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .device-item-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      color: #1976d2;
-      flex-shrink: 0;
-    }
-
-    .device-item.iphone .device-item-icon {
-      color: #757575;
-    }
-
-    .device-item-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .device-item-info h4 {
-      margin: 0 0 4px 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: #212121;
-    }
-
-    .device-item-manufacturer {
-      margin: 0 0 8px 0;
-      font-size: 13px;
-      color: #757575;
-    }
-
-    .device-type-chip {
-      font-size: 11px;
-      height: 20px;
-      min-height: 20px;
-      font-weight: 600;
-    }
-
-    .iphone-chip {
-      background: #757575 !important;
-      color: white !important;
-    }
-
-    .android-chip {
-      background: #1976d2 !important;
-      color: white !important;
-    }
-
-    .select-indicator {
-      color: #4caf50;
+    .header-icon {
       font-size: 28px;
       width: 28px;
       height: 28px;
-      flex-shrink: 0;
     }
 
-    .device-item-details {
-      margin-top: 15px;
-      padding-top: 15px;
-    }
-
-    .detail-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px;
-      margin-bottom: 8px;
-      background: white;
-      border-radius: 8px;
-    }
-
-    .detail-row mat-icon {
-      color: #1976d2;
-      flex-shrink: 0;
-    }
-
-    .detail-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .detail-label {
-      font-size: 11px;
-      color: #757575;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .detail-value {
-      font-family: 'Courier New', monospace;
+    .header-title {
+      font-size: 16px;
       font-weight: 600;
-      color: #212121;
+      letter-spacing: 0.3px;
+    }
+
+    .device-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: $white;
+      padding: 4px 10px;
+      border-radius: 12px;
       font-size: 13px;
-      margin-top: 2px;
-      word-break: break-all;
-    }
+      font-weight: 700;
+      min-width: 28px;
+      text-align: center;
 
-    .populate-btn {
-      width: 100%;
-      margin-top: 15px;
-      height: 44px;
-      font-size: 15px;
+      &.has-devices {
+        background: rgba(76, 175, 80, 0.9);
+      }
     }
+  }
 
-    .device-hint {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px;
-      margin-top: 10px;
-      background: #fff3e0;
-      border-radius: 8px;
-      font-size: 12px;
-      color: #e65100;
-    }
+  .refresh-button {
+    color: $white;
+    width: 40px;
+    height: 40px;
 
-    .device-hint mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-
-    /* Recent Tests */
-    .recent-tests-card mat-card-header {
-      margin-bottom: 15px;
-    }
-
-    .count-chip {
-      font-size: 12px;
-      height: 24px;
-      min-height: 24px;
-      background: #e3f2fd !important;
-      color: #1976d2 !important;
-    }
-
-    .test-history {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .test-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      border-radius: 8px;
-      border-left: 4px solid #bdbdbd;
-      background: #f5f5f5;
-    }
-
-    .test-item.pass {
-      border-left-color: #4caf50;
-      background: #e8f5e9;
-    }
-
-    .test-item.fail {
-      border-left-color: #f44336;
-      background: #ffebee;
-    }
-
-    .test-main {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .test-main mat-icon {
+    mat-icon {
       font-size: 24px;
       width: 24px;
       height: 24px;
     }
 
-    .test-item.pass mat-icon {
-      color: #4caf50;
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
     }
+  }
+}
 
-    .test-item.fail mat-icon {
-      color: #f44336;
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+// No Device State
+.no-device-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  .device-icon-container {
+    background: $grey-lighter;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    animation: pulse-icon 2.5s ease-in-out infinite;
+
+    .device-icon-large {
+      font-size: 56px;
+      width: 56px;
+      height: 56px;
+      color: $grey-medium;
     }
+  }
 
-    .test-info {
-      display: flex;
-      flex-direction: column;
+  .no-device-title {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: $grey-dark;
+  }
+
+  .no-device-text {
+    margin: 0;
+    font-size: 14px;
+    color: $grey-medium;
+  }
+}
+
+@keyframes pulse-icon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+// Device List
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.device-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: $white;
+  border: 2px solid $grey-light;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  &:hover {
+    border-color: $primary-blue;
+    box-shadow: $shadow-sm;
+    transform: translateY(-2px);
+  }
+
+  &.active {
+    border-color: $primary-blue;
+    background: $primary-blue-light;
+    box-shadow: $shadow-md;
+
+    .device-item-icon {
+      color: $primary-blue;
     }
+  }
 
-    .test-serial {
-      font-family: 'Courier New', monospace;
+  .device-item-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: $grey-medium;
+    transition: color 0.25s ease;
+  }
+
+  .device-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .device-name {
+      font-size: 15px;
       font-weight: 600;
+      color: $grey-dark;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .device-type {
       font-size: 13px;
-      color: #212121;
+      color: $grey-medium;
+      margin-top: 2px;
     }
+  }
 
-    .test-device-type {
-      font-size: 11px;
-      color: #1976d2;
-      font-weight: 500;
-    }
+  .check-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: $success-green;
+    animation: check-bounce 0.4s ease;
+  }
+}
 
-    .test-time {
-      font-size: 11px;
-      color: #757575;
-    }
+@keyframes check-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
 
-    .grade-chip {
-      font-weight: 600;
-      background: #e3f2fd !important;
-      color: #1976d2 !important;
-    }
+// ============================================
+// MAIN PANEL - CENTER CONTENT
+// ============================================
+.main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
 
-    .no-history {
-      text-align: center;
-      padding: 30px;
-      color: #999;
-    }
+.testing-card {
+  width: 100%;
+  height: 100%;
+  background: $white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: card-entrance 0.5s ease;
+}
 
-    .no-history mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      margin-bottom: 10px;
-    }
+@keyframes card-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-    /* Right Panel */
-    .right-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+// Card Header
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 26px 40px;
+  background: linear-gradient(135deg, #e8eef5 0%, #f5f7fa 100%);
+  border-bottom: 3px solid $primary-blue;
+  flex-shrink: 0;
 
-    .form-card {
-      flex: 1;
-    }
+  .card-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: $primary-blue;
+  }
 
-    .selected-device-chip {
-      font-size: 12px;
-      height: 24px;
-      min-height: 24px;
-      background: #e8f5e9 !important;
-      color: #2e7d32 !important;
-    }
+  .card-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: $grey-dark;
+    letter-spacing: 0.3px;
+  }
+}
 
-    .full-width {
-      width: 100%;
-    }
+// Card Body
+.card-body {
+  padding: 36px 40px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
 
-    .auto-filled {
-      border-color: #4caf50 !important;
-    }
+// Device Info Banner
+.device-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: $primary-blue-light;
+  border-left: 4px solid $primary-blue;
+  border-radius: $radius-sm;
+  margin-bottom: 24px;
 
-    .auto-icon {
-      color: #4caf50;
-      animation: sparkle 1s ease-in-out;
-    }
+  .info-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: $primary-blue;
+  }
 
-    @keyframes sparkle {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; transform: scale(1.1); }
-    }
+  .info-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: $grey-dark;
+  }
+}
 
-    mat-divider {
-      margin: 20px 0;
-    }
+// Looking Up State
+.lookup-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  border-radius: $radius-md;
+  border: 2px dashed $primary-blue;
 
-    .service-options {
-      margin: 20px 0;
-    }
+  .lookup-content {
+    text-align: center;
 
-    .service-options h4 {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #424242;
-      margin-bottom: 15px;
-    }
+    .lookup-spinner {
+      margin: 0 auto 20px;
 
-    .service-options mat-checkbox {
-      display: block;
-      margin-bottom: 15px;
-    }
-
-    .checkbox-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .checkbox-hint {
-      font-size: 12px;
-      color: #757575;
-    }
-
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    .form-actions button {
-      min-width: 140px;
-      height: 48px;
-    }
-
-    /* Stats Card */
-    .stats-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-
-    @media (max-width: 768px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+      ::ng-deep circle {
+        stroke: $primary-blue;
       }
     }
 
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .lookup-text {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: $grey-dark;
     }
 
-    .stat-icon {
-      font-size: 36px;
-      width: 36px;
-      height: 36px;
-      opacity: 0.9;
+    .lookup-subtext {
+      margin: 0;
+      font-size: 14px;
+      color: $grey-medium;
+    }
+  }
+}
+
+// Error Banner
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #ffebee;
+  border-left: 4px solid $error-red;
+  border-radius: $radius-sm;
+  margin-bottom: 24px;
+
+  .error-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: $error-red;
+  }
+
+  .error-text {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #c62828;
+  }
+}
+
+// Testing Form
+.testing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: $grey-dark;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// Serial Number Field - Extra Large and Prominent
+.serial-field {
+  width: 100%;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      height: 64px !important;
     }
 
-    .stat-icon.pass {
-      color: #4caf50;
+    .mat-mdc-form-field-flex {
+      height: 64px !important;
     }
 
-    .stat-icon.fail {
-      color: #f44336;
+    .mat-mdc-form-field-infix {
+      padding: 20px 0 !important;
     }
 
-    .stat-icon.total {
-      color: #2196f3;
+    input.serial-input {
+      font-size: 24px !important;
+      font-weight: 700 !important;
+      letter-spacing: 1px;
+      color: $grey-dark;
+      text-align: center;
     }
 
-    .stat-icon.rate {
-      color: #ffc107;
+    .mdc-notched-outline {
+      border-width: 2px !important;
+      border-color: $grey-light !important;
     }
 
-    .stat-content {
-      display: flex;
-      flex-direction: column;
+    &.mat-focused .mdc-notched-outline {
+      border-color: $primary-blue !important;
+      border-width: 3px !important;
     }
 
-    .stat-value {
+    .input-icon {
       font-size: 28px;
-      font-weight: 700;
-      line-height: 1;
+      width: 28px;
+      height: 28px;
+      color: $grey-medium;
+    }
+  }
+}
+
+// Standard Fields
+.standard-field,
+.grade-field {
+  width: 100%;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      height: 54px !important;
     }
 
-    .stat-label {
-      font-size: 12px;
-      opacity: 0.9;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .mat-mdc-form-field-flex {
+      height: 54px !important;
     }
 
-    /* Material overrides */
-    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-      height: auto;
-      min-height: 16px;
+    .mat-mdc-form-field-infix {
+      padding: 14px 0 !important;
     }
 
-    ::ng-deep .mat-mdc-form-field {
-      margin-bottom: 15px;
+    input,
+    .mat-mdc-select-value {
+      font-size: 16px !important;
+      font-weight: 500 !important;
+      color: $grey-dark;
     }
+
+    .mdc-notched-outline {
+      border-width: 2px !important;
+      border-color: $grey-light !important;
+    }
+
+    &.mat-focused .mdc-notched-outline {
+      border-color: $primary-blue !important;
+      border-width: 2px !important;
+    }
+
+    .input-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: $grey-medium;
+    }
+  }
+}
+
+// Checkbox Section
+.checkbox-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 16px 0;
+
+  .option-checkbox {
+    flex: 0 0 auto;
+
+    ::ng-deep {
+      .mdc-checkbox {
+        padding: 10px;
+      }
+
+      .mdc-checkbox__background {
+        border-width: 2px;
+        border-color: $grey-medium;
+      }
+
+      &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+        background-color: $primary-blue;
+        border-color: $primary-blue;
+      }
+
+      .mdc-label {
+        font-size: 15px;
+        font-weight: 500;
+        color: $grey-dark;
+        padding-left: 8px;
+      }
+    }
+  }
+}
+
+// Action Section
+.action-section {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 2px solid $grey-lighter;
+  margin-top: 8px;
+
+  button {
+    height: 52px;
+    min-width: 140px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+
+    mat-spinner {
+      margin-right: 4px;
+    }
+  }
+
+  .btn-cancel {
+    border: 2px solid $grey-medium;
+    color: $grey-medium;
+
+    &:hover:not(:disabled) {
+      background: rgba($grey-medium, 0.08);
+      border-color: $grey-dark;
+      color: $grey-dark;
+      transform: translateY(-2px);
+      box-shadow: $shadow-sm;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+
+  .btn-submit {
+    background: $accent-orange;
+    color: $white;
+    border: none;
+    box-shadow: $shadow-sm;
+
+    &:hover:not(:disabled) {
+      background: $accent-orange-hover;
+      transform: translateY(-2px);
+      box-shadow: $shadow-md;
+    }
+
+    &:disabled {
+      background: $grey-light;
+      color: rgba(0, 0, 0, 0.38);
+      box-shadow: none;
+    }
+  }
+}
+
+// Card Footer
+.card-footer {
+  padding: 18px 40px;
+  background: $grey-lighter;
+  border-top: 1px solid $grey-light;
+  text-align: center;
+  flex-shrink: 0;
+
+  .footer-text {
+    font-size: 13px;
+    color: $grey-medium;
+    font-weight: 500;
+  }
+}
+
+// ============================================
+// SCROLLBAR STYLING
+// ============================================
+.sidebar-content::-webkit-scrollbar,
+.main-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-content::-webkit-scrollbar-track,
+.main-panel::-webkit-scrollbar-track {
+  background: $grey-lighter;
+  border-radius: 10px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb,
+.main-panel::-webkit-scrollbar-thumb {
+  background: $grey-light;
+  border-radius: 10px;
+
+  &:hover {
+    background: $grey-medium;
+  }
+}
+
+// ============================================
+// RESPONSIVE DESIGN
+// ============================================
+@media (max-width: 1024px) {
+  .device-receiving-container {
+    flex-direction: column;
+  }
+
+  .sidebar-panel {
+    width: 100%;
+    max-height: 280px;
+  }
+
+  .main-panel {
+    padding: 20px;
+  }
+
+  .testing-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    padding: 20px;
+
+    .card-title {
+      font-size: 18px;
+    }
+  }
+
+  .card-body {
+    padding: 24px;
+  }
+
+  .action-section {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+      min-width: unset;
+    }
+  }
+
+  .checkbox-section {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+// ============================================
+// MATERIAL COMPONENT OVERRIDES
+// ============================================
+::ng-deep {
+  .mat-mdc-snack-bar-container {
+    &.snackbar-success {
+      --mdc-snackbar-container-color: #{$success-green};
+      --mat-snack-bar-button-color: #ffffff;
+    }
+
+    &.snackbar-error {
+      --mdc-snackbar-container-color: #{$error-red};
+      --mat-snack-bar-button-color: #ffffff;
+    }
+
+    &.snackbar-warning {
+      --mdc-snackbar-container-color: #{$warning-orange};
+      --mat-snack-bar-button-color: #ffffff;
+    }
+
+    &.snackbar-info {
+      --mdc-snackbar-container-color: #{$primary-blue};
+      --mat-snack-bar-button-color: #ffffff;
+    }
+  }
+}
