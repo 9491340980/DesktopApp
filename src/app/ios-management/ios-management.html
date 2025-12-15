@@ -87,7 +87,7 @@
                      class="serial-input"
                      (blur)="onSerialEntered()"
                      [readonly]="isLookingUp">
-              <mat-icon matSuffix class="input-icon">qr_code_scanner</mat-icon>
+              <!-- <mat-icon matSuffix class="input-icon">qr_code_scanner</mat-icon> -->
               <mat-error *ngIf="testForm.get('manufacturerSerial')?.hasError('required')">
                 Serial number is required
               </mat-error>
@@ -100,17 +100,17 @@
             <mat-form-field appearance="outline" class="standard-field">
               <input matInput
                      formControlName="meid"
-                     placeholder="Auto-populated from lookup"
-                     [readonly]="true">
+                     placeholder="Enter MEID"
+                     >
               <!-- <mat-icon matSuffix class="input-icon">fingerprint</mat-icon> -->
             </mat-form-field>
           </div>
-
-          <!-- Grade Selection -->
-          <div class="form-section">
+<div class="additional-options-section">
+  <!-- Grade Selection -->
+          <div class="form-section custom-grade-section">
             <label class="form-label">GRADE</label>
-            <mat-form-field appearance="outline" class="grade-field">
-              <mat-select formControlName="grade" placeholder="Select grade">
+            <mat-form-field appearance="outline" class="grade-field" >
+              <mat-select formControlName="grade" placeholder="Select grade" [attr.disabled]="true">
                 <mat-option value="">Select Grade</mat-option>
                 <mat-option value="A+">A+ (Excellent)</mat-option>
                 <mat-option value="A">A (Very Good)</mat-option>
@@ -125,18 +125,20 @@
             </mat-form-field>
           </div>
 
-          <!-- Options Checkboxes -->
-          <div class="form-section checkbox-section">
-            <mat-checkbox formControlName="gsxCall" class="option-checkbox">
-              <span class="checkbox-label">GsxCall</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="fmiCall" class="option-checkbox">
-              <span class="checkbox-label">FMICall</span>
-            </mat-checkbox>
-            <mat-checkbox formControlName="autoPrintLabel" class="option-checkbox">
-              <span class="checkbox-label">Auto-Print Label</span>
-            </mat-checkbox>
-          </div>
+        </div>
+        <!-- Options Checkboxes -->
+        <div class="form-section checkbox-section">
+          <mat-checkbox formControlName="gsxCall" class="option-checkbox">
+            <span class="checkbox-label">GsxCall</span>
+          </mat-checkbox>
+          <mat-checkbox formControlName="fmiCall" class="option-checkbox">
+            <span class="checkbox-label">FMICall</span>
+          </mat-checkbox>
+          <mat-checkbox formControlName="autoPrintLabel" class="option-checkbox">
+            <span class="checkbox-label">Auto-Print Label</span>
+          </mat-checkbox>
+        </div>
+          
 
           <!-- Action Buttons -->
           <div class="action-section">
@@ -158,11 +160,6 @@
             </button>
           </div>
         </form>
-      </div>
-
-      <!-- Card Footer -->
-      <div class="card-footer">
-        <span class="footer-text">© XPO Logistics - Supply Chain | All rights Reserved</span>
       </div>
     </div>
   </div>

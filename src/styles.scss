@@ -754,6 +754,22 @@ cubic-bezier(0.4, 0, 0.6, 1);
   .mat-mdc-tab .mdc-tab-indicator__content--underline {
     border-top-width: var(--mat-tab-active-indicator-height, 4px) !important;
 }
+.custom-grade-section{
+  .mat-mdc-select-arrow-wrapper {
+        margin-right: 12px !important;
+}
+}
+.testing-form{
+  .mdc-text-field--outlined .mdc-notched-outline .mdc-notched-outline__leading {
+    border-width: 0 !important;
+}
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mat-mdc-notch-piece{
+      border-left: 1px #1f2937 solid;
+}
+.mdc-text-field--outlined.mdc-text-field--disabled .mat-mdc-notch-piece{
+  border-left: 1px #1f2937 solid;
+}
+}
 /* ============================================
    RESPONSIVE UTILITIES
    ============================================ */

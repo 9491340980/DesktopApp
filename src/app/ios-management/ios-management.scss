@@ -29,20 +29,24 @@ $radius-lg: 16px;
 // MAIN CONTAINER
 // ============================================
 .device-receiving-container {
-  height: 100vh;
-  display: flex;
-  background: #f5f5f5;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
-  overflow: hidden;
-  padding: 12px;
-  gap: 12px;
+    height: calc(100vh - 85px);
+    width: 75%;
+    margin: 10px auto;
+    display: flex;
+    background: #ffffff;
+    border-radius: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", sans-serif;
+    overflow: hidden;
+    padding: 12px;
+    gap: 12px;
+    box-shadow: 0px 0px 8px rgb(0 0 0 / 13%);
 }
 
 // ============================================
 // LEFT SIDEBAR - DEVICE DETECTION
 // ============================================
 .sidebar-panel {
-  width: 360px;
+  width: 430px;
   background: $white;
   box-shadow: $shadow-md;
   display: flex;
@@ -71,26 +75,26 @@ $radius-lg: 16px;
     flex: 1;
 
     .header-icon {
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
     }
 
     .header-title {
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
     }
 
     .device-badge {
-      background: rgba(255, 255, 255, 0.2);
-      color: $white;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 700;
-      min-width: 28px;
-      text-align: center;
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    padding: 4px 7px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    min-width: 28px;
+    text-align: center;
 
       &.has-devices {
         background: rgba(76, 175, 80, 0.9);
@@ -260,6 +264,8 @@ $radius-lg: 16px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  border: 2px #1a78c459 solid;
+    border-radius: 15px;
 }
 
 .testing-card {
@@ -287,13 +293,13 @@ $radius-lg: 16px;
 
 // Card Header
 .card-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 26px 40px;
-  background: linear-gradient(135deg, #e8eef5 0%, #f5f7fa 100%);
-  border-bottom: 3px solid $primary-blue;
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 21px;
+    background: linear-gradient(135deg, #e8eef5 0%, #f5f7fa 100%);
+    border-bottom: 3px solid #2196F3;
+    flex-shrink: 0;
 
   .card-icon {
     font-size: 36px;
@@ -304,7 +310,7 @@ $radius-lg: 16px;
 
   .card-title {
     margin: 0;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     color: $grey-dark;
     letter-spacing: 0.3px;
@@ -313,7 +319,7 @@ $radius-lg: 16px;
 
 // Card Body
 .card-body {
-  padding: 36px 40px;
+  padding: 25px 30px;
   flex: 1;
   overflow-y: auto;
   display: flex;
@@ -412,7 +418,7 @@ $radius-lg: 16px;
 .testing-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .form-section {
@@ -429,34 +435,41 @@ $radius-lg: 16px;
   letter-spacing: 0.5px;
 }
 
-// Serial Number Field - Extra Large and Prominent
+// Serial Number Field - Standardized with other fields
 .serial-field {
   width: 100%;
 
   ::ng-deep {
     .mat-mdc-text-field-wrapper {
-      height: 64px !important;
+      height: 48px !important;
     }
 
     .mat-mdc-form-field-flex {
-      height: 64px !important;
+      height: 48px !important;
     }
 
     .mat-mdc-form-field-infix {
-      padding: 20px 0 !important;
+      padding: 12px 0 !important;
     }
 
     input.serial-input {
-      font-size: 24px !important;
-      font-weight: 700 !important;
+      font-size: 16px !important;
+      font-weight: 600;
       letter-spacing: 1px;
-      color: $grey-dark;
-      text-align: center;
+      color: #424242;
+      text-indent: 15px;
     }
 
     .mdc-notched-outline {
       border-width: 2px !important;
       border-color: $grey-light !important;
+      border-radius: 10px !important;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-radius: 10px !important;
     }
 
     &.mat-focused .mdc-notched-outline {
@@ -473,22 +486,22 @@ $radius-lg: 16px;
   }
 }
 
-// Standard Fields
+// Standard Fields - Updated to match requirements
 .standard-field,
 .grade-field {
   width: 100%;
 
   ::ng-deep {
     .mat-mdc-text-field-wrapper {
-      height: 54px !important;
+      height: 48px !important;
     }
 
     .mat-mdc-form-field-flex {
-      height: 54px !important;
+      height: 48px !important;
     }
 
     .mat-mdc-form-field-infix {
-      padding: 14px 0 !important;
+      padding: 12px 0 !important;
     }
 
     input,
@@ -496,11 +509,19 @@ $radius-lg: 16px;
       font-size: 16px !important;
       font-weight: 500 !important;
       color: $grey-dark;
+      text-indent: 15px;
     }
 
     .mdc-notched-outline {
       border-width: 2px !important;
       border-color: $grey-light !important;
+      border-radius: 10px !important;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-radius: 10px !important;
     }
 
     &.mat-focused .mdc-notched-outline {
@@ -523,6 +544,7 @@ $radius-lg: 16px;
   flex-wrap: wrap;
   gap: 20px;
   padding: 16px 0;
+      flex-direction: row;
 
   .option-checkbox {
     flex: 0 0 auto;
@@ -660,6 +682,16 @@ $radius-lg: 16px;
   &:hover {
     background: $grey-medium;
   }
+}
+.mdc-text-field--outlined.mdc-text-field--disabled .mat-mdc-notch-piece {
+    border-color: var(--mat-form-field-outlined-disabled-outline-color, color-mix(in srgb, var(--mat-sys-on-surface) 12%, transparent));
+    border-radius: 8px !important;
+}
+.additional-options-section{
+      display: flex;
+    align-items: end;
+    gap: 15px;
+    justify-content: space-between;
 }
 
 // ============================================
