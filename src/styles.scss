@@ -770,6 +770,11 @@ cubic-bezier(0.4, 0, 0.6, 1);
   border-left: 1px #1f2937 solid;
 }
 }
+.mat-form-field-disabled {
+      .mat-mdc-text-field-wrapper {
+        background-color: #f2f2f2 !important;
+      }
+    }
 /* ============================================
    RESPONSIVE UTILITIES
    ============================================ */

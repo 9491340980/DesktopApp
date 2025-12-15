@@ -79,11 +79,11 @@
         <form [formGroup]="testForm" (ngSubmit)="submitTest()" class="testing-form">
           <!-- Manufacturer Serial Number - Large and prominent -->
           <div class="form-section">
-            <label class="form-label">Manufacturer Serial Number</label>
+            <label class="form-label">Manufacturer Serialnumber</label>
             <mat-form-field appearance="outline" class="serial-field">
               <input matInput
                      formControlName="manufacturerSerial"
-                     placeholder="Scan or enter serial number"
+                     placeholder="Scan or enter serialnumber"
                      class="serial-input"
                      (blur)="onSerialEntered()"
                      [readonly]="isLookingUp">
@@ -105,27 +105,20 @@
               <!-- <mat-icon matSuffix class="input-icon">fingerprint</mat-icon> -->
             </mat-form-field>
           </div>
-<div class="additional-options-section">
-  <!-- Grade Selection -->
-          <div class="form-section custom-grade-section">
-            <label class="form-label">GRADE</label>
-            <mat-form-field appearance="outline" class="grade-field" >
-              <mat-select formControlName="grade" placeholder="Select grade" [attr.disabled]="true">
-                <mat-option value="">Select Grade</mat-option>
-                <mat-option value="A+">A+ (Excellent)</mat-option>
-                <mat-option value="A">A (Very Good)</mat-option>
-                <mat-option value="B+">B+ (Good)</mat-option>
-                <mat-option value="B">B (Fair)</mat-option>
-                <mat-option value="C">C (Poor)</mat-option>
-                <mat-option value="D">D (Parts Only)</mat-option>
-              </mat-select>
-              <mat-error *ngIf="testForm.get('grade')?.hasError('required')">
-                Grade is required
-              </mat-error>
-            </mat-form-field>
+          <div class="additional-options-section">
+
+            <div class="form-section custom-grade-section">
+              <label class="form-label">GRADE</label>
+              <mat-form-field appearance="outline" class="standard-field">
+                <input matInput [disabled]="true"
+                       formControlName="meid"
+                       placeholder="GRADE"
+                       >
+                <!-- <mat-icon matSuffix class="input-icon">fingerprint</mat-icon> -->
+              </mat-form-field>
+            </div>
           </div>
 
-        </div>
         <!-- Options Checkboxes -->
         <div class="form-section checkbox-section">
           <mat-checkbox formControlName="gsxCall" class="option-checkbox">

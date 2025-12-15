@@ -535,6 +535,12 @@ $radius-lg: 16px;
       height: 24px;
       color: $grey-medium;
     }
+
+    &.mat-form-field-disabled {
+      .mat-mdc-text-field-wrapper {
+        background-color: $grey-lighter !important;
+      }
+    }
   }
 }
 
